@@ -1,0 +1,43 @@
+{
+    "translation": {
+      "common": {
+        "back": "Назад",
+        "save": "Сохранить",
+        "cancel": "Отмена",
+        "delete": "Удалить",
+        "error": "Ошибка",
+        "success": "Успешно"
+      },
+      "auth": {
+        "signIn": "Войти",
+        "signUp": "Зарегистрироваться",
+        "email": "Email",
+        "password": "Пароль"
+      },
+      "errors": {
+        "notFound": {
+          "title": "404",
+          "description": "Страница не найдена",
+          "backHome": "Вернуться на главную"
+        }
+      },
+      "calendar": {
+        "yesterday": "Вчера",
+        "tomorrow": "Завтра",
+        "dayInfo": "Информация о выбранном дне..."
+      },
+      "diary": {
+        "mood": {
+          "eveningReflection": "Вечерняя рефлексия",
+          "sumUpYourDay": "Подведите итоги дня",
+          "moods": {
+            "terrible": "Ужасно",
+            "bad": "Плохо",
+            "normal": "Нормально",
+            "good": "Хорошо",
+            "excellent": "Отлично"
+          }
+        }
+    }
+    }
+  }

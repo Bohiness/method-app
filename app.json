@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "method-app",
+    "name": "Method",
     "slug": "method-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,14 +8,13 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": true
-    },
+    "jsEngine": "jsc",
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.methodapp"
     },
     "web": {
       "bundler": "metro",
@@ -35,7 +34,21 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "tsconfigPaths": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "2f9b2df6-af52-4635-9b67-d222cd5006c8"
+      }
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_ERROR_RECOVERY",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

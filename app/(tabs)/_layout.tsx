@@ -1,45 +1,89 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+// app/(tabs)/_layout.tsx
+import { AddButton } from '@features/nav/bottom-menu/AddButton'
+import { useColorScheme } from '@hooks/systems/colors/useColorScheme'
+import { Colors } from '@shared/constants/colors'
+import { HapticTab } from '@shared/ui/system/HapticTab'
+import { Text } from '@ui/styled-text'
+import { Header } from '@widgets/nav/Header'
+import { Tabs } from 'expo-router'
+import { BarChart3, Bed, BookOpen, View } from 'lucide-react-native'
+import React from 'react'
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme() ?? 'light'
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
+    <>
+      <Header />
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarButton: HapticTab,
+          tabBarStyle: {
             position: 'absolute',
+            bottom: 0,
+            height: 80,
+            backgroundColor: Colors[colorScheme].background,
+            borderTopWidth: 0,
+            paddingBottom: 20,
+            paddingHorizontal: 10,
           },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
-  );
+          tabBarActiveTintColor: Colors[colorScheme].tint,
+          tabBarInactiveTintColor: Colors[colorScheme].inactive,
+          tabBarShowLabel: true,
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontFamily: 'System',
+          },
+        }}>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Today',
+            tabBarIcon: ({ color }) => <Bed size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="explore"
+          options={{
+            title: 'Explore',
+            tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="add"
+          options={{
+            title: '',
+            tabBarButton: () => <AddButton />,
+          }}
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault()
+              // Ваша логика при нажатии на кнопку
+            },
+          }}
+        />
+        <Tabs.Screen
+          name="journey"
+          options={{
+            title: 'Journey',
+            tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="trends"
+          options={{
+            title: 'Trends',
+            tabBarIcon: ({ color }) => <BarChart3 size={24} color={color} />,
+            // Кастомный контент для Header
+            headerLeft: () => (
+              <View>
+                <Text>Статистика</Text>
+              </View>
+            ),
+          }}
+        />
+      </Tabs>
+    </>
+  )
 }

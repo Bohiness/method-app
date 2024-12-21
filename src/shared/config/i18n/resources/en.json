@@ -1,0 +1,43 @@
+{
+  "translation": {
+    "common": {
+      "back": "Back",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "error": "Error",
+      "success": "Success"
+    },
+    "auth": {
+      "signIn": "Sign In",
+      "signUp": "Sign Up",
+      "email": "Email",
+      "password": "Password"
+    },
+    "errors": {
+      "notFound": {
+        "title": "404",
+        "description": "Page not found",
+        "backHome": "Back to home"
+      }
+    },
+    "calendar": {
+      "yesterday": "Yesterday",
+      "tomorrow": "Tomorrow",
+      "dayInfo": "Information about the selected day..."
+    },
+    "diary": {
+      "mood": {
+        "eveningReflection": "Evening Reflection",
+        "sumUpYourDay": "Sum up your day",
+        "moods": {
+          "terrible": "Terrible",
+          "bad": "Bad",
+          "normal": "Normal",
+          "good": "Good",
+          "excellent": "Excellent"
+        }
+      }
+    }
+  }
+}
