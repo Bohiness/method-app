@@ -1,78 +1,140 @@
-import { Factor } from '@shared/types/diary/mood/MoodType'
+import { HighlightedText } from '@shared/lib/utils/HighlightedText'
+import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
-import { Text } from '@shared/ui/styled-text'
+import { Icon } from '@shared/ui/icon'
+import { Text, Title } from '@shared/ui/styled-text'
 import * as Haptics from 'expo-haptics'
-import { Animated, ScrollView, TextInput, View } from 'react-native'
-import { SlideInRight, SlideOutLeft } from 'react-native-reanimated'
+import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ScrollView, View } from 'react-native'
+import Animated, {
+    FadeIn,
+    SlideInRight,
+    SlideOutLeft
+} from 'react-native-reanimated'
 
 // FactorsStep
 interface FactorsStepProps {
     factors: Factor[]
     selectedFactors: number[]
+    selectedEmotions: number[]
     onSelect: (id: number) => void
     onNotesChange: (text: string) => void
-    onComplete: () => void
+    onNext: () => void
     onBack: () => void
-    isLoading: boolean
+    emotions: Emotion[]
+    onRemoveEmotion: (id: number) => void
 }
 
 export const FactorsStep: React.FC<FactorsStepProps> = ({
     factors,
     selectedFactors,
+    selectedEmotions,
     onSelect,
     onNotesChange,
-    onComplete,
+    onNext,
     onBack,
-    isLoading,
+    emotions,
+    onRemoveEmotion
 }) => {
+    const [showNextButton, setShowNextButton] = useState(false)
+    const { t } = useTranslation()
+
+    const TitleWithHighlights = () => {
+        const selectedEmotionsCount = selectedEmotions.length
+
+        return (
+            <View className="flex-row flex-wrap justify-center items-center mb-6 text-center">
+                <Title className='inline-flex flex-row'>{t('diary.moodcheckin.step3.title')}</Title>
+                {emotions
+                    .filter(emotion => selectedEmotions.includes(emotion.id))
+                    .map((emotion, index, arr) => (
+                        <React.Fragment key={emotion.id}>
+                            <HighlightedText
+                                key={emotion.id}
+                                text={emotion.name.toLowerCase()}
+                                onRemove={onRemoveEmotion}
+                                id={emotion.id}
+                                canDelete={selectedEmotionsCount > 1}
+                                isLast={index === arr.length - 1}
+                            />
+                            {index < arr.length - 1 && <Text>,</Text>}
+                        </React.Fragment>
+                    ))}
+                <Title className='inline-flex flex-row'>?</Title>
+            </View>
+        )
+    }
+
+    useEffect(() => {
+        setShowNextButton(selectedFactors.length > 0)
+    }, [selectedFactors])
+
     return (
         <Animated.View
             className="flex-1 p-4"
             entering={SlideInRight}
             exiting={SlideOutLeft}
         >
-            <Text className="mb-6 text-center text-xl">
-                Что повлияло на ваше состояние?
-            </Text>
+            <TitleWithHighlights />
 
-            <TextInput
-                className="mb-4 rounded-xl border border-gray-200 p-3"
+            {/* <TextInput
+                className="mb-4 rounded-xl border border-gray-200 p-3 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 placeholder="Добавьте заметку..."
                 multiline
                 numberOfLines={3}
                 onChangeText={onNotesChange}
-            />
+            /> */}
 
-            <ScrollView className="flex-1">
-                <View className="flex-row flex-wrap gap-3">
-                    {factors.map((factor) => (
-                        <Button
-                            key={factor.id}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                onSelect(factor.id)
-                            }}
-                            variant={selectedFactors.includes(factor.id) ? "tint" : "outline"}
-                            className="mb-3"
-                        >
-                            {factor.name}
-                        </Button>
-                    ))}
+            <ScrollView
+                className="flex-1 mb-20"
+                showsVerticalScrollIndicator={false}
+            >
+                <View className="flex-row flex-wrap gap-2 gap-y-4">
+                    {factors
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((factor) => (
+                            <Button
+                                key={factor.id}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                    onSelect(factor.id)
+                                }}
+                                variant={selectedFactors.includes(factor.id) ? "default" : "secondary"}
+                            >
+                                {factor.name}
+                            </Button>
+                        ))
+                    }
                 </View>
             </ScrollView>
 
-            <View className="flex-row justify-between space-x-4">
-                <Button onPress={onBack} variant="outline" className="flex-1">
-                    Назад
-                </Button>
-                <Button
-                    onPress={onComplete}
-                    variant="tint"
-                    className="flex-1"
-                    disabled={isLoading}
+            <View className="px-4 pb-6 pt-4 bg-background dark:bg-background-dark">
+                <Animated.View
+                    entering={FadeIn}
+                    className="flex-row justify-between align-center"
                 >
-                    {isLoading ? 'Сохранение...' : 'Завершить'}
-                </Button>
+                    <Button
+                        onPress={onBack}
+                        variant="outline"
+                        className="px-4"
+                    >
+                        <Icon
+                            name="ChevronLeft"
+                            size={20}
+                        />
+                    </Button>
+
+                    {showNextButton && (
+                        <Button
+                            onPress={onNext}
+                            variant="outline"
+                            disabled={!showNextButton}
+                        >
+                            {t('common.next')} ({selectedFactors.length})
+                        </Button>
+                    )}
+                </Animated.View>
             </View>
         </Animated.View>
     )

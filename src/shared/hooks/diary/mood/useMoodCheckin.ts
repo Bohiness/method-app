@@ -1,98 +1,118 @@
-// src/shared/hooks/mood/useMoodCheckin.ts
+// src/shared/hooks/mood/useMoodCheckins.ts
 import { apiClient } from '@shared/config/api-client'
-import { Emotion, Factor, MoodCheckin, MoodCheckinResponse } from '@shared/types/diary/mood/MoodType'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { initialEmotionsEN } from '@shared/data/initial/emotions'
+import { initialFactorsEN } from '@shared/data/initial/factors'
+import { useOfflineMutation } from '@shared/hooks/useOfflineQuery'
+import { Emotion, Factor, MoodCheckin } from '@shared/types/diary/mood/MoodType'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-/**
- * Хук для работы с записями настроения
- * @returns Методы и данные для работы с записями настроения
- */
-export const useMoodCheckin = () => {
-  const queryClient = useQueryClient();
+const STALE_TIME = 5 * 60 * 1000; // 5 минут
 
-  // Получение списка эмоций
-  const { data: emotions, isLoading: isLoadingEmotions } = useQuery<Emotion[]>({
+// Хук для получения эмоций
+export const useEmotions = () => {
+  return useQuery<Emotion[], Error>({
     queryKey: ['emotions'],
     queryFn: async () => {
-      const data = await apiClient.get<Emotion[]>('/emotions');
-      return data;
+      try {
+        return await apiClient.get<Emotion[]>('/api/emotions/');
+      } catch (error) {
+        console.error('Failed to fetch emotions:', error);
+        throw error;
+      }
     },
+    staleTime: STALE_TIME,
+    retry: 3,
+    initialData: initialEmotionsEN
   });
+};
 
-  // Получение списка факторов
-  const { data: factors, isLoading: isLoadingFactors } = useQuery<Factor[]>({
+// Хук для получения факторов
+export const useFactors = () => {
+  return useQuery<Factor[], Error>({
     queryKey: ['factors'],
     queryFn: async () => {
-      const data = await apiClient.get<Factor[]>('/factors');
-      return data;
+      try {
+        return await apiClient.get<Factor[]>('/api/factors/');
+      } catch (error) {
+        console.error('Failed to fetch factors:', error);
+        throw error;
+      }
     },
+    staleTime: STALE_TIME,
+    retry: 3,
+    initialData: initialFactorsEN
   });
+};
 
-  // Получение истории записей
-  const { data: history, isLoading: isLoadingHistory } = useQuery<MoodCheckinResponse[]>({
+// Хук для работы с историей записей
+export const useMoodHistory = () => {
+  return useQuery<MoodCheckin[], Error>({
     queryKey: ['mood-checkins'],
     queryFn: async () => {
-      const data = await apiClient.get<MoodCheckinResponse[]>('/mood-checkins');
-      return data;
+      try {
+        return await apiClient.get<MoodCheckin[]>('/api/mood-checkins/');
+      } catch (error) {
+        console.error('Failed to fetch mood checkins:', error);
+        throw error;
+      }
     },
+    staleTime: STALE_TIME,
   });
+};
 
-  // Создание новой записи
-  const { mutateAsync: createMoodCheckin, isPending: isCreating } = useMutation({
-    mutationFn: async (data: Omit<MoodCheckin, 'id' | 'created_at'>) => {
-      const response = await apiClient.post<MoodCheckinResponse>('/mood-checkins', data);
-      return response;
-    },
-    onSuccess: () => {
-      // Инвалидируем кэш истории записей после успешного создания
-      queryClient.invalidateQueries({ queryKey: ['mood-checkins'] });
-    },
-  });
-
-  // Получение статистики
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
+// Хук для получения статистики
+export const useMoodStats = () => {
+  return useQuery({
     queryKey: ['mood-stats'],
     queryFn: async () => {
-      const data = await apiClient.get('/mood-checkins/stats');
-      return data;
+      try {
+        return await apiClient.get('/api/mood-checkins/stats/');
+      } catch (error) {
+        console.error('Failed to fetch mood stats:', error);
+        throw error;
+      }
     },
+    staleTime: STALE_TIME,
   });
+};
 
-  // Получение последней записи
-  const { data: lastCheckin } = useQuery<MoodCheckinResponse>({
+// Хук для получения последней записи
+export const useLastMoodCheckin = () => {
+  return useQuery<MoodCheckin, Error>({
     queryKey: ['mood-checkins', 'last'],
     queryFn: async () => {
-      const data = await apiClient.get<MoodCheckinResponse>('/mood-checkins/last');
-      return data;
+      try {
+        return await apiClient.get<MoodCheckin>('/api/mood-checkins/last/');
+      } catch (error) {
+        console.error('Failed to fetch last checkin:', error);
+        throw error;
+      }
     },
+    staleTime: STALE_TIME,
   });
+};
 
-  return {
-    // Данные
-    emotions,
-    factors,
-    history,
-    stats,
-    lastCheckin,
+// Хук для создания новой записи
+export const useCreateMoodCheckin = () => {
+  const queryClient = useQueryClient();
 
-    // Состояния загрузки
-    isLoading: isLoadingEmotions || isLoadingFactors || isLoadingHistory || isLoadingStats,
-    isCreating,
+  return useOfflineMutation<Omit<MoodCheckin, 'id' | 'created_at'>>(
+    'mood-checkins',
+    (data) => apiClient.post<MoodCheckin>('/api/mood-checkins/', data),
+  );
+};
 
-    // Методы
-    createMoodCheckin,
-
-    // Вспомогательные функции
-    getEmotionsByMoodLevel: (level: number) => 
-      emotions?.filter(emotion => emotion.mood_level === level) || [],
-    
-    getMoodLevelStats: (level: number) =>
-      stats?.find(stat => stat.mood_level === level),
-    
-    getEmotionName: (id: number) => 
-      emotions?.find(emotion => emotion.id === id)?.name,
-    
-    getFactorName: (id: number) => 
-      factors?.find(factor => factor.id === id)?.name,
-  };
+// Вспомогательные функции
+export const moodHelpers = {
+  getEmotionsByMoodLevel: (emotions: Emotion[] | undefined, level: number) => 
+    emotions?.filter(emotion => emotion.mood_level === level) || [],
+  
+  getMoodLevelStats: (stats: any[] | undefined, level: number) =>
+    stats?.find(stat => stat.mood_level === level),
+  
+  getEmotionName: (emotions: Emotion[] | undefined, id: number) => 
+    emotions?.find(emotion => emotion.id === id)?.name,
+  
+  getFactorName: (factors: Factor[] | undefined, id: number) => 
+    factors?.find(factor => factor.id === id)?.name,
 };

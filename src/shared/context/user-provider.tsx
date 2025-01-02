@@ -1,18 +1,22 @@
 // src/shared/context/user-provider.tsx
-import { authService } from '@shared/api/auth/auth.service'
+import { authApiService } from '@shared/api/auth/auth-api.service'
+import { anonymousUserService } from '@shared/lib/user/anonymous.service'
+import { tokenService } from '@shared/lib/user/token/token.service'
 import { useQueryClient } from '@tanstack/react-query'
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useStorage } from '../lib/storage/storage.service'
 import { UserType } from '../types/user/UserType'
 
 interface UserContextValue {
     user: UserType | null
     isAuthenticated: boolean
+    isAnonymous: boolean
     isLoading: boolean
     checkAuth: () => Promise<void>
     signIn: (email: string, password: string) => Promise<void>
     signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
     signOut: () => Promise<void>
+    convertToRegistered: (userData: Partial<UserType>) => Promise<UserType>
 }
 
 const UserContext = createContext<UserContextValue | undefined>(undefined)
@@ -23,25 +27,77 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const storage = useStorage()
     const queryClient = useQueryClient()
 
+
+    // Выход из системы
+    const signOut = async () => {
+        try {
+            console.debug('UserProvider: Signing out...')
+            setIsLoading(true)
+            await authApiService.logout()
+
+            // Очищаем кэш запросов
+            queryClient.clear()
+
+            // После выхода создаем нового анонимного пользователя
+            await signInAnonymously()
+        } catch (error) {
+            console.error('UserProvider: Sign out failed:', error)
+            throw error
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+
     // Проверка текущей сессии
     const checkAuth = async () => {
         try {
+            console.debug('UserProvider: Checking authentication...')
             setIsLoading(true)
-            const session = await storage.get('user-session', true)
+
+            const session = await tokenService.getSession()
+            console.debug('UserProvider: Session status:', !!session)
 
             if (session) {
                 try {
                     // Проверяем авторизацию на сервере
-                    const userData = await authService.checkAuth()
-                    setUser(userData)
-                    await storage.set('user-data', userData)
+                    const checkResponse = await authApiService.checkAuth()
+                    console.debug('UserProvider: Got user data:', !!checkResponse)
+                    setUser(checkResponse.userData)
+                    // Сохраняем данные
+                    await storage.set('user-data', checkResponse.userData)
+                    await storage.set('csrf-token', checkResponse.csrfToken)
+
                 } catch (error) {
-                    console.error('Auth check failed:', error)
-                    await signOut()
+                    console.error('UserProvider: Auth check failed:', error)
+                    // Если проверка не удалась, пробуем получить анонимного пользователя
+                    await signInAnonymously()
                 }
+            } else {
+                // Если нет сессии, создаем анонимного пользователя
+                await signInAnonymously()
             }
         } finally {
             setIsLoading(false)
+        }
+    }
+
+
+    const signInAnonymously = async () => {
+        try {
+            console.debug('UserProvider: Creating anonymous session...')
+            const response = await anonymousUserService.getOrCreateAnonymousUser()
+
+            if (!response.user) {
+                throw new Error('No user data in response')
+            }
+
+            setUser(response.user)
+            console.debug('UserProvider: Anonymous session created successfully')
+        } catch (error) {
+            console.error('UserProvider: Failed to create anonymous session:', error)
+            setUser(null)
+            throw error // Пробрасываем ошибку дальше
         }
     }
 
@@ -49,10 +105,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const signIn = async (email: string, password: string) => {
         try {
             setIsLoading(true)
-            const { user, tokens } = await authService.login({ email, password })
+            const { user, tokens } = await authApiService.login({ email, password })
 
             // Сохраняем данные
-            await storage.set('user-session', tokens, true)
+            await tokenService.setSession(tokens)
             await storage.set('user-data', user)
 
             setUser(user)
@@ -68,7 +124,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
         try {
             setIsLoading(true)
-            const { user, tokens } = await authService.register({
+            const { user, tokens } = await authApiService.register({
                 email,
                 password,
                 first_name: firstName,
@@ -76,7 +132,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             })
 
             // Сохраняем данные
-            await storage.set('user-session', tokens, true)
+            await tokenService.setSession(tokens)
             await storage.set('user-data', user)
 
             setUser(user)
@@ -88,36 +144,41 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    // Выход из системы
-    const signOut = async () => {
+    // Конвертация анонимного пользователя в зарегистрированного
+    const convertToRegistered = async (userData: Partial<UserType>) => {
         try {
+            console.debug('UserProvider: Converting anonymous user...')
             setIsLoading(true)
-            await authService.logout()
 
-            // Очищаем кэш запросов
-            queryClient.clear()
+            const { user: registeredUser } = await anonymousUserService.convertToRegisteredUser(userData)
+            console.debug('UserProvider: User converted successfully')
+            setUser(registeredUser)
 
-            // Удаляем данные сессии
-            await storage.remove('user-session')
-            await storage.remove('user-data')
-
-            setUser(null)
+            return registeredUser
         } catch (error) {
-            console.error('Sign out failed:', error)
+            console.error('UserProvider: Failed to convert user:', error)
             throw error
         } finally {
             setIsLoading(false)
         }
     }
 
+    useEffect(() => {
+        checkAuth()
+    }, [])
+
+    const isAnonymous = !user?.email
+
     const value: UserContextValue = {
         user,
-        isAuthenticated: !!user,
+        isAuthenticated: !!user?.email,
+        isAnonymous,
         isLoading,
         checkAuth,
         signIn,
         signUp,
-        signOut
+        signOut,
+        convertToRegistered
     }
 
     return (

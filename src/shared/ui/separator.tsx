@@ -1,5 +1,5 @@
 // src/shared/ui/separator/separator.tsx
-import { useColorScheme } from '@shared/hooks/systems/colors/useColorScheme'
+import { useTheme } from '@shared/context/theme-provider'
 import React from 'react'
 import { View } from 'react-native'
 
@@ -8,11 +8,11 @@ interface SeparatorProps {
 }
 
 export const Separator = ({ className = '' }: SeparatorProps) => {
-    const colorScheme = useColorScheme()
+    const { isDark } = useTheme()
 
     return (
         <View
-            className={`h-px w-full ${colorScheme === 'dark' ? 'bg-dark-secondary/20' : 'bg-light-secondary/20'} ${className}`}
+            className={`h-px w-full ${isDark ? 'bg-dark-secondary/20' : 'bg-light-secondary/20'} ${className}`}
         />
     )
 }

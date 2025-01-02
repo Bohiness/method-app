@@ -1,16 +1,15 @@
 // app/(tabs)/_layout.tsx
 import { AddButton } from '@features/nav/bottom-menu/AddButton'
-import { useColorScheme } from '@hooks/systems/colors/useColorScheme'
 import { Colors } from '@shared/constants/colors'
-import { HapticTab } from '@shared/ui/system/HapticTab'
-import { Text } from '@ui/styled-text'
+import { useColorScheme } from '@shared/context/theme-provider'
+import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Header } from '@widgets/nav/Header'
 import { Tabs } from 'expo-router'
-import { BarChart3, Bed, BookOpen, View } from 'lucide-react-native'
+import { BarChart2, Compass, Home, ListChecks } from 'lucide-react-native'
 import React from 'react'
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme() ?? 'light'
+  const colorScheme = useColorScheme()
 
   return (
     <>
@@ -28,7 +27,7 @@ export default function TabLayout() {
             paddingBottom: 20,
             paddingHorizontal: 10,
           },
-          tabBarActiveTintColor: Colors[colorScheme].tint,
+          tabBarActiveTintColor: Colors[colorScheme].text,
           tabBarInactiveTintColor: Colors[colorScheme].inactive,
           tabBarShowLabel: true,
           tabBarLabelStyle: {
@@ -40,14 +39,14 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Today',
-            tabBarIcon: ({ color }) => <Bed size={24} color={color} />,
+            tabBarIcon: ({ color }) => <Home size={24} color={color} />,
           }}
         />
         <Tabs.Screen
-          name="explore"
+          name="plans"
           options={{
-            title: 'Explore',
-            tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
+            title: 'Plans',
+            tabBarIcon: ({ color }) => <ListChecks size={24} color={color} />,
           }}
         />
         <Tabs.Screen
@@ -64,23 +63,17 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="journey"
+          name="explore"
           options={{
-            title: 'Journey',
-            tabBarIcon: ({ color }) => <BookOpen size={24} color={color} />,
+            title: 'Explore',
+            tabBarIcon: ({ color }) => <Compass size={24} color={color} />,
           }}
         />
         <Tabs.Screen
           name="trends"
           options={{
             title: 'Trends',
-            tabBarIcon: ({ color }) => <BarChart3 size={24} color={color} />,
-            // Кастомный контент для Header
-            headerLeft: () => (
-              <View>
-                <Text>Статистика</Text>
-              </View>
-            ),
+            tabBarIcon: ({ color }) => <BarChart2 size={24} color={color} />,
           }}
         />
       </Tabs>

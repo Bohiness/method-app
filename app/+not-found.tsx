@@ -20,7 +20,7 @@ export default function NotFoundScreen() {
           </Text>
 
           <Link
-            href="/"
+            href="/home"
             className="bg-primary px-6 py-3 rounded-lg active:opacity-80"
           >
             <Text className="text-white font-medium">

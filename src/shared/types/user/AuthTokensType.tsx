@@ -1,5 +1,5 @@
 export interface AuthTokensType {
-    accessToken: string
-    refreshToken: string
-    expiresAt: number
+    access: string
+    refresh: string
+    expiresAt?: number
 }

@@ -1,43 +1,41 @@
-import { HapticTab } from '@ui/system/HapticTab'
+import { useTheme } from '@shared/context/theme-provider'
+import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Plus } from 'lucide-react-native'
 import { View } from 'react-native'
 
-// Компонент центральной кнопки с тактильной отдачей
-export const AddButton = () => (
-    <View style={{
-        position: 'absolute',
-        bottom: 20,
-        alignSelf: 'center',
-        backgroundColor: '#ffffff',
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    }}>
-        <HapticTab
-            onPress={() => {
-                // Обработка нажатия
-            }}
-            style={{
-                width: '100%',
-                height: '100%',
-                justifyContent: 'center',
-                alignItems: 'center',
-            }}
-        >
-            <Plus
-                size={30}
-                color="#000000"
-            />
-        </HapticTab>
-    </View>
-)
+export const AddButton = () => {
+    const { colors } = useTheme()
+
+    return (
+        <View className="
+            absolute 
+            bottom-5 
+            self-center 
+            bg-background-dark
+            dark:bg-background
+            w-16
+            h-16
+            rounded-full 
+            justify-center 
+            items-center 
+            shadow-lg
+        ">
+            <HapticTab
+                onPress={() => {
+                    // Обработка нажатия
+                }}
+                className="
+                    w-full 
+                    h-full 
+                    justify-center 
+                    items-center
+                "
+            >
+                <Plus
+                    size={30}
+                    color={colors.background}
+                />
+            </HapticTab>
+        </View>
+    )
+}

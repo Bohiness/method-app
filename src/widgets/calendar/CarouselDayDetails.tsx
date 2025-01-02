@@ -1,6 +1,7 @@
+import { FeatureButton } from '@features/components/FeatureButton'
+import { FeatureButtonModal } from '@features/components/FeatureButtonModal'
 import { useCarouselAnimation } from '@shared/hooks/animations/useCarouselAnimation'
-import { Text } from '@shared/ui/styled-text'
-import { EveningReflectionButton } from '@widgets/diary/mood/EveningReflectionButton'
+import { MoodCheckin } from '@widgets/diary/mood/MoodCheckin'
 import React from 'react'
 import { View, ViewStyle } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
@@ -15,15 +16,37 @@ interface DayCardProps {
 const DayCard: React.FC<DayCardProps> = ({ date, formatDateTime, style }) => (
     <Animated.View
         style={[style]}
-        className="absolute w-full rounded-3xl bg-light-background dark:bg-dark-background"
+        className="absolute w-full rounded-3xl bg-background dark:bg-background-dark"
     >
-        <View className="p-4">
-            <View className="flex-row justify-between">
-                <View>
-                    <Text className="text-lg font-bold">{formatDateTime(date, 'dd')}</Text>
-                    <Text className="text-sm text-gray-500">{formatDateTime(date, 'EEE')}</Text>
+        <View className="flex-col gap-4">
+            <View className="flex-1">
+                <FeatureButtonModal
+                    title="diary.moodCheckin.title"
+                    description="diary.moodCheckin.description"
+                    icon="Rabbit"
+                    modalContent={<MoodCheckin date={date} />}
+                />
+            </View>
+
+            <View className="flex-row justify-between gap-4">
+                <View className="flex-1 flex-grow">
+                    <FeatureButton
+                        className="flex-1"
+                        title="diary.startYourDay.title"
+                        description="diary.startYourDay.description"
+                        icon="Sun"
+                        modalContent={<MoodCheckin date={date} />}
+                    />
                 </View>
-                <EveningReflectionButton date={date} />
+
+                <View className="flex-1 flex-grow">
+                    <FeatureButton
+                        className="flex-1"
+                        title="diary.mood.eveningReflection"
+                        description="diary.mood.sumUpYourDay"
+                        icon="Moon"
+                    />
+                </View>
             </View>
         </View>
     </Animated.View>
@@ -50,21 +73,7 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
     const nextDate = new Date(selectedDate)
     nextDate.setDate(nextDate.getDate() + 1)
 
-    // Изменяем эту функцию, добавляя проверку источника изменения
     const handleDateChange = (direction: 'left' | 'right', source: 'swipe' | 'tap' = 'tap') => {
-        // Если источник - свайп, просто вызываем onDateChange
-        if (source === 'swipe') {
-            const newDate = new Date(selectedDate)
-            if (direction === 'right') {
-                newDate.setDate(newDate.getDate() - 1)
-            } else if (direction === 'left' && canSwipeLeft) {
-                newDate.setDate(newDate.getDate() + 1)
-            }
-            onDateChange(newDate)
-            return
-        }
-
-        // Для нажатия оставляем старую логику
         const newDate = new Date(selectedDate)
         if (direction === 'right') {
             newDate.setDate(newDate.getDate() - 1)
@@ -75,7 +84,7 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
     }
 
     const { gestureHandler, currentStyle, prevStyle, nextStyle } = useCarouselAnimation({
-        onChangePage: (direction) => handleDateChange(direction, 'swipe'), // Указываем источник
+        onChangePage: (direction) => handleDateChange(direction, 'swipe'),
         canSwipeLeft,
         canSwipeRight: true,
         selectedTimestamp: selectedDate.getTime(),
@@ -93,7 +102,7 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
     })
 
     return (
-        <View>
+        <View className="relative">
             <PanGestureHandler onGestureEvent={gestureHandler}>
                 <Animated.View className="h-32">
                     <DayCard

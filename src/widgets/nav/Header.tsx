@@ -1,11 +1,12 @@
-// src/shared/ui/layout/Header.tsx
-import { Colors } from '@shared/constants/colors'
+import { useStreakStats } from '@hooks/gamification/useGamification'
+import { useModal } from '@shared/context/modal-provider'
 import { useUser } from '@shared/context/user-provider'
-import { useColorScheme } from '@shared/hooks/systems/colors/useColorScheme'
 import { Icon } from '@shared/ui/icon'
+import { Text } from '@shared/ui/styled-text'
+import { SettingModal } from '@widgets/profile/SettingModal'
 import { useRouter } from 'expo-router'
 import React from 'react'
-import { Image, Pressable, Text, View } from 'react-native'
+import { Image, Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface HeaderProps {
@@ -20,37 +21,49 @@ export const Header: React.FC<HeaderProps> = ({
     const router = useRouter()
     const { user } = useUser()
     const insets = useSafeAreaInsets()
-    const colorScheme = useColorScheme() ?? 'light'
-    const theme = Colors[colorScheme as keyof typeof Colors]
+    const { current_streak } = useStreakStats()
 
-    const handleUserPress = () => {
-        router.push('/ProfileScreen')
+    const { showBottomSheet } = useModal()
+
+    const handleProfilePress = () => {
+        showBottomSheet(<SettingModal />)
     }
 
     return (
         <View
-            className={`${theme.background}`}
+            className="bg-background dark:bg-background-dark"
             style={{
                 paddingTop: insets.top,
+                paddingRight: insets.right,
+                paddingLeft: insets.left
             }}
         >
-            <View className="flex-row items-center justify-between px-4 py-2">
-                {/* Левая часть (счетчик дней или другой контент) */}
+            <View className="flex-row  justify-between px-6 py-2">
                 {showLeftContent && (
                     leftContent || (
-                        <View className="flex-row items-center">
-                            <Text className={`${theme.accent} text-lg font-bold`}>0</Text>
-                            <Text className={`${theme.secondaryText} text-sm ml-2`}>
-                                дней в ударе
+                        <Pressable
+                            className="w-10 h-10 flex-row rounded-full items-center justify-center"
+                        >
+                            <Icon
+                                name="Flame"
+                                size={20}
+                                variant="secondary"
+                                className="ml-2"
+                            />
+                            <Text
+                                variant="secondary"
+                                size="xl"
+                                weight="medium"
+                            >
+                                {current_streak || 0}
                             </Text>
-                        </View>
+                        </Pressable>
                     )
                 )}
 
-                {/* Правая часть (кнопка профиля) */}
                 <Pressable
-                    onPress={handleUserPress}
-                    className={`w-10 h-10 rounded-full ${theme.profileButton} items-center justify-center ml-auto`}
+                    onPress={handleProfilePress}
+                    className="w-10 h-10 rounded-full bg-profile dark:bg-profile-dark items-center justify-center ml-auto"
                 >
                     {user?.profile_photo ? (
                         <Image
@@ -61,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <Icon
                             name="User"
                             size={20}
-                            color={theme.text}
+                            variant="default"
                         />
                     )}
                 </Pressable>

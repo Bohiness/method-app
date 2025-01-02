@@ -1,12 +1,14 @@
 {
-  "translation": {
     "common": {
       "back": "Back",
+      "next": "Next",
       "save": "Save",
       "cancel": "Cancel",
       "delete": "Delete",
       "error": "Error",
-      "success": "Success"
+      "loading": "Loading",
+      "success": "Success",
+      "done": "Done"
     },
     "auth": {
       "signIn": "Sign In",
@@ -22,13 +24,34 @@
       }
     },
     "calendar": {
-      "yesterday": "Yesterday",
-      "tomorrow": "Tomorrow",
+      "yesterday": "yesterday",
+      "tomorrow": "tomorrow",
       "dayInfo": "Information about the selected day..."
     },
     "diary": {
+      "moodcheckin": {
+        "step1": {
+          "title": "How are you feeling now?",
+          "description": "at"
+        },
+        "step2": {
+          "title": "What emotions are you experiencing?"
+        },
+        "step3": {
+          "title": "What factors influenced you to feel"
+        },
+        "step4": {
+          "title1": "How",
+          "title2": "influenced how you feel",
+          "placeholder": "Write your thoughts here..."
+        },
+        "success": {
+          "title": "Good job! Mood recorded",
+          "description": "Keep tracking your mood every day for better self-awareness"
+        }
+      },
       "mood": {
-        "eveningReflection": "Evening Reflection",
+        "eveningReflection": "Evening reflection",
         "sumUpYourDay": "Sum up your day",
         "moods": {
           "terrible": "Terrible",
@@ -37,7 +60,89 @@
           "good": "Good",
           "excellent": "Excellent"
         }
+      },
+      "moodCheckin": {
+        "title": "Mood check-in",
+        "description": "Check how you're feeling today"
+      },
+      "startYourDay": {
+        "title": "Start your day",
+        "description": "Let's plan your day",
+        "start": "Start"
+      }
+    },
+    "plans": {
+      "comingSoon": "Coming Soon",
+      "description": "We're working on exciting new features that will help you achieve your goals more effectively",
+      "features": {
+        "taskManagement": {
+          "title": "Task Management",
+          "description": "Create, organize and track your tasks. Use tags, priorities and deadlines for effective planning."
+        },
+        "goalAlignment": {
+          "title": "Goal Alignment",
+          "description": "Link tasks to long-term goals. Track progress and visualize your path to achievement."
+        },
+        "habitTracker": {
+          "title": "Habit Tracker",
+          "description": "Form beneficial habits. Set reminders and monitor completion statistics."
+        },
+        "aiAssistant": {
+          "title": "AI Assistant",
+          "description": "Get smart recommendations for planning, task decomposition and workflow optimization."
+        },
+        "calendarSync": {
+          "title": "Calendar Sync",
+          "description": "Integrate your tasks with Google Calendar and Apple Calendar. Manage all events in one place."
+        }
+      }
+    },
+    "explore": {
+      "comingSoon": "Coming Soon",
+      "description": "We're working on a platform that will help you find the perfect specialist for personal growth",
+      "features": {
+        "smartMatching": {
+          "title": "Smart Specialist Matching",
+          "description": "Find coaches and psychologists by specialization, experience, price and other parameters. AI algorithm will help match a specialist to your specific request."
+        },
+        "videoChat": {
+          "title": "Video & Chat",
+          "description": "Communicate with specialists through secure video chat right in the app. Save chat history and session materials."
+        },
+        "scheduling": {
+          "title": "Convenient Scheduling",
+          "description": "Book sessions at convenient times. Automatic reminders and calendar synchronization."
+        },
+        "security": {
+          "title": "Security & Privacy",
+          "description": "All specialists undergo thorough verification. Your data and communications are securely protected."
+        }
+      }
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Manage your profile and settings"
+    },
+    "settings": {
+      "viewProfile": "View Profile",
+      "settings": "Settings",
+      "title": "Settings",
+      "theme": {
+        "title": "Theme",
+        "description": "Choose a theme that suits you",
+        "automatic": "Automatic",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "language": {
+        "title": "Language",
+        "description": "Select your preferred language",
+        "english": "English",
+        "russian": "Russian"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Enable notifications"
       }
     }
   }
-}

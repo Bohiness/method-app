@@ -13,9 +13,9 @@ const LANGUAGE_KEY = '@app_language';
 export const getStoredLanguage = async () => {
   try {
     const language = await AsyncStorage.getItem(LANGUAGE_KEY);
-    return language || 'ru';
+    return language || 'en';
   } catch {
-    return 'ru';
+    return 'en';
   }
 };
 
@@ -29,27 +29,39 @@ export const setStoredLanguage = async (language: string) => {
 };
 
 // Инициализация i18next
-export const initI18n = async () => {
-  const storedLanguage = await getStoredLanguage();
+declare module "i18next" {
+  interface CustomTypeOptions {
+    defaultNS: 'translation';
+    resources: {
+      en: {
+        translation: typeof en;
+      };
+      ru: {
+        translation: typeof ru;
+      };
+    };
+  }
+}
 
-  await i18n
-    .use(initReactI18next)
-    .init({
-      resources: {
-        en,
-        ru,
+i18n
+  .use(initReactI18next)
+  .init({
+    resources: {
+      en: {
+        translation: en,
       },
-      lng: storedLanguage,
-      fallbackLng: 'ru',
-      interpolation: {
-        escapeValue: false,
+      ru: {
+        translation: ru,
       },
-      react: {
-        useSuspense: false,
-      },
-    });
-
-  return i18n;
-};
+    },
+    lng: 'en',
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false,
+    },
+    react: {
+      useSuspense: false,
+    },
+  });
 
 export default i18n;

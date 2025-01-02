@@ -3,10 +3,11 @@ import { UserType } from './UserType'
 
 export interface StorageKeysType {
   'user-session': {
-    token: string;
-    refreshToken: string;
+    access: string;
+    refresh: string;
     expiresAt: number;
   };
+  'csrf-token': string;
   'user-data': UserType;
   'app-settings': {
     theme: 'light' | 'dark';

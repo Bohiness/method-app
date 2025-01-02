@@ -14,21 +14,11 @@ export interface Factor {
 
 export interface MoodCheckin {
   id: number;
-  user: number;
   mood_level: number;
   emotions: number[];
   factors: number[];
   factor_review_notes: string;
   factor_emotion_review_notes: string;
   created_at: string;
+  date?: Date;
 }
-
-
-export interface MoodCheckinResponse {
-    id: number;
-    mood_level: number;
-    emotions: Emotion[];
-    factors: Factor[];
-    notes?: string;
-    created_at: string;
-  }

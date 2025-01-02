@@ -16,6 +16,12 @@
       },
       "package": "com.anonymous.methodapp"
     },
+    "ios": {
+      "nsAppTransportSecurity": {
+        "allowsArbitraryLoads": true,
+        "allowsLocalNetworking": true
+      }
+    },
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -31,7 +37,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,
