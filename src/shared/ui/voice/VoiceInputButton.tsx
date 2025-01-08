@@ -21,6 +21,7 @@ export const VoiceInputButton = ({
     asButton = false,
 }: VoiceInputButtonProps) => {
     const [accumulatedText, setAccumulatedText] = useState('')
+    const [isInitialized, setIsInitialized] = useState(false)
 
     // Обработчик транскрибации внутри компонента
     const handleTranscribe = (newText: string, shouldAppend = true) => {
@@ -38,10 +39,17 @@ export const VoiceInputButton = ({
         audioLevel,
         startRecording,
         stopRecording,
-    } = useVoiceInput({ onTranscribe: handleTranscribe })
-
+    } = useVoiceInput({
+        onTranscribe: handleTranscribe,
+        enabled: isInitialized
+    })
 
     const handlePress = async () => {
+        if (!isInitialized) {
+            setIsInitialized(true)
+            return
+        }
+
         if (isRecording) {
             await stopRecording()
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)

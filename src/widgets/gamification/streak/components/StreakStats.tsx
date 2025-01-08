@@ -1,5 +1,5 @@
 // src/features/gamification/streak/ui/components/StreakStats.tsx
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'

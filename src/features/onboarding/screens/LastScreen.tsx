@@ -1,5 +1,5 @@
 import { Icon } from '@shared/ui/icon'
-import { Text, Title } from '@shared/ui/styled-text'
+import { Text, Title } from '@shared/ui/text'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Dimensions, PanResponder } from 'react-native'

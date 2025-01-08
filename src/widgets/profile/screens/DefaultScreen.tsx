@@ -1,6 +1,6 @@
 import { useUser } from '@shared/context/user-provider'
 import { MenuItem } from '@shared/ui/modals/menu-item'
-import { Title } from '@shared/ui/styled-text'
+import { Title } from '@shared/ui/text'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
 import { ScreenType } from '../SettingModal'

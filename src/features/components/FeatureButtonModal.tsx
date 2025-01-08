@@ -1,7 +1,7 @@
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Icon, IconName } from '@shared/ui/icon'
 import { FullScreenModal } from '@shared/ui/modals/fullscreen-modal'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'

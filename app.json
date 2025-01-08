@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "Method",
+    "name": "Method do",
     "slug": "method-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icons/icon-trans.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "jsc",
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/icons/icon-trans.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.methodapp"
@@ -22,12 +22,13 @@
         "allowsLocalNetworking": true
       },
       "bundleIdentifier": "com.anonymous.methodapp",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "icon": "./assets/images/icons/icon-trans.png"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icons/icon-trans.png"
     },
     "plugins": [
       "expo-router",

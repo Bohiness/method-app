@@ -1,5 +1,5 @@
 // src/shared/ui/HighlightedText.tsx
-import { Text, Title } from '@shared/ui/styled-text'
+import { Text, Title } from '@shared/ui/text'
 import * as Haptics from 'expo-haptics'
 import { Pressable, View } from 'react-native'
 
@@ -22,7 +22,7 @@ export const HighlightedText: React.FC<HighlightedTextProps> = ({
 }) => (
     <View className="inline-flex flex-row items-center">
         <View className="inline-flex flex-row items-center bg-surface-paper dark:bg-surface-paper-dark rounded-lg px-1 mx-1">
-            <Title className="text-secondary dark:text-secondary-dark">
+            <Title className="text-secondary-dark dark:text-secondary-dark-dark">
                 {text}{!isLast && separator}
             </Title>
 
@@ -34,7 +34,7 @@ export const HighlightedText: React.FC<HighlightedTextProps> = ({
                     }}
                     className="ml-1 flex items-center justify-center"
                 >
-                    <Text className="text-secondary dark:text-secondary-dark">×</Text>
+                    <Text className="text-secondary-dark dark:text-secondary-dark-dark">×</Text>
                 </Pressable>
             )}
         </View>

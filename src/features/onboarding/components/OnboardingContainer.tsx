@@ -1,7 +1,7 @@
 // src/features/onboarding/screens/OnboardingContainer.tsx
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Button } from '@shared/ui/button'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'

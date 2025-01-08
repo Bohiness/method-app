@@ -1,5 +1,5 @@
 import { Button } from '@shared/ui/button'
-import { Text, Title } from '@shared/ui/styled-text'
+import { Text, Title } from '@shared/ui/text'
 import { Image } from 'expo-image'
 import React from 'react'
 import { useTranslation } from 'react-i18next'

@@ -1,6 +1,6 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { useLocale } from '@shared/hooks/systems/locale/useLocale'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { Image } from 'expo-image'
 import { View } from 'react-native'
 

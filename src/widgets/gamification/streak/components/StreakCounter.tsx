@@ -1,5 +1,5 @@
 // src/features/gamification/streak/ui/components/StreakCounter.tsx
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { Shield } from 'lucide-react-native'
 import React from 'react'
 import { useTranslation } from 'react-i18next'

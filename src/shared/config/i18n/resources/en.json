@@ -47,6 +47,8 @@
         "step4": {
           "title1": "How",
           "title2": "influenced how you feel",
+          "titleNoFactors": "Why do you think you are feeling",
+          "titleNoFactors2": "Were there any events or thoughts that triggered them?",
           "placeholder": "Write your thoughts here..."
         },
         "success": {
@@ -161,7 +163,8 @@
       }
     },
     "threads": {
-      "title": "Threads"
+        "title": "trends.",
+        "description": "We're working on exciting new features that will help you achieve your goals more effectively"
     },
     "screens": {
       "splashscreen": {
@@ -339,5 +342,13 @@
       "restore_error_title": "Restore Failed",
       "restore_error_message": "Failed to restore purchases. Please try again",
       "terms_text": "By subscribing you agree to our Terms of Service and Privacy Policy. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period."
+    },
+    "coaches": {
+      "list": {
+        "mini": {
+          "title": "Coaches"
+        }
+      }
     }
+
 } 

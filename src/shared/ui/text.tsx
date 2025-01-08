@@ -7,7 +7,7 @@ type Variant = 'default' | 'secondary' | 'accent' | 'success' | 'error' | 'warni
 type Size = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl'
 type Weight = 'normal' | 'medium' | 'semibold' | 'bold'
 
-interface StyledTextProps extends TextProps {
+export interface StyledTextProps extends TextProps {
     variant?: Variant
     size?: Size
     weight?: Weight
@@ -15,15 +15,15 @@ interface StyledTextProps extends TextProps {
     className?: string
 }
 
-const getVariantClasses = (variant: Variant, colorScheme: 'light' | 'dark'): string => {
+const getVariantClasses = (variant: Variant, isDark: boolean): string => {
     const variants = {
-        default: colorScheme === 'dark' ? 'text-text-dark' : 'text-text',
-        secondary: colorScheme === 'dark' ? 'text-secondary-light-dark' : 'text-secondary-light',
-        accent: colorScheme === 'dark' ? 'text-accent-dark' : 'text-accent',
-        success: colorScheme === 'dark' ? 'text-success-dark' : 'text-success',
-        error: colorScheme === 'dark' ? 'text-error-dark' : 'text-error',
-        warning: colorScheme === 'dark' ? 'text-warning-dark' : 'text-warning',
-        tint: colorScheme === 'dark' ? 'text-tint-dark' : 'text-tint'
+        default: isDark ? 'text-text-dark' : 'text-text',
+        secondary: isDark ? 'text-secondary-light-dark' : 'text-secondary-light',
+        accent: isDark ? 'text-accent-dark' : 'text-accent',
+        success: isDark ? 'text-success-dark' : 'text-success',
+        error: isDark ? 'text-error-dark' : 'text-error',
+        warning: isDark ? 'text-warning-dark' : 'text-warning',
+        tint: isDark ? 'text-tint-dark' : 'text-tint'
     }
     return variants[variant]
 }
@@ -64,10 +64,10 @@ export const Text = ({
     style,
     ...props
 }: StyledTextProps) => {
-    const { colorScheme } = useTheme()
+    const { isDark } = useTheme()
 
     const baseClasses = cn(
-        getVariantClasses(variant, colorScheme),
+        getVariantClasses(variant, isDark),
         getSizeClasses(size),
         getWeightClasses(weight),
         italic && 'italic',
@@ -89,7 +89,7 @@ export const Text = ({
 export const Title = (props: StyledTextProps) => (
     <Text
         size="2xl"
-        weight="medium"
+        weight="bold"
         className="text-text dark:text-text-dark"
         {...props}
     />
@@ -138,3 +138,13 @@ export const AccentText = (props: StyledTextProps) => (
         {...props}
     />
 )
+
+export const WarningText = (props: StyledTextProps) => (
+    <Text
+        variant="warning"
+        className="text-warning dark:text-warning-dark"
+        {...props}
+    />
+)
+
+export default Text.displayName = 'Text'

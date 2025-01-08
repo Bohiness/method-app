@@ -1,6 +1,6 @@
 import { useModal } from '@shared/context/modal-provider'
 import { Icon, IconName } from '@shared/ui/icon'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View, ViewStyle } from 'react-native'

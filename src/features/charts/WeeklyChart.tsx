@@ -1,6 +1,6 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { hexToRgb } from '@shared/lib/utils/hexToRgb'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import React, { useEffect, useState } from 'react'
 import { Dimensions, View } from 'react-native'
 import { LineChart } from 'react-native-chart-kit'
@@ -30,13 +30,13 @@ export const WeeklyChart = ({
         datasets: [
             {
                 data: currentWeekData,
-                color: (): string => `rgba(${hexToRgb(colors.tint)}, 1)`,
+                color: (): string => `rgba(${hexToRgb(colors.text)}, 1)`,
                 strokeWidth: 4,
                 withDots: false
             },
             {
                 data: previousWeekData,
-                color: (): string => `rgba(${hexToRgb(colors.inactive)}, 0.6)`,
+                color: (): string => `rgba(${hexToRgb(colors.text)}, 0.6)`,
                 strokeWidth: 4,
                 withDots: false
             },
@@ -63,13 +63,13 @@ export const WeeklyChart = ({
             datasets: [
                 {
                     data: currentWeekData,
-                    color: (): string => `rgba(${hexToRgb(colors.tint)}, 1)`,
+                    color: (): string => `rgba(${hexToRgb(colors.text)}, 1)`,
                     strokeWidth: 4,
                     withDots: false
                 },
                 {
                     data: previousWeekData,
-                    color: (): string => `rgba(${hexToRgb(colors.inactive)}, 0.6)`,
+                    color: (): string => `rgba(${hexToRgb(colors.text)}, 0.6)`,
                     strokeWidth: 4,
                     withDots: false
                 },
@@ -91,8 +91,8 @@ export const WeeklyChart = ({
         backgroundGradientFrom: colors.background,
         backgroundGradientTo: colors.background,
         decimalPlaces: 1,
-        color: (opacity = 1) => colors.tint,
-        labelColor: () => colors.secondaryText,
+        color: (opacity = 1) => colors.text,
+        labelColor: () => colors.secondary.light,
         propsForDots: { r: '0' },
         propsForBackgroundLines: { stroke: 'false' },
         fromZero: true,

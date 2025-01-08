@@ -1,5 +1,5 @@
 // src/shared/ui/icon/icon.tsx
-import { useTheme } from '@shared/context/theme-provider'
+import { useColors, useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { icons } from 'lucide-react-native'
 import { memo } from 'react'
@@ -7,12 +7,10 @@ import { StyleProp, ViewStyle } from 'react-native'
 
 export type IconName = keyof typeof icons
 
-// Типы для вариантов иконок
 export type IconVariant =
     | 'default'
     | 'primary'
     | 'secondary'
-    | 'accent'
     | 'success'
     | 'error'
     | 'warning'
@@ -27,11 +25,8 @@ interface IconProps {
     style?: StyleProp<ViewStyle>
     strokeWidth?: number
     variant?: IconVariant
-    // Инвертировать цвета для темной темы
     invertInDark?: boolean
-    // Отключить интерактивность
     disabled?: boolean
-    // Opacity для disabled состояния
     disabledOpacity?: number
 }
 
@@ -47,15 +42,14 @@ export const Icon = memo(({
     disabled = false,
     disabledOpacity = 0.5,
 }: IconProps) => {
-    const { colors, isDark } = useTheme()
+    const { isDark } = useTheme()
+    const colors = useColors()
     const LucideIcon = icons[name]
 
-    // Получаем базовые цвета для текущей темы
     const getBaseColors = () => ({
         default: colors.text,
         primary: colors.tint,
-        secondary: colors['secondary-light'],
-        accent: isDark ? colors.tint : colors.inactive,
+        secondary: colors.secondary.dark,
         success: colors.success,
         error: colors.error,
         warning: colors.warning,
@@ -63,12 +57,10 @@ export const Icon = memo(({
         muted: colors.inactive,
     })
 
-    // Инвертированные цвета для темной темы
     const getInvertedColors = () => ({
         default: isDark ? colors.background : colors.text,
         primary: isDark ? colors.background : colors.tint,
-        secondary: isDark ? colors.background : colors['secondary-light'],
-        accent: isDark ? colors.background : colors.tint,
+        secondary: isDark ? colors.background : colors.secondary.dark,
         success: isDark ? colors.background : colors.success,
         error: isDark ? colors.background : colors.error,
         warning: isDark ? colors.background : colors.warning,
@@ -76,28 +68,21 @@ export const Icon = memo(({
         muted: isDark ? colors.background : colors.inactive,
     })
 
-    // Определяем финальный цвет иконки
     const getIconColor = () => {
-        // Если передан явный цвет - используем его
         if (color) return color
 
-        // Получаем цвета в зависимости от инверсии
         const variantColors = invertInDark ? getInvertedColors() : getBaseColors()
-
-        // Получаем цвет для текущего варианта
         const variantColor = variantColors[variant]
 
-        // Применяем прозрачность если иконка отключена
         if (disabled) {
-            return variantColor + Math.round(disabledOpacity * 255).toString(16)
+            const alpha = Math.round(disabledOpacity * 255).toString(16).padStart(2, '0')
+            return variantColor + alpha
         }
 
         return variantColor
     }
 
-    // Добавляем проверку на существование иконки
-    const IconComponent = icons[name]
-    if (!IconComponent) {
+    if (!LucideIcon) {
         console.warn(`Icon with name "${name}" not found`)
         return null
     }

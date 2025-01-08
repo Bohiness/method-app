@@ -1,7 +1,7 @@
 import { useLanguage } from '@shared/context/language-provider'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { ProcessedMoodStats } from '@shared/types/diary/stats/statsType'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { eachDayOfInterval, endOfMonth, format, getDay, startOfMonth } from 'date-fns'
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
@@ -66,9 +66,9 @@ export const MonthlyActivity = ({ currentMonthData }: MonthlyActivityProps) => {
         const isToday = formattedDate === formattedToday
         const hasMood = currentMonthData?.current?.some(point => point.date === formattedDate) || false
 
-        if (isToday) return 'bg-tint'
-        if (hasMood) return 'bg-tint'
-        return 'bg-zinc-900'
+        if (isToday) return 'bg-text dark:bg-text-dark'
+        if (hasMood) return 'bg-tint dark:bg-tint-dark'
+        return 'bg-transparent'
     }
 
     const getTextStyle = (date: Date | null) => {
@@ -76,15 +76,15 @@ export const MonthlyActivity = ({ currentMonthData }: MonthlyActivityProps) => {
         const formattedDate = format(date, 'yyyy-MM-dd')
         const hasMood = currentMonthData?.current?.some(point => point.date === formattedDate)
 
-        if (hasMood) return 'text-white'
-        return 'text-zinc-400'
+        if (hasMood) return 'text-text-dark dark:text-text'
+        return 'text-secondary-light dark:text-secondary-light-dark'
     }
 
     return (
         <View className="w-full p-4">
             <Text className={`
                 text-center text-base font-semibold mb-4
-                text-secondary/60 dark:text-secondary-dark/60
+                text-secondary-light dark:text-secondary-light-dark
             `}>
                 {formatDateTime(new Date(), 'LLLL yyyy')}
             </Text>
@@ -92,7 +92,7 @@ export const MonthlyActivity = ({ currentMonthData }: MonthlyActivityProps) => {
             <View className="flex-row justify-between mb-4">
                 {DAYS_OF_WEEK[currentLanguage as 'ru' | 'en'].map(day => (
                     <View key={day} className="w-10 items-center">
-                        <Text className="text-sm text-zinc-400">{day}</Text>
+                        <Text className="text-sm text-secondary-light dark:text-secondary-light-dark">{day}</Text>
                     </View>
                 ))}
             </View>

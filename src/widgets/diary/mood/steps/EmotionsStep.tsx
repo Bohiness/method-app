@@ -2,7 +2,7 @@ import { useColorScheme } from '@shared/context/theme-provider'
 import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
-import { Text, Title } from '@shared/ui/styled-text'
+import { Text, Title } from '@shared/ui/text'
 import * as Haptics from 'expo-haptics'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -73,10 +73,7 @@ export const EmotionsStep: React.FC<EmotionsStepProps> = ({
                         className="items-center"
                     >
                         <Animated.View
-                            className={`p-4 rounded-full ${selectedMood === mood.level
-                                ? 'bg-gray-200 border-gray-300 dark:bg-gray-700 dark:border-gray-600'
-                                : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
-                                }`}
+                            className={`p-4 rounded-full `}
                             style={selectedMood === mood.level ? animatedIconStyle : undefined}
                         >
                             {mood.icon(selectedMood === mood.level ?
@@ -100,7 +97,6 @@ export const EmotionsStep: React.FC<EmotionsStepProps> = ({
                         <Button
                             key={emotion.id}
                             onPress={() => {
-                                // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                                 onSelect(emotion.id)
                             }}
                             variant={selectedEmotions.includes(emotion.id) ? "default" : "secondary"}

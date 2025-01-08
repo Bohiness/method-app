@@ -12,7 +12,7 @@ export const Separator = ({ className = '' }: SeparatorProps) => {
 
     return (
         <View
-            className={`h-px w-full ${isDark ? 'bg-surface-paper' : 'bg-surface-paper'} ${className}`}
+            className={`h-px w-full ${isDark ? 'bg-surface-paper-dark' : 'bg-surface-paper'} ${className}`}
         />
     )
 }

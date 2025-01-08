@@ -2,7 +2,7 @@
 import { Colors } from '@shared/constants/colors'
 import { useColorScheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { SearchIcon } from 'lucide-react-native'
 import React, { forwardRef } from 'react'
 import { Platform, TextInput as RNTextInput, TextInputProps, View } from 'react-native'

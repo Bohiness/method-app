@@ -5,47 +5,50 @@ import { Audio } from 'expo-av'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface UseVoiceInputProps {
-    onTranscribe: (text: string, shouldAppend?: boolean) => void; 
+    onTranscribe: (text: string, shouldAppend?: boolean) => void;
+    enabled?: boolean;
 }
 
-export const useVoiceInput = ({ onTranscribe }: UseVoiceInputProps) => {
+export const useVoiceInput = ({ onTranscribe, enabled = true }: UseVoiceInputProps) => {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Храним идентификатор интервала для метеринга звука
   const levelCheckInterval = useRef<NodeJS.Timeout | null>(null);
 
-
   /**
-   * Запрашиваем разрешения и настраиваем аудио при монтировании.
+   * Настройка аудио и запрос разрешений
    */
-  useEffect(() => {
-    const setupAudio = async () => {
-      try {
-        // Запрашиваем разрешения
-        const { granted } = await Audio.requestPermissionsAsync();
-        if (!granted) {
-          setError('Разрешения на использование микрофона не предоставлены');
-          return;
-        }
-
-        // Настраиваем аудио-мод
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-      } catch (err) {
-        setError('Ошибка при настройке аудио');
-        console.error('Error setting up audio:', err);
+  const setupAudio = async () => {
+    try {
+      // Запрашиваем разрешения
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) {
+        setError('Разрешения на использование микрофона не предоставлены');
+        return false;
       }
-    };
 
-    setupAudio();
+      // Настраиваем аудио-мод
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+      
+      setIsInitialized(true);
+      return true;
+    } catch (err) {
+      setError('Ошибка при настройке аудио');
+      console.error('Error setting up audio:', err);
+      return false;
+    }
+  };
 
-    // При размонтировании удаляем таймер
+  // Очистка при размонтировании
+  useEffect(() => {
     return () => {
       if (levelCheckInterval.current) {
         clearInterval(levelCheckInterval.current);
@@ -57,11 +60,19 @@ export const useVoiceInput = ({ onTranscribe }: UseVoiceInputProps) => {
    * Начать запись.
    */
   const startRecording = useCallback(async () => {
+    if (!enabled) return;
+    
     try {
       setError(null);
 
+      // Если аудио еще не инициализировано, инициализируем
+      if (!isInitialized) {
+        const success = await setupAudio();
+        if (!success) return;
+      }
+
       // Создаём объект записи со всеми нужными опциями
-      const { recording } = await Audio.Recording.createAsync( Audio.RecordingOptionsPresets.HIGH_QUALITY );
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
 
       setRecording(recording);
       setIsRecording(true);

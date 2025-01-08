@@ -3,7 +3,7 @@ import { HighlightedText } from '@shared/lib/utils/HighlightedText'
 import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
-import { Text, Title } from '@shared/ui/styled-text'
+import { Title } from '@shared/ui/text'
 import { MultilineTextInput } from '@shared/ui/text-input'
 import { VoiceInputButton } from '@shared/ui/voice/VoiceInputButton'
 import React, { useEffect, useState } from 'react'
@@ -49,37 +49,62 @@ export const ExplanationStep: React.FC<ExplanationStepProps> = ({
 
         return (
             <View className="flex-row flex-wrap justify-center items-center mb-6 text-center">
-                <Title className='inline-flex flex-row'>{t('diary.moodcheckin.step4.title1')}</Title>
-                {factors
-                    .filter(factor => selectedFactors.includes(factor.id))
-                    .map((factor, index, arr) => (
-                        <React.Fragment key={factor.id}>
-                            <HighlightedText
-                                key={factor.id}
-                                text={factor.name.toLowerCase()}
-                                onRemove={onRemoveFactor}
-                                id={factor.id}
-                                canDelete={selectedFactorsCount > 1}
-                                isLast={index === arr.length - 1}
-                            />
-                        </React.Fragment>
-                    ))}
-                <Title className='inline-flex flex-row'>{t('diary.moodcheckin.step4.title2')}</Title>
-                {emotions
-                    .filter(emotion => selectedEmotions.includes(emotion.id))
-                    .map((emotion, index, arr) => (
-                        <React.Fragment key={emotion.id}>
-                            <HighlightedText
-                                key={emotion.id}
-                                text={emotion.name.toLowerCase()}
-                                onRemove={onRemoveEmotion}
-                                id={emotion.id}
-                                canDelete={selectedEmotionsCount > 1}
-                                isLast={index === arr.length - 1}
-                            />
-                        </React.Fragment>
-                    ))}
-                <Text className='inline-flex flex-row'>?</Text>
+                {selectedFactors && selectedFactors.length > 0 ? (
+                    <View className="flex-row flex-wrap justify-center items-center mb-6 text-center">
+                        <Title className='inline-flex flex-row'>{t('diary.moodcheckin.step4.title1')}</Title>
+
+                        {factors
+                            .filter(factor => selectedFactors.includes(factor.id))
+                            .map((factor, index, arr) => (
+                                <React.Fragment key={factor.id}>
+                                    <HighlightedText
+                                        key={factor.id}
+                                        text={factor.name.toLowerCase()}
+                                        onRemove={onRemoveFactor}
+                                        id={factor.id}
+                                        canDelete={selectedFactorsCount > 1}
+                                        isLast={index === arr.length - 1}
+                                    />
+                                </React.Fragment>
+                            ))}
+                        <Title className='inline-flex flex-row'>{t('diary.moodcheckin.step4.title2')}</Title>
+                        {emotions
+                            .filter(emotion => selectedEmotions.includes(emotion.id))
+                            .map((emotion, index, arr) => (
+                                <React.Fragment key={emotion.id}>
+                                    <HighlightedText
+                                        key={emotion.id}
+                                        text={emotion.name.toLowerCase()}
+                                        onRemove={onRemoveEmotion}
+                                        id={emotion.id}
+                                        canDelete={selectedEmotionsCount > 1}
+                                        isLast={index === arr.length - 1}
+                                    />
+                                </React.Fragment>
+                            ))}
+                        <Title className='inline-flex flex-row'>?</Title>
+                    </View>
+                ) : (
+                    <View className="flex-row flex-wrap justify-center items-center mb-6 text-center">
+                        <Title className='inline-flex flex-row'>{t('diary.moodcheckin.step4.titleNoFactors')}</Title>
+                        {emotions
+                            .filter(emotion => selectedEmotions.includes(emotion.id))
+                            .map((emotion, index, arr) => (
+                                <React.Fragment key={emotion.id}>
+                                    <HighlightedText
+                                        key={emotion.id}
+                                        text={emotion.name.toLowerCase()}
+                                        onRemove={onRemoveEmotion}
+                                        id={emotion.id}
+                                        canDelete={selectedEmotionsCount > 1}
+                                        isLast={index === arr.length - 1}
+                                    />
+                                </React.Fragment>
+                            ))}
+                        <Title className='inline flex-row text-center'>?</Title>
+                        <Title className='inline flex-row text-center'>{t('diary.moodcheckin.step4.titleNoFactors2')}</Title>
+                    </View>
+                )}
             </View>
         )
     }
@@ -137,15 +162,13 @@ export const ExplanationStep: React.FC<ExplanationStepProps> = ({
                             />
                         </View>
 
-                        {showNextButton && (
-                            <Button
-                                onPress={onNext}
-                                variant="outline"
-                                disabled={isLoading || !showNextButton}
-                            >
-                                {isLoading ? t('common.loading') : t('common.next')}
-                            </Button>
-                        )}
+                        <Button
+                            onPress={onNext}
+                            variant="outline"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? t('common.loading') : t('common.next')}
+                        </Button>
 
                     </Animated.View>
                 </View>

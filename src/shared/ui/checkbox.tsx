@@ -1,6 +1,6 @@
 // src/shared/ui/checkbox/index.tsx
 import { useTheme } from '@shared/context/theme-provider'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import React, { createContext, useContext } from 'react'
 import { Pressable, View } from 'react-native'
 import Animated, {

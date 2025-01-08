@@ -1,7 +1,7 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { useUser } from '@shared/context/user-provider'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import Constants from 'expo-constants'
 import { Image } from 'expo-image'
 import * as Updates from 'expo-updates'
@@ -165,7 +165,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                 style={[logoTopAnimatedStyle, { position: 'absolute', bottom: insets.bottom + 16 + 140 + 100, left: 16 }]}
             >
                 <Image
-                    source={require('@assets/images/logo/logo-black.svg')}
+                    source={logoSource}
                     style={{ height: 120, width: 900 }}
                     contentFit="contain"
                 />
@@ -174,7 +174,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                 style={[logoBottomAnimatedStyle, { position: 'absolute', bottom: insets.bottom + 16 + 100, left: 16 }]}
             >
                 <Image
-                    source={require('@assets/images/logo/logo-black.svg')}
+                    source={logoSource}
                     style={{ height: 120, width: 900 }}
                     contentFit="contain"
                 />

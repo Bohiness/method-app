@@ -1,6 +1,6 @@
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Separator } from '@shared/ui/separator'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { ChevronRight } from 'lucide-react-native'
 import { ReactNode } from 'react'
 import { View } from 'react-native'

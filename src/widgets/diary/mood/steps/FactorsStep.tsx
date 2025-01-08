@@ -2,11 +2,12 @@ import { HighlightedText } from '@shared/lib/utils/HighlightedText'
 import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
-import { Text, Title } from '@shared/ui/styled-text'
+import { Text, Title } from '@shared/ui/text'
+import { TextInput } from '@shared/ui/text-input'
 import * as Haptics from 'expo-haptics'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView, View } from 'react-native'
+import { Keyboard, ScrollView, TouchableWithoutFeedback, View } from 'react-native'
 import Animated, {
     FadeIn,
     SlideInRight,
@@ -37,7 +38,6 @@ export const FactorsStep: React.FC<FactorsStepProps> = ({
     emotions,
     onRemoveEmotion
 }) => {
-    const [showNextButton, setShowNextButton] = useState(false)
     const { t } = useTranslation()
 
     const TitleWithHighlights = () => {
@@ -66,76 +66,71 @@ export const FactorsStep: React.FC<FactorsStepProps> = ({
         )
     }
 
-    useEffect(() => {
-        setShowNextButton(selectedFactors.length > 0)
-    }, [selectedFactors])
-
     return (
-        <Animated.View
-            className="flex-1 p-4"
-            entering={SlideInRight}
-            exiting={SlideOutLeft}
-        >
-            <TitleWithHighlights />
-
-            {/* <TextInput
-                className="mb-4 rounded-xl border border-gray-200 p-3 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                placeholder="Добавьте заметку..."
-                multiline
-                numberOfLines={3}
-                onChangeText={onNotesChange}
-            /> */}
-
-            <ScrollView
-                className="flex-1 mb-20"
-                showsVerticalScrollIndicator={false}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <Animated.View
+                className="flex-1 p-4"
+                entering={SlideInRight}
+                exiting={SlideOutLeft}
             >
-                <View className="flex-row flex-wrap gap-2 gap-y-4">
-                    {factors
-                        .sort((a, b) => a.name.localeCompare(b.name))
-                        .map((factor) => (
-                            <Button
-                                key={factor.id}
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                    onSelect(factor.id)
-                                }}
-                                variant={selectedFactors.includes(factor.id) ? "default" : "secondary"}
-                            >
-                                {factor.name}
-                            </Button>
-                        ))
-                    }
-                </View>
-            </ScrollView>
+                <TitleWithHighlights />
 
-            <View className="px-4 pb-6 pt-4 bg-background dark:bg-background-dark">
-                <Animated.View
-                    entering={FadeIn}
-                    className="flex-row justify-between align-center"
+                <TextInput
+                    placeholder={t('diary.moodcheckin.step4.placeholder')}
+                    multiline
+                    numberOfLines={3}
+                    onChangeText={onNotesChange}
+                    className='mb-6'
+                />
+
+                <ScrollView
+                    className="flex-1 mb-20"
+                    showsVerticalScrollIndicator={false}
                 >
-                    <Button
-                        onPress={onBack}
-                        variant="outline"
-                        className="px-4"
-                    >
-                        <Icon
-                            name="ChevronLeft"
-                            size={20}
-                        />
-                    </Button>
+                    <View className="flex-row flex-wrap gap-2 gap-y-4">
+                        {factors
+                            .sort((a, b) => a.name.localeCompare(b.name))
+                            .map((factor) => (
+                                <Button
+                                    key={factor.id}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                        onSelect(factor.id)
+                                    }}
+                                    variant={selectedFactors.includes(factor.id) ? "default" : "secondary"}
+                                >
+                                    {factor.name}
+                                </Button>
+                            ))
+                        }
+                    </View>
+                </ScrollView>
 
-                    {showNextButton && (
+                <View className="px-4 pb-6 pt-4 bg-background dark:bg-background-dark">
+                    <Animated.View
+                        entering={FadeIn}
+                        className="flex-row justify-between align-center"
+                    >
+                        <Button
+                            onPress={onBack}
+                            variant="outline"
+                            className="px-4"
+                        >
+                            <Icon
+                                name="ChevronLeft"
+                                size={20}
+                            />
+                        </Button>
+
                         <Button
                             onPress={onNext}
                             variant="outline"
-                            disabled={!showNextButton}
                         >
                             {t('common.next')} ({selectedFactors.length})
                         </Button>
-                    )}
-                </Animated.View>
-            </View>
-        </Animated.View>
+                    </Animated.View>
+                </View>
+            </Animated.View>
+        </TouchableWithoutFeedback>
     )
 }

@@ -1,7 +1,7 @@
 // src/shared/ui/input/input.tsx
 import { useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import React, { forwardRef } from 'react'
 import { TextInput, TextInputProps, View } from 'react-native'
 import Animated, {

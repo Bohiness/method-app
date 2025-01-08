@@ -1,6 +1,6 @@
 // src/features/gamification/streak/ui/components/StatsComponent.tsx
 import { useColorScheme } from '@shared/context/theme-provider'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { Calendar, Clock, Snowflake } from 'lucide-react-native'
 import React from 'react'
 import { useTranslation } from 'react-i18next'

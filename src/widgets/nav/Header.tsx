@@ -3,7 +3,7 @@ import { useModal } from '@shared/context/modal-provider'
 import { useUser } from '@shared/context/user-provider'
 import { useScreenNavigation } from '@shared/hooks/modal/useScreenNavigation'
 import { Icon } from '@shared/ui/icon'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { ScreenType, SettingModal } from '@widgets/profile/SettingModal'
 import { useRouter } from 'expo-router'
 import { Image, Pressable, View } from 'react-native'
@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <Icon
                             name="User"
                             size={20}
-                            variant="default"
+                            variant="secondary"
                         />
                     )}
                 </Pressable>

@@ -1,7 +1,7 @@
 // src/shared/ui/radio/RadioGroup.tsx
 import { useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { Check } from 'lucide-react-native'
 import React from 'react'
 import { Pressable, View } from 'react-native'

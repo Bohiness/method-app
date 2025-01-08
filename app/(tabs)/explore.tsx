@@ -1,5 +1,8 @@
+import { CheckConnect } from '@features/system/CheckConnect'
 import { Icon } from '@shared/ui/icon'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
+import { Container } from '@shared/ui/view'
+import { CoachesWidgets } from '@widgets/coaches/coach-widgets/CoachesWidgets'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
@@ -13,6 +16,7 @@ const FeatureItem = ({ title, description }: { title: string, description: strin
 
 export default function ExploreScreen() {
     const { t } = useTranslation()
+    const lock = false
 
     const features = [
         {
@@ -34,32 +38,40 @@ export default function ExploreScreen() {
     ]
 
     return (
-        <View className="flex-1 bg-background dark:bg-background-dark">
-            <ScrollView className="flex-1 px-4 pt-6">
-                <View className="items-center mb-2">
-                    <View className="rounded-full p-2">
-                        <Icon
-                            name="Lock"
-                            size={40}
-                            strokeWidth={1.5}
-                        />
+        <Container>
+            {lock ? (
+                <ScrollView className="flex-1 px-4">
+                    <View className="items-center mb-2">
+                        <View className="rounded-full p-2">
+                            <Icon
+                                name="Lock"
+                                size={40}
+                                strokeWidth={1.5}
+                            />
+                        </View>
+                        <Text size="2xl" weight="bold" className="text-center mb-2">
+                            {t('explore.comingSoon')}
+                        </Text>
+                        <Text variant="secondary" className="text-center mb-6">
+                            {t('explore.description')}
+                        </Text>
                     </View>
-                    <Text size="2xl" weight="bold" className="text-center mb-2">
-                        {t('explore.comingSoon')}
-                    </Text>
-                    <Text variant="secondary" className="text-center mb-6">
-                        {t('explore.description')}
-                    </Text>
-                </View>
 
-                {features.map((feature, index) => (
-                    <FeatureItem
-                        key={index}
-                        title={feature.title}
-                        description={feature.description}
-                    />
-                ))}
-            </ScrollView>
-        </View>
+                    {features.map((feature, index) => (
+                        <FeatureItem
+                            key={index}
+                            title={feature.title}
+                            description={feature.description}
+                        />
+                    ))}
+                </ScrollView>
+            ) : (
+                <>
+                    <CheckConnect>
+                        <CoachesWidgets />
+                    </CheckConnect>
+                </>
+            )}
+        </Container>
     )
 }

@@ -206,7 +206,7 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
                 {[1, 2, 3, 4].map(i => (
                     <HapticTab
                         key={i}
-                        className={`h-2 w-2 rounded-full ${step >= i ? 'bg-background-dark dark:bg-background' : 'bg-secondary'}`}
+                        className={`h-2 w-2 rounded-full ${step >= i ? 'bg-background-dark dark:bg-background' : 'bg-secondary-light dark:bg-secondary-dark'}`}
                         onPress={() => {
                             if (i < step) {
                                 setStep(i)

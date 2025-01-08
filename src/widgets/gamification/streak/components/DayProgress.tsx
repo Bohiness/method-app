@@ -1,5 +1,5 @@
 import { useColorScheme } from '@shared/context/theme-provider'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { format } from 'date-fns'
 import { Calendar } from 'lucide-react-native'
 import React from 'react'

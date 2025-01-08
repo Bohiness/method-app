@@ -1,5 +1,5 @@
 import { RadioGroup } from '@shared/ui/radio-group-button'
-import { Text, Title } from '@shared/ui/styled-text'
+import { Text, Title } from '@shared/ui/text'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'

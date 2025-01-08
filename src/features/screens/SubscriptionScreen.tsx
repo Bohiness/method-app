@@ -1,7 +1,7 @@
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Button } from '@shared/ui/button'
 import { Icon, IconName } from '@shared/ui/icon'
-import { Text, Title } from '@shared/ui/styled-text'
+import { Text, Title } from '@shared/ui/text'
 import { ToggleSwitch } from '@shared/ui/toggle-switch'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'

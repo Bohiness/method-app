@@ -1,7 +1,7 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { useLanguage } from '@shared/context/language-provider'
 import { MenuGroup, MenuItem } from '@shared/ui/modals/menu-item'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { ScreenType } from '../SettingModal'

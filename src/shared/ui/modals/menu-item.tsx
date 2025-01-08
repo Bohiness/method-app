@@ -1,6 +1,6 @@
 // src/shared/ui/menu-item/index.tsx
 import { useTheme } from '@shared/context/theme-provider'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { ChevronRight } from 'lucide-react-native'
 import React from 'react'
 import { Pressable, View } from 'react-native'

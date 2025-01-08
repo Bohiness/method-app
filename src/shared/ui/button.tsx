@@ -1,5 +1,5 @@
 // src/shared/ui/Button/index.tsx
-
+import { useColors, useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import * as Haptics from 'expo-haptics'
 import { ActivityIndicator, Pressable, PressableProps, View } from 'react-native'
@@ -9,7 +9,7 @@ import Animated, {
     withSpring,
 } from 'react-native-reanimated'
 import { Icon, IconName } from './icon'
-import { Text } from './styled-text'
+import { Text } from './text'
 
 type ButtonVariant = 'default' | 'outline' | 'ghost' | 'tint' | 'destructive' | 'secondary'
 type ButtonSize = 'sm' | 'md' | 'lg'
@@ -35,104 +35,88 @@ export const Button: React.FC<ButtonProps> = ({
     loading = false,
     disabled = false,
     fullWidth = false,
-    leftIcon = undefined,
-    rightIcon = undefined,
+    leftIcon,
+    rightIcon,
     className = '',
     children,
     haptic = true,
     onPress,
     ...props
 }) => {
+    const { isDark } = useTheme()
+    const colors = useColors()
     const pressed = useSharedValue(0)
 
-    // Определяем цвет текста и иконок в зависимости от варианта и темы
     const getColors = (variant: ButtonVariant) => {
-        const colors = {
+        const variantColors = {
             default: {
-                text: 'text-text-dark dark:text-surface-paper-dark',
-                iconColor: '#000000'
+                text: colors.background,
+                icon: colors.background,
+                background: colors.text
             },
             secondary: {
-                text: 'text-text dark:text-text-dark',
-                iconColor: '#1A202C'
+                text: colors.text,
+                icon: colors.text,
+                background: colors.surface.stone
             },
             outline: {
-                text: 'text-text dark:text-text-dark',
-                iconColor: '#1A202C'
+                text: colors.text,
+                icon: colors.text,
+                background: 'transparent'
             },
             ghost: {
-                text: 'text-text dark:text-text-dark',
-                iconColor: '#1A202C'
+                text: colors.text,
+                icon: colors.text,
+                background: 'transparent'
             },
             tint: {
-                text: 'text-surface-paper dark:text-surface-paper',
-                iconColor: '#FFFFFF'
+                text: colors.background,
+                icon: colors.background,
+                background: colors.tint
             },
             destructive: {
-                text: 'text-error dark:text-error',
-                iconColor: '#FFFFFF'
-            },
+                text: colors.background,
+                icon: colors.background,
+                background: colors.error
+            }
         }
-        return colors[variant]
+        return variantColors[variant]
     }
 
-    const { text: textColor, iconColor } = getColors(variant)
+    const variantColors = getColors(variant)
 
-    // ---------------------------
-    // 1) Размеры кнопки
-    // ---------------------------
+    // Размеры кнопки
     const sizeClasses = {
         sm: 'py-2 px-3',
         md: 'py-4 px-10',
         lg: 'py-6 px-12',
     }[size]
 
-    // ---------------------------
-    // 2) Варианты стилей
-    // ---------------------------
-    const variantClasses = {
-        default: `
-            bg-surface-paper-dark 
-            dark:bg-surface-paper
-        `,
-        secondary: `
-            bg-surface-paper border-border
-            dark:bg-surface-paper-dark dark:border dark:border-border
-        `,
-        outline: `
-            border border-background-dark bg-transparent
-            dark:border-border dark:bg-transparent
-        `,
-        ghost: `
-            bg-transparent hover:bg-black/5
-            dark:bg-transparent dark:hover:bg-white/5
-        `,
-        tint: `
-            bg-tint 
-            dark:bg-white
-        `,
-        destructive: `
-            bg-error
-            dark:bg-white
-        `,
-    }[variant]
+    // Варианты стилей
+    const getVariantClasses = () => {
+        const baseClasses = {
+            default: `bg-background-dark dark:bg-background`,
+            secondary: `bg-surface-stone dark:bg-surface-stone`,
+            outline: `border border-border dark:border-border bg-transparent`,
+            ghost: `bg-transparent`,
+            tint: `bg-tint dark:bg-tint`,
+            destructive: `bg-error dark:bg-error`,
+        }[variant]
 
-    // ---------------------------
-    // Остальной код без изменений
-    // ---------------------------
+        return baseClasses
+    }
+
     const disabledClasses = disabled ? 'opacity-30' : ''
     const widthClasses = fullWidth ? 'w-full' : 'w-auto'
 
     const animatedStyle = useAnimatedStyle(() => ({
-        transform: [
-            {
-                scale: withSpring(pressed.value ? 0.97 : 1, {
-                    mass: 0.5,
-                    damping: 12,
-                    stiffness: 150,
-                }),
-            },
-        ],
+        transform: [{
+            scale: withSpring(pressed.value ? 0.97 : 1, {
+                mass: 0.5,
+                damping: 12,
+                stiffness: 150,
+            }),
+        }],
     }))
 
     const handlePress = async (e: any) => {
@@ -145,17 +129,13 @@ export const Button: React.FC<ButtonProps> = ({
     return (
         <AnimatedPressable
             disabled={disabled || loading}
-            onPressIn={() => {
-                pressed.value = 1
-            }}
-            onPressOut={() => {
-                pressed.value = 0
-            }}
+            onPressIn={() => { pressed.value = 1 }}
+            onPressOut={() => { pressed.value = 0 }}
             onPress={handlePress}
             style={animatedStyle}
             className={cn(
                 'rounded-full active:opacity-90',
-                variantClasses,
+                getVariantClasses(),
                 sizeClasses,
                 disabledClasses,
                 widthClasses,
@@ -166,36 +146,37 @@ export const Button: React.FC<ButtonProps> = ({
             <View className="flex-row items-center justify-center space-x-2">
                 {loading ? (
                     <ActivityIndicator
-                        color={iconColor}
+                        color={variantColors.icon}
                         className="h-5 w-5"
                     />
                 ) : (
                     <>
-                        {leftIcon &&
-                            <View className="mr-2">
+                        {leftIcon && (
+                            <View className="mr-2 -ml-2">
                                 <Icon
                                     name={leftIcon}
                                     size={24}
-                                    color={iconColor}
+                                    color={variantColors.icon}
                                 />
                             </View>
-                        }
+                        )}
                         <Text
-                            className={textColor}
+                            className="text-inherit"
+                            style={{ color: variantColors.text }}
                             size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'base'}
                             weight="medium"
                         >
                             {children}
                         </Text>
-                        {rightIcon &&
+                        {rightIcon && (
                             <View className="ml-2">
                                 <Icon
                                     name={rightIcon}
                                     size={24}
-                                    color={iconColor}
+                                    color={variantColors.icon}
                                 />
                             </View>
-                        }
+                        )}
                     </>
                 )}
             </View>

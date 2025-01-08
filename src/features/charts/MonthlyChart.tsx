@@ -1,5 +1,5 @@
 import { useTheme } from "@react-navigation/native"
-import { Text } from "@shared/ui/styled-text"
+import { Text } from "@shared/ui/text"
 import { LineChart } from "lucide-react-native"
 import { useMemo } from "react"
 import { Dimensions, View } from "react-native"

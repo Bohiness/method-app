@@ -1,5 +1,5 @@
 import { Icon } from '@shared/ui/icon'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
@@ -39,7 +39,7 @@ export default function PlansScreen() {
 
     return (
         <View className="flex-1 bg-background dark:bg-background-dark">
-            <ScrollView className="flex-1 px-4 pt-6">
+            <ScrollView className="flex-1 px-4">
                 <View className="items-center mb-2">
                     <View className="rounded-full p-2">
                         <Icon

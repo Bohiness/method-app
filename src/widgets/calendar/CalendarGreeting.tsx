@@ -1,7 +1,7 @@
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Separator } from '@shared/ui/separator'
-import { Text } from '@ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { addDays, eachDayOfInterval, format, isSameDay, subDays } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import React, { useEffect, useRef, useState } from 'react'
@@ -50,7 +50,7 @@ const CalendarGreeting = () => {
     return (
         <View className="space-y-4 px-4">
             {/* Приветствие */}
-            <View className="py-2">
+            <View className="mb-4">
                 <Text
                     size="2xl"
                     weight="bold"

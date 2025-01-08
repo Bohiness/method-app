@@ -1,6 +1,6 @@
 // src/features/gamification/streak/ui/components/StreakBadge.tsx
 import { HapticTab } from '@shared/lib/utils/HapticTab'
-import { Text } from '@shared/ui/styled-text'
+import { Text } from '@shared/ui/text'
 import { Award } from 'lucide-react-native'
 import React from 'react'
 import { useColorScheme, View } from 'react-native'

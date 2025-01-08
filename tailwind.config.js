@@ -1,3 +1,5 @@
+const { error } = require('console')
+const { Colors } = require('./src/shared/constants/colors')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -10,68 +12,68 @@ module.exports = {
     colors: {
       // Main background and text colors
       background: {
-        DEFAULT: '#FFFFFF',
-        dark: '#000000'
+        DEFAULT: Colors.light.background,
+        dark: Colors.dark.background
       },
       text: {
-        DEFAULT: '#232324',
-        dark: '#FFFFFF'
+        DEFAULT: Colors.light.text,
+        dark: Colors.dark.text
       },
       secondary: {
         dark: {
-          DEFAULT: '#484848',
-          dark: '#484848'
+          DEFAULT: Colors.light.secondary.dark,
+          dark: Colors.dark.secondary.dark
         },
         light: {
-          DEFAULT: '#868686',
-          dark: '#868686'
+          DEFAULT: Colors.light.secondary.light,
+          dark: Colors.dark.secondary.light
         }
       },
 
       // UI-specific colors
       surface: {
         paper: {
-          DEFAULT: '#F3F3F1',
-          dark: '#1F1F1F'  
+          DEFAULT: Colors.light.surface.paper,
+          dark: Colors.dark.surface.paper
         },
         canvas: {
-          DEFAULT: '#E3DED8',
-          dark: '#2A2A2A'  
+          DEFAULT: Colors.light.surface.canvas,
+          dark: Colors.dark.surface.canvas
         },
         stone: {
-          DEFAULT: '#C4C2C5',
-          dark: '#333333' 
+          DEFAULT: Colors.light.surface.stone,
+          dark: Colors.dark.surface.stone
         },
       },
 
       // Accent and interactive colors
       error: {
-        DEFAULT: '#E53E3E',
-        dark: '#E53E3E'
+        DEFAULT: Colors.light.error,
+        dark: Colors.dark.error
       },
       success: {
-        DEFAULT: '#22C55E',
-        dark: '#22C55E'
+        DEFAULT: Colors.light.success,
+        dark: Colors.dark.success
       },
       warning: {
-        DEFAULT: '#F59E0B',
-        dark: '#F59E0B'
+        DEFAULT: Colors.light.warning,
+        dark: Colors.dark.warning
       },
       tint: {
-        DEFAULT: '#007CCB',
-        dark: '#007CCB'
+        DEFAULT: Colors.light.tint,
+        dark: Colors.dark.tint
       },
       inactive: {
-        DEFAULT: '#71717a',
-        dark: '#71717a'
+        DEFAULT: Colors.light.inactive,
+        dark: Colors.dark.inactive
       },
       border: {
-        DEFAULT: '#E5E7EB',
-        dark: '#2D3748'
+        DEFAULT: Colors.light.border,
+        dark: Colors.dark.border
       },
 
-      // Utility color
-      transparent: 'transparent'
+      // Additional colors
+      transparent: Colors.light.transparent
     },
   },
   darkMode: 'class',
