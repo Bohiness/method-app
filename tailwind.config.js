@@ -1,4 +1,3 @@
-const { default: React } = require('react')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -15,18 +14,48 @@ module.exports = {
         dark: '#000000'
       },
       text: {
-        DEFAULT: '#1A202C',
+        DEFAULT: '#232324',
         dark: '#FFFFFF'
       },
       secondary: {
-        DEFAULT: '#A3A3A3',
-        dark: '#A3A3A3'
+        dark: {
+          DEFAULT: '#484848',
+          dark: '#484848'
+        },
+        light: {
+          DEFAULT: '#868686',
+          dark: '#868686'
+        }
+      },
+
+      // UI-specific colors
+      surface: {
+        paper: {
+          DEFAULT: '#F3F3F1',
+          dark: '#1F1F1F'  
+        },
+        canvas: {
+          DEFAULT: '#E3DED8',
+          dark: '#2A2A2A'  
+        },
+        stone: {
+          DEFAULT: '#C4C2C5',
+          dark: '#333333' 
+        },
       },
 
       // Accent and interactive colors
-      accent: {
+      error: {
         DEFAULT: '#E53E3E',
         dark: '#E53E3E'
+      },
+      success: {
+        DEFAULT: '#22C55E',
+        dark: '#22C55E'
+      },
+      warning: {
+        DEFAULT: '#F59E0B',
+        dark: '#F59E0B'
       },
       tint: {
         DEFAULT: '#007CCB',
@@ -35,30 +64,6 @@ module.exports = {
       inactive: {
         DEFAULT: '#71717a',
         dark: '#71717a'
-      },
-
-      // Feedback and status colors
-      success: {
-        DEFAULT: '#22C55E',
-        dark: '#22C55E'
-      },
-      error: {
-        DEFAULT: '#EF4444',
-        dark: '#EF4444'
-      },
-      warning: {
-        DEFAULT: '#F59E0B',
-        dark: '#F59E0B'
-      },
-
-      // UI-specific colors
-      profile: {
-        DEFAULT: '#F7F7F7',
-        dark: '#2D3748'
-      },
-      surface: {
-        DEFAULT: '#F8F9FA',
-        dark: '#1A1A1A'
       },
       border: {
         DEFAULT: '#E5E7EB',
@@ -69,6 +74,6 @@ module.exports = {
       transparent: 'transparent'
     },
   },
-  darkMode: 'class', 
-  plugins: [],
+  darkMode: 'class',
+  plugins: ['nativewind'],
 }

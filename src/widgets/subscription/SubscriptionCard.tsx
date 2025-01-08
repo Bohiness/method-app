@@ -8,7 +8,7 @@ export const SubscriptionCard = () => {
     const { t } = useTranslation()
 
     return (
-        <View className="flex-1 w-max-full overflow-hidden rounded-3xl bg-surface dark:bg-surface-dark px-4 py-10">
+        <View className="flex-1 w-max-full overflow-hidden rounded-3xl bg-surface-paper dark:bg-surface-paper-dark px-4 py-10">
             <View className="flex-1 items-center gap-y-4">
                 {/* Замок в правом верхнем углу */}
                 <Icon

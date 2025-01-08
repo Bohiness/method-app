@@ -54,6 +54,9 @@ export const ThemeScreen = ({
                 onChange={handleThemeChange}
                 label={t("settings.theme.description")}
             />
+
+            {/* <ThemeDebug /> */}
+
         </View>
     )
 }

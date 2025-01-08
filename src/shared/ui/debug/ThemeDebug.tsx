@@ -21,7 +21,7 @@ export const ThemeDebug = () => {
                 </Text>
             </View>
 
-            <View className="mt-4 p-4 bg-surface dark:bg-surface-dark">
+            <View className="mt-4 p-4 bg-surface-paper dark:bg-surface-paper-dark">
                 <Text className="text-text dark:text-text-dark">
                     Surface Color Test
                 </Text>

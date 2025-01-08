@@ -8,7 +8,11 @@
       "error": "Error",
       "loading": "Loading",
       "success": "Success",
-      "done": "Done"
+      "done": "Done",
+      "skip": "Skip",
+      "allow": "Allow",
+      "swipe": "Swipe to continue",
+      "continue": "Continue"
     },
     "auth": {
       "signIn": "Sign In",
@@ -95,6 +99,10 @@
           "title": "Calendar Sync",
           "description": "Integrate your tasks with Google Calendar and Apple Calendar. Manage all events in one place."
         }
+      },
+      "nextDayPlan": {
+        "title": "Next Day Plan",
+        "description": "Plan your day ahead and stay organized"
       }
     },
     "explore": {
@@ -121,7 +129,14 @@
     },
     "profile": {
       "title": "Profile",
-      "description": "Manage your profile and settings"
+      "description": "Manage your profile and settings",
+      "email": "Email",
+      "phone": "Phone",
+      "deleteAccount": {
+        "title": "Delete Account",
+        "message": "Are you sure you want to delete your account? This action cannot be undone.",
+        "button": "Delete Account"
+      }
     },
     "settings": {
       "viewProfile": "View Profile",
@@ -144,5 +159,185 @@
         "title": "Notifications",
         "description": "Enable notifications"
       }
+    },
+    "threads": {
+      "title": "Threads"
+    },
+    "screens": {
+      "splashscreen": {
+        "yourgoals": "your goals.",
+        "yourenergy": "your energy.",
+        "yourjourney": "your journey."
+      },
+      "onboarding": {
+        "welcome": {
+          "title": "Method is your partner\nin achieving goals\nand finding inner peace.",
+          "description": "Let’s start this journey together!",
+          "button": "Let's go"
+        },
+        "aboutyou": {
+          "title": "Tailor your journey\nby sharing a bit\nabout yourself",
+          "description": "Answer a few questions\nto get personalized",
+          "button": "Okay"
+        },
+        "ask1": {
+          "title": "How old are you?",
+          "description": "Your age is used to\npersonalize your content",
+          "option1": "13-17",
+          "option2": "18-24",
+          "option3": "25-34",
+          "option4": "35-44",
+          "option5": "45-54",
+          "option6": "55+"
+        },
+        "ask2": {
+          "title": "What’s your gender?",
+          "description": "",
+          "option1": "Female",
+          "option2": "Male",
+          "option3": "Prefer not to say"
+        },
+        "ask3": {
+          "title": "What are you currently\nfocused on?",
+          "description": "",
+          "option1": "Work",
+          "option2": "Personal",
+          "option3": "Relationships",
+          "option4": "Health",
+          "option5": "Financial",
+          "option6": "Other"
+        },
+        "notifications": {
+          "title": "Step by step you can\nchange your life",
+          "subtitle": "When would you prefer to receive reminders for self-reflection?",
+          "morning": "Morning",
+          "evening": "Evening",
+          "smart_system": "Smart notification system is enabled,\nwhich adapts to your schedule",
+          "alert_description": "Hey, buddy! It's time to plan your day. Let's get started!",
+          "allow": "Allow notifications"
+        },
+        "last": {
+          "title": "Welcome to Method",
+          "subtitle": "You journey starts here"
+        },
+        "ask4": {
+          "title": "What's your name?",
+          "description": "We'll use this to personalize your experience",
+          "label": "First name",
+          "placeholder": "Enter your first name",
+          "errors": {
+            "required": "Name is required",
+            "tooShort": "Name must be at least 2 characters",
+            "tooLong": "Name must be less than 50 characters"
+          }
+        }
+      },
+      "subscription": {
+        "title": "Do you want fast growth?",
+        "subtitle": "Get premium and begin the journey to your goals in inner peace.",
+        "restorePurchase": "Restore purchase",
+        "termsAndConditions": "Terms and conditions",
+        "disclaimer": "This subscription will renew at the end of your current period. You can cancel anytime.",
+        "toggle": {
+          "premium": "Premium",
+          "premiumPlus": "Premium + AI"
+        },
+        "plans": {
+          "premium": {
+            "title": "Premium",
+            "description": "Advanced features for productivity",
+            "features": {
+              "planning": {
+                "title": "Smart Planning",
+                "description": "Create tasks, set priorities and deadlines"
+              },
+              "motivation": {
+                "title": "Motivational Phrases",
+                "description": "Daily inspiring quotes and reminders to maintain motivation"
+              },
+              "reminders": {
+                "title": "Smart Reminder System",
+                "description": "Flexible setup of notifications and recurring reminders"
+              },
+              "state": {
+                "title": "State Assessment",
+                "description": "Regular analysis of your mood and productivity"
+              },
+              "goals": {
+                "title": "Goal Setting",
+                "description": "Link tasks to long-term goals, track progress"
+              },
+              "habits": {
+                "title": "Habit Tracker",
+                "description": "Form beneficial habits with reminders and statistics"
+              },
+              "analytics": {
+                "title": "Advanced Analytics",
+                "description": "Detailed reports and insights about your productivity"
+              }
+            }
+          },
+          "premiumPlus": {
+            "title": "Premium + AI",
+            "description": "All Premium features + advanced AI assistant",
+            "features": {
+              "voice": {
+                "title": "Voice Input",
+                "description": "Create records and notes using voice input"
+              },
+              "voiceTasks": {
+                "title": "Voice Planning",
+                "description": "Plan your day using voice commands"
+              },
+              "smartInput": {
+                "title": "Smart Suggestions",
+                "description": "AI helps formulate tasks and plans more effectively"
+              },
+              "aiAnalytics": {
+                "title": "AI Analytics",
+                "description": "Deep analysis of your days and automatic report generation"
+              },
+              "smartReminders": {
+                "title": "Smart Reminders",
+                "description": "Personalized reminders based on your habits and preferences"
+              }
+            }
+          }
+        },
+        "trial": {
+          "title": "{{days}} days free",
+          "button": "Try {{days}} days free"
+        },
+        "price": {
+          "annual": "{{price}} per year (${{monthly}}/month)"
+        },
+        "cancel": {
+          "anytime": "Cancel subscription at any time"
+        }
+      }
+    },
+    "validation": {
+      "required": "This field is required",
+      "minLength": "Must be at least {{min}} characters",
+      "maxLength": "Must be less than {{max}} characters",
+      "invalidFormat": "Invalid format"
+    },
+    "subscription": {
+      "unlock_premium": "Unlock Premium Features",
+      "choose_plan": "Choose Your Plan",
+      "current_plan": "Current Plan",
+      "subscribe_button": "Subscribe",
+      "success_title": "Success!",
+      "success_message": "Thank you for your subscription!",
+      "restore_purchases": "Restore Purchases",
+      "restore_success_title": "Purchases Restored",
+      "restore_success_message": "Your purchases have been successfully restored",
+      "restore_empty_title": "No Purchases Found",
+      "restore_empty_message": "No previous purchases were found to restore",
+      "error_title": "Subscription Error",
+      "error_message": "Failed to complete subscription. Please try again",
+      "restore_error_title": "Restore Failed",
+      "restore_error_message": "Failed to restore purchases. Please try again",
+      "terms_text": "By subscribing you agree to our Terms of Service and Privacy Policy. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period."
     }
-  }
+} 

@@ -86,7 +86,7 @@ const CalendarGreeting = () => {
                                     flex h-16 w-14 items-center justify-end 
                                     rounded-xl border p-2
                                     ${isSelected ? 'border-text/20 dark:border-text-dark/20' : 'border-transparent'}
-                                    ${isToday ? 'bg-surface dark:bg-surface-dark' : ''}
+                                    ${isToday ? 'bg-surface-paper dark:bg-surface-paper-dark' : ''}
                                 `}
                             >
                                 <Text

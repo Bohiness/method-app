@@ -1,9 +1,23 @@
-// src/widgets/splash-screen/index.tsx
+import { useTheme } from '@shared/context/theme-provider'
 import { useUser } from '@shared/context/user-provider'
+import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
+import { Text } from '@shared/ui/styled-text'
 import Constants from 'expo-constants'
+import { Image } from 'expo-image'
 import * as Updates from 'expo-updates'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Text, View } from 'react-native'
+import { useTranslation } from 'react-i18next'
+import { useWindowDimensions, View } from 'react-native'
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type UpdateStatus = 'checking' | 'available' | 'no-update' | 'error'
 
@@ -12,9 +26,16 @@ interface SplashScreenProps {
 }
 
 export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
-    const { checkAuth, isLoading } = useUser()
+    const { checkAuth } = useUser()
+    const { t } = useTranslation()
     const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('checking')
-    const [updateError, setUpdateError] = useState<string | null>(null)
+    const insets = useSafeAreaInsets()
+    const { width: screenWidth } = useWindowDimensions()
+
+    const { isDark } = useTheme()
+    const logoSource = isDark
+        ? require('@assets/images/logo/logo-white.svg')
+        : require('@assets/images/logo/logo-black.svg')
 
     const checkForUpdates = async () => {
         if (__DEV__ || Constants.appOwnership === 'expo') {
@@ -42,10 +63,8 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     const initialize = async () => {
         try {
             await checkForUpdates()
-            const user = await checkAuth()
+            await checkAuth()
             onComplete()
-            console.log('Initialization completed')
-            console.log('User:', user)
         } catch (error) {
             console.error('Initialization failed:', error)
             onComplete()
@@ -56,21 +75,110 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
         initialize()
     }, [])
 
+    // Анимированные стили для текста
+    const createTextStyle = (delay: number) => {
+        return useAnimatedStyle(() => ({
+            transform: [{
+                translateX: withDelay(
+                    delay,
+                    withSpring(textProgress.value * -100 + 100)
+                )
+            }]
+        }))
+    }
+
+    // Изменяем начальные позиции и анимацию для верхнего и нижнего логотипа
+    const textProgress = useSharedValue(0)
+
+    const logoTopX = useSharedValue(0)
+    const logoBottomX = useSharedValue(-950 / 2)
+
+    console.log('screenWidth', screenWidth)
+
+    useEffect(() => {
+        // Анимация текста остается прежней
+        textProgress.value = withSpring(1, {
+            damping: 30,
+            stiffness: 200,
+        })
+
+        // Анимация верхнего логотипа - движение вправо
+        logoTopX.value = withRepeat(
+            withSequence(
+                withTiming(-950, { duration: 15000 }),
+                withTiming(screenWidth, { duration: 0 })
+            ),
+            -1
+        )
+
+        // Анимация нижнего логотипа - движение влево
+        logoBottomX.value = withRepeat(
+            withSequence(
+                withTiming(screenWidth, { duration: 20000 }),
+                withTiming(-screenWidth, { duration: 0 })
+            ),
+            -1
+        )
+    }, [screenWidth])
+
+    // Анимированные стили для логотипов
+    const logoTopAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{
+            translateX: logoTopX.value
+        }]
+    }))
+
+    const logoBottomAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{
+            translateX: logoBottomX.value
+        }]
+    }))
+
     return (
-        <View className="flex-1 items-center justify-center bg-white dark:bg-black">
-            <Image
-                source={require('@assets/images/logo.jpg')}
-                className="w-32 h-32 mb-8"
-                width={32}
-                height={32}
-            />
-            <ActivityIndicator size="large" className="mb-4" />
-            <Text className="text-gray-600 dark:text-gray-300 text-center px-4">
-                {updateStatus === 'checking' && 'Проверка обновлений...'}
-                {updateStatus === 'available' && 'Устанавливаем обновление...'}
-                {updateStatus === 'error' && `Ошибка обновления: ${updateError}`}
-                {updateStatus === 'no-update' && isLoading && 'Загрузка данных...'}
-            </Text>
-        </View>
+        <BackgroundWithNoise className="flex-1 bg-surface-paper dark:bg-surface-paper-dark" noiseOpacity={0.3}>
+            {/* Верхний текст */}
+            <View className="absolute px-8" style={{ right: 0, top: insets.top + 8 }}>
+                <View className="items-end space-y-2">
+                    {[
+                        { text: t('screens.splashscreen.yourgoals'), delay: 0 },
+                        { text: t('screens.splashscreen.yourenergy'), delay: 500 },
+                        { text: t('screens.splashscreen.yourjourney'), delay: 1000 }
+                    ].map(({ text, delay }) => (
+                        <Animated.View
+                            key={text}
+                            style={createTextStyle(delay)}
+                        >
+                            <Text
+                                variant="secondary"
+                                size="xl"
+                                className="text-secondary-light dark:text-secondary-light-dark"
+                            >
+                                {text}
+                            </Text>
+                        </Animated.View>
+                    ))}
+                </View>
+            </View>
+
+            {/* Нижние логотипы */}
+            <Animated.View
+                style={[logoTopAnimatedStyle, { position: 'absolute', bottom: insets.bottom + 16 + 140 + 100, left: 16 }]}
+            >
+                <Image
+                    source={require('@assets/images/logo/logo-black.svg')}
+                    style={{ height: 120, width: 900 }}
+                    contentFit="contain"
+                />
+            </Animated.View>
+            <Animated.View
+                style={[logoBottomAnimatedStyle, { position: 'absolute', bottom: insets.bottom + 16 + 100, left: 16 }]}
+            >
+                <Image
+                    source={require('@assets/images/logo/logo-black.svg')}
+                    style={{ height: 120, width: 900 }}
+                    contentFit="contain"
+                />
+            </Animated.View>
+        </BackgroundWithNoise>
     )
 }

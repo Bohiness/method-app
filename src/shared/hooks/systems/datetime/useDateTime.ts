@@ -1,7 +1,7 @@
 // src/shared/hooks/useDateTime.ts
 import { format, formatInTimeZone } from 'date-fns-tz'
 import { enGB, ru } from 'date-fns/locale'
-import { useLocaleStorage } from '../locale/useLocaleStorage'
+import { useLocale } from '../locale/useLocale'
 import { useTimeZoneStorage } from './useTimeZoneStorage'
 
 interface UseDateTime {
@@ -17,7 +17,7 @@ interface UseDateTime {
 }
 
 export const useDateTime = (): UseDateTime => {
-  const { locale, updateLocale, isLoading: isLocaleLoading } = useLocaleStorage();
+  const { locale, updateLocale, isLoading: isLocaleLoading } = useLocale();
   const { timeZone, updateTimeZone, isLoading: isTimeZoneLoading } = useTimeZoneStorage();
 
   // Маппинг локалей

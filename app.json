@@ -20,7 +20,9 @@
       "nsAppTransportSecurity": {
         "allowsArbitraryLoads": true,
         "allowsLocalNetworking": true
-      }
+      },
+      "bundleIdentifier": "com.anonymous.methodapp",
+      "buildNumber": "1"
     },
     "web": {
       "bundler": "metro",
@@ -29,17 +31,9 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
-        }
-      ],
       "expo-audio",
-      "expo-notifications"
+      "expo-notifications",
+      "react-native-iap"
     ],
     "experiments": {
       "typedRoutes": true,

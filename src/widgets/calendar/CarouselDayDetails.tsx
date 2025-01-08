@@ -1,56 +1,13 @@
-import { FeatureButton } from '@features/components/FeatureButton'
-import { FeatureButtonModal } from '@features/components/FeatureButtonModal'
 import { useCarouselAnimation } from '@shared/hooks/animations/useCarouselAnimation'
-import { MoodCheckin } from '@widgets/diary/mood/MoodCheckin'
+
+import { DayCard } from '@features/calendar/DayCard'
+import { NextDayCard } from '@features/calendar/NextDayCard'
 import React from 'react'
-import { View, ViewStyle } from 'react-native'
+import { View } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
-import Animated, { type AnimatedStyle } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 
-interface DayCardProps {
-    date: Date
-    formatDateTime: (date: Date, pattern: string) => string
-    style: AnimatedStyle<ViewStyle>
-}
 
-const DayCard: React.FC<DayCardProps> = ({ date, formatDateTime, style }) => (
-    <Animated.View
-        style={[style]}
-        className="absolute w-full rounded-3xl bg-background dark:bg-background-dark"
-    >
-        <View className="flex-col gap-4">
-            <View className="flex-1">
-                <FeatureButtonModal
-                    title="diary.moodCheckin.title"
-                    description="diary.moodCheckin.description"
-                    icon="Rabbit"
-                    modalContent={<MoodCheckin date={date} />}
-                />
-            </View>
-
-            <View className="flex-row justify-between gap-4">
-                <View className="flex-1 flex-grow">
-                    <FeatureButton
-                        className="flex-1"
-                        title="diary.startYourDay.title"
-                        description="diary.startYourDay.description"
-                        icon="Sun"
-                        modalContent={<MoodCheckin date={date} />}
-                    />
-                </View>
-
-                <View className="flex-1 flex-grow">
-                    <FeatureButton
-                        className="flex-1"
-                        title="diary.mood.eveningReflection"
-                        description="diary.mood.sumUpYourDay"
-                        icon="Moon"
-                    />
-                </View>
-            </View>
-        </View>
-    </Animated.View>
-)
 
 interface CarouselDayDetailsProps {
     selectedDate: Date
@@ -72,6 +29,14 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
 
     const nextDate = new Date(selectedDate)
     nextDate.setDate(nextDate.getDate() + 1)
+
+    const isTommorrow = () => {
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        return selectedDate.getDate() === tomorrow.getDate() &&
+            selectedDate.getMonth() === tomorrow.getMonth() &&
+            selectedDate.getFullYear() === tomorrow.getFullYear()
+    }
 
     const handleDateChange = (direction: 'left' | 'right', source: 'swipe' | 'tap' = 'tap') => {
         const newDate = new Date(selectedDate)
@@ -110,17 +75,33 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
                         formatDateTime={formatDateTime}
                         style={prevStyle}
                     />
-                    <DayCard
-                        date={selectedDate}
-                        formatDateTime={formatDateTime}
-                        style={currentStyle}
-                    />
-                    {canSwipeLeft && (
-                        <DayCard
-                            date={nextDate}
+                    {isTommorrow() ? (
+                        <NextDayCard
+                            date={selectedDate}
                             formatDateTime={formatDateTime}
-                            style={nextStyle}
+                            style={currentStyle}
                         />
+                    ) : (
+                        <DayCard
+                            date={selectedDate}
+                            formatDateTime={formatDateTime}
+                            style={currentStyle}
+                        />
+                    )}
+                    {canSwipeLeft && (
+                        isTommorrow() ? (
+                            <NextDayCard
+                                date={nextDate}
+                                formatDateTime={formatDateTime}
+                                style={nextStyle}
+                            />
+                        ) : (
+                            <DayCard
+                                date={nextDate}
+                                formatDateTime={formatDateTime}
+                                style={nextStyle}
+                            />
+                        )
                     )}
                 </Animated.View>
             </PanGestureHandler>

@@ -1,5 +1,5 @@
 // src/shared/api/gamification/hooks/useGamification.ts
-import { gamificationApiService } from '@shared/api/gamification/gamification-api.service'
+import { DailyProgressData, gamificationApiService } from '@shared/api/gamification/gamification-api.service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 /**
@@ -45,20 +45,21 @@ export const useStreakStats = () => {
     });
 
     return {
+        streakData: response.data,
         current_streak: response.data?.current_streak,
         longest_streak: response.data?.longest_streak,
         total_days: response.data?.total_days,
         last_completed_date: response.data?.last_completed_date,
         daily_progress: response.data?.daily_progress,
+        refetchStreak: response.refetch
     };
 };
 
 export const useDailyProgress = () => {
     const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: (data: Parameters<typeof gamificationApiService.updateDailyProgress>[0]) =>
-            gamificationApiService.updateDailyProgress(data),
+    return useMutation<DailyProgressData, Error, Partial<DailyProgressData>>({
+        mutationFn: (data) => gamificationApiService.updateDailyProgress(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: GAMIFICATION_KEYS.streak });
         },

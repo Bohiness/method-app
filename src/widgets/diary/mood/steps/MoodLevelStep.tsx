@@ -1,10 +1,10 @@
-import { useColorScheme } from '@shared/hooks/systems/colors/useColorScheme'
+import { useColorScheme } from '@shared/context/theme-provider'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { Button } from '@shared/ui/button'
 import { Slider } from '@shared/ui/slider'
 import { Text, Title } from '@shared/ui/styled-text'
 import * as Haptics from 'expo-haptics'
-import { Frown, Meh, Smile } from 'lucide-react-native'
+import { Angry, Frown, Laugh, Meh, Smile } from 'lucide-react-native'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
@@ -26,7 +26,7 @@ export const moods = [
   {
     level: 1,
     label: 'diary.mood.moods.terrible',
-    icon: (color: string) => <Frown size={32} color={color} />,
+    icon: (color: string) => <Angry size={32} color={color} />,
     range: [1, 20],
   },
   {
@@ -50,7 +50,7 @@ export const moods = [
   {
     level: 5,
     label: 'diary.mood.moods.excellent',
-    icon: (color: string) => <Smile size={32} color={color} />,
+    icon: (color: string) => <Laugh size={32} color={color} />,
     range: [81, 100],
   },
 ]

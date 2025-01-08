@@ -16,7 +16,7 @@ interface CheckboxGroupContextType {
 const CheckboxGroupContext = createContext<CheckboxGroupContextType | null>(null)
 
 interface CheckboxProps {
-    label: string
+    label?: string
     value: string
     checked?: boolean
     onChange?: (checked: boolean) => void
@@ -73,14 +73,14 @@ export const Checkbox = ({
             <View className={`
                 w-12 h-7 rounded-full
                 ${checked
-                    ? 'bg-background-dark dark:bg-surface-dark'
+                    ? 'bg-background-dark dark:bg-surface-paper-dark'
                     : 'bg-inactive/30 dark:bg-inactive/50'}
             `}>
                 <Animated.View
                     style={[toggleAnimatedStyle]}
                     className={`
                         w-6 h-6 rounded-full my-0.5
-                        bg-surface dark:bg-surface-dark
+                        bg-surface-paper dark:bg-surface-paper-dark
                         shadow-sm
                     `}
                 />
@@ -125,7 +125,7 @@ export const CheckboxGroup = ({
                 </Text>
             )}
             <CheckboxGroupContext.Provider value={{ values, onChange: handleChange }}>
-                <View className="rounded-xl overflow-hidden bg-surface dark:bg-surface-dark">
+                <View className="rounded-xl overflow-hidden bg-surface-paper dark:bg-surface-paper-dark">
                     {React.Children.map(children, (child, index) => (
                         <>
                             {child}

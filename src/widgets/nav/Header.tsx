@@ -1,11 +1,11 @@
 import { useStreakStats } from '@hooks/gamification/useGamification'
 import { useModal } from '@shared/context/modal-provider'
 import { useUser } from '@shared/context/user-provider'
+import { useScreenNavigation } from '@shared/hooks/modal/useScreenNavigation'
 import { Icon } from '@shared/ui/icon'
 import { Text } from '@shared/ui/styled-text'
-import { SettingModal } from '@widgets/profile/SettingModal'
+import { ScreenType, SettingModal } from '@widgets/profile/SettingModal'
 import { useRouter } from 'expo-router'
-import React from 'react'
 import { Image, Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -22,11 +22,13 @@ export const Header: React.FC<HeaderProps> = ({
     const { user } = useUser()
     const insets = useSafeAreaInsets()
     const { current_streak } = useStreakStats()
+    const navigation = useScreenNavigation<ScreenType>('main')
 
     const { showBottomSheet } = useModal()
 
     const handleProfilePress = () => {
         showBottomSheet(<SettingModal />)
+        navigation.navigate('main')
     }
 
     return (
@@ -38,7 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
                 paddingLeft: insets.left
             }}
         >
-            <View className="flex-row  justify-between px-6 py-2">
+            <View className="flex-row align-center justify-between px-6 py-2">
                 {showLeftContent && (
                     leftContent || (
                         <Pressable
@@ -63,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                 <Pressable
                     onPress={handleProfilePress}
-                    className="w-10 h-10 rounded-full bg-profile dark:bg-profile-dark items-center justify-center ml-auto"
+                    className="size-8 rounded-full bg-profile dark:bg-profile-dark items-center justify-center ml-auto"
                 >
                     {user?.profile_photo ? (
                         <Image

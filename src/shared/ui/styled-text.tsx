@@ -1,4 +1,5 @@
 import { useTheme } from '@shared/context/theme-provider'
+import { cn } from '@shared/lib/utils/cn'
 import React from 'react'
 import { Text as RNText, TextProps } from 'react-native'
 
@@ -17,7 +18,7 @@ interface StyledTextProps extends TextProps {
 const getVariantClasses = (variant: Variant, colorScheme: 'light' | 'dark'): string => {
     const variants = {
         default: colorScheme === 'dark' ? 'text-text-dark' : 'text-text',
-        secondary: colorScheme === 'dark' ? 'text-secondary-dark' : 'text-secondary',
+        secondary: colorScheme === 'dark' ? 'text-secondary-light-dark' : 'text-secondary-light',
         accent: colorScheme === 'dark' ? 'text-accent-dark' : 'text-accent',
         success: colorScheme === 'dark' ? 'text-success-dark' : 'text-success',
         error: colorScheme === 'dark' ? 'text-error-dark' : 'text-error',
@@ -65,13 +66,13 @@ export const Text = ({
 }: StyledTextProps) => {
     const { colorScheme } = useTheme()
 
-    const baseClasses = [
+    const baseClasses = cn(
         getVariantClasses(variant, colorScheme),
         getSizeClasses(size),
         getWeightClasses(weight),
-        italic ? 'italic' : '',
+        italic && 'italic',
         className
-    ].join(' ').trim()
+    )
 
     return (
         <RNText
@@ -98,7 +99,7 @@ export const Subtitle = (props: StyledTextProps) => (
     <Text
         size="lg"
         variant="secondary"
-        className="text-secondary dark:text-secondary-dark"
+        className="text-secondary-light dark:text-secondary-light-dark"
         {...props}
     />
 )
@@ -107,7 +108,7 @@ export const Caption = (props: StyledTextProps) => (
     <Text
         size="sm"
         variant="secondary"
-        className="text-secondary dark:text-secondary-dark"
+        className="text-secondary-light dark:text-secondary-light-dark"
         {...props}
     />
 )

@@ -61,7 +61,7 @@ export const FeatureButtonModal: React.FC<FeatureButtonProps> = ({
                 onPress={handlePress}
                 disabled={disabled}
                 testID={testID}
-                className={`flex-1 w-max-full overflow-hidden rounded-3xl bg-surface dark:bg-surface-dark px-6 py-14 shadow-lg ${disabled ? 'opacity-50' : ''} ${className}`}
+                className={`flex-1 w-max-full overflow-hidden rounded-3xl bg-surface-paper dark:bg-surface-paper-dark px-6 py-14 shadow-lg ${disabled ? 'opacity-50' : ''} ${className}`}
                 style={style}
             >
                 <View className="items-center space-y-4">

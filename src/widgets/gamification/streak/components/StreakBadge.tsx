@@ -20,7 +20,7 @@ export const StreakBadge = ({ days, isAchieved, onPress }: StreakBadgeProps) => 
                 className={`p-3 rounded-full items-center justify-center
                     ${isAchieved
                         ? colorScheme === 'dark' ? 'bg-tint-dark' : 'bg-tint'
-                        : colorScheme === 'dark' ? 'bg-surface-dark' : 'bg-surface'}`
+                        : colorScheme === 'dark' ? 'bg-surface-paper-dark' : 'bg-surface-paper'}`
                 }
             >
                 <Award

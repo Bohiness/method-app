@@ -1,8 +1,9 @@
 // src/shared/context/user-provider.tsx
 import { authApiService } from '@shared/api/auth/auth-api.service'
+import { userApiService } from '@shared/api/user/user-api.service'
 import { anonymousUserService } from '@shared/lib/user/anonymous.service'
 import { tokenService } from '@shared/lib/user/token/token.service'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useStorage } from '../lib/storage/storage.service'
 import { UserType } from '../types/user/UserType'
@@ -194,4 +195,18 @@ export function useUser() {
         throw new Error('useUser must be used within a UserProvider')
     }
     return context
+}
+
+
+export const useUpdateProfile = () => {
+    const { user } = useUser()
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: (data: Partial<UserType>) =>
+            userApiService.updateProfile(user!.id, data),
+        onSuccess: (updatedUser) => {
+            queryClient.setQueryData(['user'], updatedUser)
+        }
+    })
 }

@@ -1,4 +1,4 @@
-import { useColorScheme } from '@shared/hooks/systems/colors/useColorScheme'
+import { useColorScheme } from '@shared/context/theme-provider'
 import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'

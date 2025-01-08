@@ -1,4 +1,4 @@
-import { useColorScheme } from '@shared/hooks/systems/colors/useColorScheme'
+import { useColorScheme } from '@shared/context/theme-provider'
 import { Text } from '@shared/ui/styled-text'
 import { format } from 'date-fns'
 import { Calendar } from 'lucide-react-native'
@@ -23,7 +23,7 @@ export const DayProgress = ({ date, isCompleted, tasksCompleted }: DayProgressPr
                 className={`w-8 h-8 rounded-full items-center justify-center mt-1
                     ${isCompleted
                         ? colorScheme === 'dark' ? 'bg-tint-dark' : 'bg-tint'
-                        : colorScheme === 'dark' ? 'bg-surface-dark' : 'bg-surface'}`
+                        : colorScheme === 'dark' ? 'bg-surface-paper-dark' : 'bg-surface-paper'}`
                 }
             >
                 <Calendar size={16} color={isCompleted ? '#fff' : '#A3A3A3'} />

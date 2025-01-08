@@ -4,7 +4,9 @@ import { initialEmotionsEN } from '@shared/data/initial/emotions'
 import { initialFactorsEN } from '@shared/data/initial/factors'
 import { useOfflineMutation } from '@shared/hooks/useOfflineQuery'
 import { Emotion, Factor, MoodCheckin } from '@shared/types/diary/mood/MoodType'
+import { MonthlyStatsResponse, ProcessedMoodStats, WeeklyStatsResponse } from '@shared/types/diary/stats/statsType'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 const STALE_TIME = 5 * 60 * 1000; // 5 минут
 
@@ -60,21 +62,50 @@ export const useMoodHistory = () => {
   });
 };
 
-// Хук для получения статистики
-export const useMoodStats = () => {
-  return useQuery({
-    queryKey: ['mood-stats'],
-    queryFn: async () => {
-      try {
-        return await apiClient.get('/api/mood-checkins/stats/');
-      } catch (error) {
-        console.error('Failed to fetch mood stats:', error);
-        throw error;
-      }
-    },
-    staleTime: STALE_TIME,
+export const useMoodStats = (): ProcessedMoodStats => {
+  const { data: monthlyData, isPending: isMonthlyPending } = useQuery<MonthlyStatsResponse>({
+    queryKey: ['mood-stats', 'monthly'],
+    queryFn: () => apiClient.get('/api/mood-checkins/monthly_stats/')
   });
+
+  const { data: weeklyData, isPending: isWeeklyPending } = useQuery<WeeklyStatsResponse>({
+    queryKey: ['mood-stats', 'weekly'],
+    queryFn: () => apiClient.get('/api/mood-checkins/weekly_stats/')
+  });
+
+  const processedData = useMemo(() => {
+    const processDataArray = (data: Array<{ date: string; avg_mood: number; count: number }>) => {
+      return data.map(item => ({
+        date: new Date(item.date),
+        value: item.avg_mood,
+        count: item.count
+      }));
+    };
+
+    return {
+      monthlyData: {
+        current: processDataArray(monthlyData?.current_month || []),
+        previous: processDataArray(monthlyData?.previous_month || []),
+        currentAvg: monthlyData?.current_month_avg || 0,
+        previousAvg: monthlyData?.previous_month_avg || 0
+      },
+      weeklyData: {
+        current: processDataArray(weeklyData?.current_week || []),
+        previous: processDataArray(weeklyData?.previous_week || []),
+        currentAvg: weeklyData?.current_week_avg || 0,
+        previousAvg: weeklyData?.previous_week_avg || 0
+      },
+      rawData: {
+        monthly: monthlyData,
+        weekly: weeklyData
+      },
+      isPending: isMonthlyPending || isWeeklyPending
+    };
+  }, [monthlyData, weeklyData]);
+
+  return processedData;
 };
+
 
 // Хук для получения последней записи
 export const useLastMoodCheckin = () => {
@@ -98,7 +129,11 @@ export const useCreateMoodCheckin = () => {
 
   return useOfflineMutation<Omit<MoodCheckin, 'id' | 'created_at'>>(
     'mood-checkins',
-    (data) => apiClient.post<MoodCheckin>('/api/mood-checkins/', data),
+    async (data) => {
+      const response = await apiClient.post<MoodCheckin>('/api/mood-checkins/', data);
+      queryClient.invalidateQueries({ queryKey: ['mood-stats', 'monthly'] });
+      return response;
+    }
   );
 };
 

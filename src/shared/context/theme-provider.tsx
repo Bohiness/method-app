@@ -1,17 +1,15 @@
-// src/shared/lib/theme/theme-provider.tsx
 import { Colors } from '@shared/constants/colors'
 import { storage } from '@shared/lib/storage/storage.service'
+import { useColorScheme as useNativeColorScheme } from 'nativewind'
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { useColorScheme as useNativeColorScheme } from 'react-native'
 
 // Типы темы
 export type Theme = 'light' | 'dark' | 'system'
 
-
 // Интерфейс контекста темы
 interface ThemeContextType {
     theme: Theme
-    colorScheme: 'light' | 'dark'
+    colorScheme: 'light' | 'dark' | 'system'
     setTheme: (theme: Theme) => Promise<void>
     colors: typeof Colors.light
     isDark: boolean
@@ -24,18 +22,17 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-    const systemColorScheme = useNativeColorScheme()
     const [theme, setThemeState] = useState<Theme>('system')
+    const { colorScheme = 'system', setColorScheme } = useNativeColorScheme()
+    const systemColorScheme = useNativeColorScheme()
 
-    // Получаем актуальную цветовую схему
-    const colorScheme = theme === 'system'
-        ? systemColorScheme || 'light'
-        : theme
-
-    // Получаем текущие цвета
-    const colors = Colors[colorScheme]
+    // Определяем текущую цветовую схему
+    const currentColorScheme = theme === 'system'
+        ? systemColorScheme.colorScheme || 'light'
+        : theme as 'light' | 'dark'
 
     const isDark = colorScheme === 'dark'
+    const colors = Colors[colorScheme as keyof typeof Colors]
 
     // Загружаем сохраненную тему при запуске
     useEffect(() => {
@@ -54,23 +51,10 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
         await storage.set('app-theme', newTheme)
     }
 
-    // Применяем класс темы для NativeWind
+    // При изменении темы обновляем colorScheme
     useEffect(() => {
-        if (typeof document !== 'undefined') {
-            const root = document.documentElement
-            console.log('Applying theme class:', colorScheme)
-            if (colorScheme === 'dark') {
-                root.classList.add('dark')
-            } else {
-                root.classList.remove('dark')
-            }
-            // Добавляем проверку применения класса
-            console.log('Current root classes:', root.classList.toString())
-            // Проверяем текущие CSS-переменные
-            const styles = getComputedStyle(root)
-            console.log('Current background variable:', styles.getPropertyValue('--background'))
-        }
-    }, [colorScheme])
+        setColorScheme(currentColorScheme)
+    }, [currentColorScheme, setColorScheme])
 
     // Добавляем логирование
     useEffect(() => {
@@ -82,8 +66,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
         })
     }, [systemColorScheme, theme, colorScheme])
 
-
-    const context = {
+    const context: ThemeContextType = {
         theme,
         colorScheme,
         setTheme,
@@ -92,7 +75,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     }
 
     return (
-        <ThemeContext.Provider value={context} >
+        <ThemeContext.Provider value={context}>
             {children}
         </ThemeContext.Provider>
     )

@@ -1,5 +1,6 @@
 // src/shared/ui/radio/RadioGroup.tsx
 import { useTheme } from '@shared/context/theme-provider'
+import { cn } from '@shared/lib/utils/cn'
 import { Text } from '@shared/ui/styled-text'
 import { Check } from 'lucide-react-native'
 import React from 'react'
@@ -14,17 +15,6 @@ interface RadioOption {
     value: string
 }
 
-interface RadioGroupProps {
-    options: RadioOption[]
-    value: string
-    onChange: (value: string) => void
-    label?: string
-    className?: string
-    radioClassName?: string
-    labelClassName?: string
-    containerClassName?: string
-}
-
 interface RadioButtonProps {
     label: string
     isSelected: boolean
@@ -33,6 +23,7 @@ interface RadioButtonProps {
     isLast: boolean
     showSeparator: boolean
     className?: string
+    textSize?: 'sm' | 'base' | 'lg' | 'xl'
 }
 
 const RadioButton = ({
@@ -43,6 +34,7 @@ const RadioButton = ({
     isLast,
     showSeparator,
     className = '',
+    textSize = 'base'
 }: RadioButtonProps) => {
     const { colors } = useTheme()
 
@@ -57,13 +49,13 @@ const RadioButton = ({
                 className={`flex-row justify-between items-center py-4 px-4 bg-white dark:bg-black ${isFirst ? 'rounded-t-xl' : ''
                     } ${isLast ? 'rounded-b-xl' : ''} ${className}`}
             >
-                <Text variant="default" size="base">
+                <Text variant="default" size={textSize}>
                     {label}
                 </Text>
                 <View className={`
           w-5 h-5 rounded-full border-2 
           items-center justify-center
-          ${isSelected ? 'bg-background-dark dark:bg-surface-dark border-background-dark dark:border-surface-dark' : 'border-inactive'}
+          ${isSelected ? 'bg-background-dark dark:bg-surface-paper border-background-dark dark:border-surface-paper' : 'border-inactive'}
         `}>
                     {isSelected && (
                         <Animated.View style={animatedStyle}>
@@ -83,6 +75,18 @@ const RadioButton = ({
     )
 }
 
+interface RadioGroupProps {
+    options: RadioOption[]
+    value: string
+    onChange: (value: string) => void
+    label?: string
+    className?: string
+    radioClassName?: string
+    labelClassName?: string
+    containerClassName?: string
+    textSize?: 'sm' | 'base' | 'lg' | 'xl'
+}
+
 export const RadioGroup = ({
     options,
     value,
@@ -92,6 +96,7 @@ export const RadioGroup = ({
     radioClassName = '',
     labelClassName = '',
     containerClassName = '',
+    textSize = 'base'
 }: RadioGroupProps) => {
     return (
         <View className={className}>
@@ -104,7 +109,7 @@ export const RadioGroup = ({
                     {label}
                 </Text>
             )}
-            <View className={`overflow-hidden rounded-xl bg-surface dark:bg-surface-dark ${containerClassName}`}>
+            <View className={cn('overflow-hidden rounded-2xl bg-surface-paper dark:bg-surface-paper-dark', containerClassName)}>
                 {options.map((option, index) => (
                     <RadioButton
                         key={option.value}
@@ -115,6 +120,7 @@ export const RadioGroup = ({
                         isLast={index === options.length - 1}
                         showSeparator={true}
                         className={radioClassName}
+                        textSize={textSize}
                     />
                 ))}
             </View>

@@ -21,7 +21,7 @@ export const HighlightedText: React.FC<HighlightedTextProps> = ({
     isLast = false
 }) => (
     <View className="inline-flex flex-row items-center">
-        <View className="inline-flex flex-row items-center bg-surface dark:bg-surface-dark rounded-lg px-1 mx-1">
+        <View className="inline-flex flex-row items-center bg-surface-paper dark:bg-surface-paper-dark rounded-lg px-1 mx-1">
             <Title className="text-secondary dark:text-secondary-dark">
                 {text}{!isLast && separator}
             </Title>

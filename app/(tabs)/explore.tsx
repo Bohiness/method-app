@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
 
 const FeatureItem = ({ title, description }: { title: string, description: string }) => (
-    <View className="bg-surface dark:bg-surface-dark rounded-2xl p-4 mb-4">
+    <View className="bg-surface-paper dark:bg-surface-paper-dark rounded-2xl p-4 mb-4">
         <Text size="lg" weight="bold" className="mb-2">{title}</Text>
         <Text variant="secondary">{description}</Text>
     </View>

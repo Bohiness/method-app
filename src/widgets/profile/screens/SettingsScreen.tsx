@@ -1,17 +1,21 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
+import { useLanguage } from '@shared/context/language-provider'
 import { MenuGroup, MenuItem } from '@shared/ui/modals/menu-item'
 import { Text } from '@shared/ui/styled-text'
+import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { ScreenType } from '../SettingModal'
 
 export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (screen: ScreenType) => void }) => {
+    const { t } = useTranslation()
+    const { currentLanguage } = useLanguage()
 
     return (
         <View>
             <HeaderMenuItem onBack={onBack} title={'settings.title'} />
             <View className="p-4">
                 <MenuItem
-                    label="Notifications"
+                    label={t('settings.notifications.title')}
                     leftIcon={'Bell'}
                     isFirst
                     isLast
@@ -22,9 +26,9 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                 />
 
                 {/* Группа элементов */}
-                <MenuGroup label="Preferences" className="mt-6">
+                <MenuGroup label={t('settings.preferences.title')} className="mt-6">
                     <MenuItem
-                        label="Appearance"
+                        label={t('settings.theme.title')}
                         leftIcon={'Moon'}
                         onPress={() => {
                             onNavigate('theme')
@@ -32,10 +36,10 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                     />
 
                     <MenuItem
-                        label="Language"
+                        label={t('settings.language.title')}
                         rightContent={
-                            <Text variant="secondary" size="sm">
-                                English
+                            <Text variant="secondary">
+                                {currentLanguage.toUpperCase()}
                             </Text>
                         }
                         onPress={() => {

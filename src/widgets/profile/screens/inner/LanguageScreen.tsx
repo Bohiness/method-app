@@ -1,19 +1,32 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
+import { SupportedLanguage, useLanguage } from '@shared/context/language-provider'
 import { RadioGroup } from '@shared/ui/radio-group-button'
 import { ScreenType } from '@widgets/profile/SettingModal'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-
-export const LanguageScreen = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (screen: ScreenType) => void }) => {
+export const LanguageScreen = ({ onBack, onNavigate }: {
+    onBack: () => void,
+    onNavigate: (screen: ScreenType) => void
+}) => {
     const { t } = useTranslation()
-    const [selectedLanguage, setSelectedLanguage] = useState('en')
+    const { currentLanguage, changeLanguage } = useLanguage()
+    const [selectedLanguage, setSelectedLanguage] = useState(currentLanguage)
 
     const languageOptions = [
         { label: t("settings.language.english"), value: 'en' },
         { label: t("settings.language.russian"), value: 'ru' },
     ]
+
+    const handleLanguageChange = async (value: SupportedLanguage) => {
+        try {
+            setSelectedLanguage(value)
+            await changeLanguage(value)
+        } catch (error) {
+            console.error('Failed to change language:', error)
+        }
+    }
 
     return (
         <View>
@@ -22,10 +35,9 @@ export const LanguageScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
             <RadioGroup
                 options={languageOptions}
                 value={selectedLanguage}
-                onChange={setSelectedLanguage}
+                onChange={handleLanguageChange as (value: string) => void}
                 label={t("settings.language.description")}
             />
-
         </View>
     )
 }

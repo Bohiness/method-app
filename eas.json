@@ -12,10 +12,25 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "ios": {
+        "distribution": "store"
+      }
+    },
+    "adhoc": {
+      "autoIncrement": true,
+      "ios": {
+        "distribution": "internal"
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "bohiness.id@gmail.com",
+        "ascAppId": "6740182406",
+        "appleTeamId": "R6M53KYFCB"
+      }
+    }
   }
 }

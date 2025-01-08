@@ -1,5 +1,5 @@
 // src/features/gamification/streak/ui/StreakWidget.tsx
-import { useColorScheme } from '@shared/hooks/systems/colors/useColorScheme'
+import { useColorScheme } from '@shared/context/theme-provider'
 import { streakService } from '@shared/lib/gamification/streak.service'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { DailyProgress, StreakStats } from '@shared/types/gamification/StreakTypes'
@@ -45,7 +45,7 @@ export const StreakWidget = () => {
     if (!stats) return null
 
     return (
-        <View className={`p-4 rounded-2xl ${colorScheme === 'dark' ? 'bg-surface-dark' : 'bg-surface'}`}>
+        <View className={`p-4 rounded-2xl ${colorScheme === 'dark' ? 'bg-surface-paper-dark' : 'bg-surface-paper'}`}>
             {/* Заголовок */}
             <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center">
@@ -71,7 +71,7 @@ export const StreakWidget = () => {
                                 className={`w-8 h-8 rounded-full items-center justify-center mt-1
                                     ${day.isCompleted
                                         ? colorScheme === 'dark' ? 'bg-tint-dark' : 'bg-tint'
-                                        : colorScheme === 'dark' ? 'bg-surface-dark' : 'bg-surface'}`
+                                        : colorScheme === 'dark' ? 'bg-surface-paper-dark' : 'bg-surface-paper'}`
                                 }
                             >
                                 <Calendar size={16} color={day.isCompleted ? '#fff' : '#A3A3A3'} />

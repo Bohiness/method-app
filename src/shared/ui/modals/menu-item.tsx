@@ -5,6 +5,7 @@ import { ChevronRight } from 'lucide-react-native'
 import React from 'react'
 import { Pressable, View } from 'react-native'
 import { Icon, IconName } from '../icon'
+import { Separator } from '../separator'
 
 interface MenuItemProps {
     // Основные пропсы
@@ -49,7 +50,7 @@ export const MenuItem = ({
                 className={`
                     flex-row items-center justify-between
                     py-4 px-4 
-                    ${isDark ? 'bg-surface-dark' : 'bg-surface'}
+                    ${isDark ? 'bg-surface-paper-dark' : 'bg-surface-paper'}
                     ${isFirst ? 'rounded-t-xl' : ''}
                     ${isLast ? 'rounded-b-xl' : ''}
                     ${disabled ? 'opacity-50' : ''}
@@ -90,7 +91,7 @@ export const MenuItem = ({
 
             {/* Разделитель */}
             {showSeparator && !isLast && (
-                <View className="h-[1px] bg-inactive/20 mx-4" />
+                <Separator />
             )}
         </View>
     )
@@ -121,7 +122,7 @@ export const MenuGroup = ({
                     {label}
                 </Text>
             )}
-            <View className="rounded-xl overflow-hidden bg-surface dark:bg-surface-dark">
+            <View className="rounded-xl overflow-hidden bg-surface-paper dark:bg-surface-paper-dark">
                 {React.Children.map(children, (child, index) => {
                     if (!React.isValidElement(child)) return child
 

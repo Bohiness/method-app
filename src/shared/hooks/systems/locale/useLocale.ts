@@ -1,15 +1,16 @@
-// src/shared/hooks/useLocaleStorage.ts
+// src/shared/hooks/useLocale.ts
 import { useStorage } from '@shared/lib/storage/storage.service'
-import { useEffect, useState } from 'react'
 import { SupportedLocale } from '@shared/types/locale/types'
+import { useEffect, useState } from 'react'
 
 interface LocaleStorageProps {
   initialLocale?: SupportedLocale;
 }
 
-export const useLocaleStorage = ({ initialLocale = 'ru' }: LocaleStorageProps = {}) => {
+export const useLocale = ({ initialLocale = 'ru' }: LocaleStorageProps = {}) => {
   const [locale, setLocale] = useState<SupportedLocale>(initialLocale);
   const [isLoading, setIsLoading] = useState(true);
+  const [hour12, setHour12] = useState(true);
   const storage = useStorage();
 
   useEffect(() => {
@@ -46,7 +47,9 @@ export const useLocaleStorage = ({ initialLocale = 'ru' }: LocaleStorageProps = 
 
   return {
     locale,
+    hour12,
+    setHour12,
     updateLocale,
-    isLoading
+    isLoading,
   };
 };

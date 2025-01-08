@@ -1,6 +1,6 @@
 // src/features/gamification/streak/ui/StreakContainer.tsx
+import { useColorScheme } from '@shared/context/theme-provider'
 import { useAchievements, useDailyGoals, useDailyProgress, useStreakStats } from '@shared/hooks/gamification/useGamification'
-import { useColorScheme } from '@shared/hooks/systems/colors/useColorScheme'
 import { DailyProgress, StreakStats } from '@shared/types/gamification/StreakTypes'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -20,9 +20,8 @@ export const StreakContainer = () => {
 
     // React Query хуки
     const {
-        data: streakData,
-        isLoading: isStreakLoading,
-        refetch: refetchStreak
+        streakData,
+        refetchStreak
     } = useStreakStats()
 
     const { mutate: updateProgress, isPending: isUpdating } = useDailyProgress()
@@ -79,7 +78,7 @@ export const StreakContainer = () => {
             })
 
             // Генерируем прогресс за неделю
-            generateWeekProgress(streakData.daily_progress)
+            generateWeekProgress(streakData?.daily_progress)
 
             // Обновляем прогресс за сегодня
             const today = new Date().toISOString().split('T')[0]
@@ -124,7 +123,7 @@ export const StreakContainer = () => {
                 />
             }
         >
-            <View className={`p-4 rounded-2xl ${colorScheme === 'dark' ? 'bg-surface-dark' : 'bg-surface'}`}>
+            <View className={`p-4 rounded-2xl ${colorScheme === 'dark' ? 'bg-surface-paper-dark' : 'bg-surface-paper'}`}>
                 {/* Счетчик серии */}
                 <StreakCounter
                     current={stats.currentStreak}
