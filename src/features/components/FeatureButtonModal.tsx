@@ -1,8 +1,8 @@
+import { useModal } from '@shared/context/modal-provider'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Icon, IconName } from '@shared/ui/icon'
-import { FullScreenModal } from '@shared/ui/modals/fullscreen-modal'
 import { Text } from '@shared/ui/text'
-import React, { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
@@ -42,23 +42,22 @@ export const FeatureButtonModal: React.FC<FeatureButtonProps> = ({
     testID
 }) => {
     const { t } = useTranslation()
-    const [isModalVisible, setIsModalVisible] = useState(false)
+    const { showFullScreenModal } = useModal()
 
-    const handlePress = useCallback(() => {
-        try {
-            if (modalContent) {
-                setIsModalVisible(true)
-            }
-            onPress?.()
-        } catch (error) {
-            console.error('Error handling button press:', error)
+    const showSubscriptionModal = useCallback(() => {
+        if (modalContent) {
+            showFullScreenModal(modalContent)
+        } else {
+            console.warn('modalContent is null or undefined')
         }
-    }, [modalContent, onPress])
+    }, [showFullScreenModal, modalContent])
+
+
 
     return (
         <>
             <HapticTab
-                onPress={handlePress}
+                onPress={showSubscriptionModal}
                 disabled={disabled}
                 testID={testID}
                 className={`flex-1 w-max-full overflow-hidden rounded-3xl bg-surface-paper dark:bg-surface-paper-dark px-6 py-14 shadow-lg ${disabled ? 'opacity-50' : ''} ${className}`}
@@ -93,18 +92,6 @@ export const FeatureButtonModal: React.FC<FeatureButtonProps> = ({
                     </View>
                 </View>
             </HapticTab>
-
-            {modalContent && (
-                <FullScreenModal
-                    isVisible={isModalVisible}
-                    onClose={() => setIsModalVisible(false)}
-                    showCloseButton={true}
-                >
-                    {React.cloneElement(modalContent as React.ReactElement, {
-                        onClose: () => setIsModalVisible(false)
-                    })}
-                </FullScreenModal>
-            )}
         </>
     )
 }

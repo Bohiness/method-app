@@ -56,7 +56,6 @@ class GamificationApiService {
             );
             return response;
         } catch (error) {
-            console.error('Failed to fetch streak stats:', error);
             throw error;
         }
     }

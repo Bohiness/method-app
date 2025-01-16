@@ -32,15 +32,13 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
                 entering={FadeIn}
                 exiting={FadeOut}
                 className="flex-1 bg-background dark:bg-background-dark"
-                style={{ paddingTop: insets.top }}
             >
-                {/* Кнопка закрытия с абсолютным позиционированием */}
                 {showCloseButton && (
                     <View
                         className="absolute right-0 z-50"
                         style={{
-                            top: insets.top + 8, // Добавляем отступ 8 от верхней безопасной зоны
-                            right: insets.right + 16, // Добавляем отступ 16 от правой безопасной зоны
+                            top: insets.top + 8,
+                            right: insets.right + 16,
                         }}
                     >
                         <HapticTab

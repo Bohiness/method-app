@@ -17,6 +17,8 @@ export const SyncManager = () => {
         try {
             // Передаем queryClient в метод синхронизации
             await syncService.syncMoodCheckins(queryClient)
+            await syncService.syncFavorites(queryClient)
+
             // В будущем добавьте другие типы данных
             // await syncService.syncUserProfile();
             // await syncService.syncSettings();

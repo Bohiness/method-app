@@ -1,13 +1,12 @@
-import { useCarouselAnimation } from '@shared/hooks/animations/useCarouselAnimation'
+// CarouselDayDetails.tsx
 
 import { DayCard } from '@features/calendar/DayCard'
 import { NextDayCard } from '@features/calendar/NextDayCard'
+import { useCarouselAnimation } from '@shared/hooks/animations/useCarouselAnimation'
 import React from 'react'
 import { View } from 'react-native'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
-
-
 
 interface CarouselDayDetailsProps {
     selectedDate: Date
@@ -15,7 +14,7 @@ interface CarouselDayDetailsProps {
     formatDateTime: (date: Date, pattern: string) => string
 }
 
-const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
+const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = React.memo(({
     selectedDate,
     onDateChange,
     formatDateTime,
@@ -23,19 +22,21 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
     const today = new Date()
     const canSwipeLeft = selectedDate < today
 
-    // Вычисляем соседние даты
     const prevDate = new Date(selectedDate)
     prevDate.setDate(prevDate.getDate() - 1)
 
     const nextDate = new Date(selectedDate)
     nextDate.setDate(nextDate.getDate() + 1)
 
-    const isTommorrow = () => {
+    const isTomorrow = (date?: Date) => {
         const tomorrow = new Date(today)
         tomorrow.setDate(tomorrow.getDate() + 1)
-        return selectedDate.getDate() === tomorrow.getDate() &&
-            selectedDate.getMonth() === tomorrow.getMonth() &&
-            selectedDate.getFullYear() === tomorrow.getFullYear()
+        const result =
+            date?.getDate() === tomorrow.getDate() &&
+            date.getMonth() === tomorrow.getMonth() &&
+            date.getFullYear() === tomorrow.getFullYear()
+        console.log('isTomorrow check:', result)
+        return result
     }
 
     const handleDateChange = (direction: 'left' | 'right', source: 'swipe' | 'tap' = 'tap') => {
@@ -49,7 +50,10 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
     }
 
     const { gestureHandler, currentStyle, prevStyle, nextStyle } = useCarouselAnimation({
-        onChangePage: (direction) => handleDateChange(direction, 'swipe'),
+        onChangePage: (direction) => {
+            console.log('onChangePage called with direction:', direction)
+            handleDateChange(direction, 'swipe')
+        },
         canSwipeLeft,
         canSwipeRight: true,
         selectedTimestamp: selectedDate.getTime(),
@@ -66,16 +70,18 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
         },
     })
 
+    console.log('Rendering CarouselDayDetails with styles:', { currentStyle, prevStyle, nextStyle })
+
     return (
-        <View className="relative">
+        <View style={{ position: 'relative' }}>
             <PanGestureHandler onGestureEvent={gestureHandler}>
-                <Animated.View className="h-32">
+                <Animated.View>
                     <DayCard
                         date={prevDate}
                         formatDateTime={formatDateTime}
                         style={prevStyle}
                     />
-                    {isTommorrow() ? (
+                    {isTomorrow(selectedDate) ? (
                         <NextDayCard
                             date={selectedDate}
                             formatDateTime={formatDateTime}
@@ -89,7 +95,7 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
                         />
                     )}
                     {canSwipeLeft && (
-                        isTommorrow() ? (
+                        isTomorrow(nextDate) ? (
                             <NextDayCard
                                 date={nextDate}
                                 formatDateTime={formatDateTime}
@@ -107,6 +113,10 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = ({
             </PanGestureHandler>
         </View>
     )
-}
+}, (prevProps, nextProps) => {
+    return prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
+        prevProps.onDateChange === nextProps.onDateChange &&
+        prevProps.formatDateTime === nextProps.formatDateTime
+})
 
 export default CarouselDayDetails

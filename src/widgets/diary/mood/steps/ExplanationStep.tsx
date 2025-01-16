@@ -114,15 +114,16 @@ export const ExplanationStep: React.FC<ExplanationStepProps> = ({
     }, [explanation])
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1"
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+
+        <Animated.View
+            className="flex-1 p-4"
+            entering={SlideInRight}
+            exiting={SlideOutLeft}
         >
-            <Animated.View
-                className="flex-1 p-4"
-                entering={SlideInRight}
-                exiting={SlideOutLeft}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                className="flex-1 bg-background dark:bg-background-dark"
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
             >
                 <TitleWithHighlights />
 
@@ -172,8 +173,8 @@ export const ExplanationStep: React.FC<ExplanationStepProps> = ({
 
                     </Animated.View>
                 </View>
+            </KeyboardAvoidingView>
+        </Animated.View>
 
-            </Animated.View>
-        </KeyboardAvoidingView>
     )
 }

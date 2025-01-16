@@ -73,7 +73,7 @@ export const Checkbox = ({
             <View className={`
                 w-12 h-7 rounded-full
                 ${checked
-                    ? 'bg-background-dark dark:bg-surface-paper-dark'
+                    ? 'bg-surface-paper-dark dark:bg-surface-paper'
                     : 'bg-inactive/30 dark:bg-inactive/50'}
             `}>
                 <Animated.View

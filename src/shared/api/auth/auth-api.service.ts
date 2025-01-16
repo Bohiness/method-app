@@ -30,6 +30,8 @@ interface CheckAuthResponse {
 }
 
 class AuthApiService {
+
+
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
       console.debug('AuthService: Attempting login...');

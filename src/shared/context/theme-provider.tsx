@@ -56,16 +56,6 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
         setColorScheme(currentColorScheme)
     }, [currentColorScheme, setColorScheme])
 
-    // Добавляем логирование
-    useEffect(() => {
-        console.log('Theme State:', {
-            systemColorScheme,
-            theme,
-            colorScheme,
-            isDarkMode: colorScheme === 'dark'
-        })
-    }, [systemColorScheme, theme, colorScheme])
-
     const context: ThemeContextType = {
         theme,
         colorScheme,

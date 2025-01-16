@@ -1,5 +1,6 @@
 // src/shared/api/base/api-client.ts
 import NetInfo from '@react-native-community/netinfo'
+import { logger } from '@shared/lib/logger/logger.service'
 import { storage } from '@shared/lib/storage/storage.service'
 import { tokenService } from '@shared/lib/user/token/token.service'
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
@@ -24,8 +25,6 @@ class ApiClient {
   private readonly API_URL: string;
 
   constructor() {
-    console.debug('ApiClient: Initializing...');
-
     this.API_URL = API_URL;
     this.instance = axios.create({
       baseURL: this.API_URL,
@@ -44,7 +43,6 @@ class ApiClient {
     this.instance.interceptors.request.use(
       async (config) => {
         try {
-          console.debug('ApiClient: Processing request:', config.url);
           
           // Проверяем подключение к интернету
           const netInfo = await NetInfo.fetch();
@@ -58,22 +56,22 @@ class ApiClient {
 
           return config;
         } catch (error) {
-          console.error('ApiClient: Request interceptor error:', error);
+          logger.error('ApiClient: Request interceptor error:', error, 'api-client');
           return Promise.reject(error);
         }
       },
       (error) => {
-        console.error('ApiClient: Request interceptor error:', error);
+        logger.error('ApiClient: Request interceptor error:', error, 'api-client');
         return Promise.reject(error);
       }
     );
 
+    
     // Интерцептор ответов
     this.instance.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
         try {
-          console.debug('ApiClient: Processing response error:', error.response?.status);
           
           const originalRequest = error.config;
           if (!originalRequest) {
@@ -86,17 +84,15 @@ class ApiClient {
             originalRequest.url !== 'api/token/refresh/'
           ) {
             try {
-              console.debug('ApiClient: Attempting to refresh token...');
               const tokens = await tokenService.refreshTokens();
               
               // Обновляем заголовок Authorization
               originalRequest.headers['Authorization'] = `Bearer ${tokens.access}`;
               
               // Повторяем оригинальный запрос
-              console.debug('ApiClient: Retrying original request...');
               return this.instance(originalRequest);
             } catch (refreshError) {
-              console.error('ApiClient: Token refresh failed:', refreshError);
+              logger.error('ApiClient: Token refresh failed:', refreshError, 'api-client');
               await tokenService.clearSession();
               throw refreshError;
             }
@@ -104,7 +100,7 @@ class ApiClient {
 
           throw error;
         } catch (error) {
-          console.error('ApiClient: Response interceptor error:', error);
+          logger.error('ApiClient: Response interceptor error:', error, 'api-client');
           return Promise.reject(error);
         }
       }
@@ -129,9 +125,7 @@ class ApiClient {
 
       // Если есть сессия, проверяем и обновляем токен при необходимости
       if (session?.access) {
-        console.debug('ApiClient: Session found, checking token...');
         if (await tokenService.shouldRefreshToken()) {
-          console.debug('ApiClient: Token needs refresh, refreshing...');
           const newTokens = await tokenService.refreshTokens();
           headers['Authorization'] = `Bearer ${newTokens.access}`;
         } else {
@@ -141,7 +135,7 @@ class ApiClient {
 
       return headers;
     } catch (error) {
-      console.error('ApiClient: Error getting headers:', error);
+      logger.error('ApiClient: Error getting headers:', error, 'api-client');
       return headers;
     }
   }
@@ -226,5 +220,6 @@ class ApiClient {
     }
   }
 }
+
 
 export const apiClient = new ApiClient();

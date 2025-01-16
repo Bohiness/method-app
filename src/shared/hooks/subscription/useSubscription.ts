@@ -1,20 +1,20 @@
 // src/shared/hooks/subscription/useSubscription.ts
 import { subscriptionService } from '@shared/lib/subscription/subscription.service'
-import { SubscriptionPlan, SubscriptionStatus } from '@shared/types/subscription/SubscriptionType'
+import { SubscriptionStateType } from '@shared/types/subscription/SubscriptionType'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export function useSubscription() {
     const queryClient = useQueryClient();
 
     // Получение статуса подписки
-    const { data: status, isLoading: isStatusLoading } = useQuery<SubscriptionStatus | null>({
+    const { data: status, isLoading: isStatusLoading } = useQuery<SubscriptionStateType['currentPlan'] | null>({
         queryKey: ['subscription-status'],
         queryFn: () => subscriptionService.getSubscriptionStatus(),
         staleTime: 1000 * 60 * 5, // 5 минут
     });
 
     // Получение доступных планов
-    const { data: plans, isLoading: isPlansLoading } = useQuery<SubscriptionPlan[]>({
+    const { data: plans, isLoading: isPlansLoading } = useQuery<SubscriptionStateType['plans']>({
         queryKey: ['subscription-plans'],
         queryFn: () => subscriptionService.getAvailablePlans(),
         staleTime: 1000 * 60 * 60, // 1 час

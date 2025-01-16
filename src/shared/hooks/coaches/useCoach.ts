@@ -1,12 +1,34 @@
-import { coachesApiService } from '@shared/api/coaches/coaches.api-service'
+import { coachesApiService } from '@shared/api/coaches/coaches-api.service'
+import { packagesApiService } from '@shared/api/coaches/packages-api.service'
 import { CoachType } from '@shared/types/coaches/CoachType'
+import { PackageType } from '@shared/types/coaches/PackageType'
 import { PaginatedResponse } from '@shared/types/PaginatedResponse'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+
+
+export function useCoaches(filters?: Record<string, string>) {
+  const result = useQuery<PaginatedResponse<CoachType>, Error>({
+    queryKey: ['coaches'],
+    queryFn: () => coachesApiService.getCoaches(filters),
+    retry: 3,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return {
+    coaches: result.data?.results ?? [],
+    totalCount: result.data?.count ?? 0,
+    nextPage: result.data?.next ?? null,
+    previousPage: result.data?.previous ?? null,
+    isPending: result.isPending,
+    error: result.error,
+  };
+}
+
 
 export function useCoach(id: number, initialData?: CoachType) {
   const queryClient = useQueryClient();
 
-  return useQuery<CoachType, Error>({
+  const data = useQuery<CoachType, Error>({
     queryKey: ['coach', id],
     queryFn: () => coachesApiService.getCoachById(id),
     retry: 3,
@@ -18,22 +40,30 @@ export function useCoach(id: number, initialData?: CoachType) {
       return coaches?.results.find((coach) => coach.id === id);
     },
   });
+
+  return {
+    coach: data.data,
+    isPending: data.isPending,
+    error: data.error,
+  };
 }
 
-export function useCoaches(filters?: Record<string, string>) {
-  const result = useQuery<PaginatedResponse<CoachType>, Error>({
-    queryKey: ['coaches', filters],
-    queryFn: () => coachesApiService.getCoaches(filters),
+
+
+export function usePackages(coach_id: number) {
+  const result = useQuery<PaginatedResponse<PackageType[]>, Error>({
+    queryKey: ['packages', coach_id],
+    queryFn: () => packagesApiService.getPackagesByCoachId(coach_id),
     retry: 3,
     staleTime: 5 * 60 * 1000,
   });
 
   return {
-    coaches: result.data?.results ?? [],
+    packages: result.data?.results ?? [],
     totalCount: result.data?.count ?? 0,
     nextPage: result.data?.next ?? null,
     previousPage: result.data?.previous ?? null,
-    isFetching: result.isFetching,
+    isPending: result.isPending,
     error: result.error,
   };
 }

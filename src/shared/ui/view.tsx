@@ -1,8 +1,9 @@
 // src/shared/ui/view/view.tsx
 import { useColors, useColorScheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
-import React from 'react'
+import React, { forwardRef } from 'react'
 import { View as RNView, ViewProps as RNViewProps } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export type ViewVariant =
     | 'default'
@@ -28,18 +29,19 @@ const getVariantClasses = (variant: ViewVariant) => {
     return variants[variant]
 }
 
-export const View: React.FC<ViewProps> = ({
+export const View = forwardRef<RNView, ViewProps>(({
     variant = 'default',
     className,
     style,
     children,
     ...props
-}) => {
+}, ref) => {
     const colorScheme = useColorScheme()
     const colors = useColors()
 
     return (
         <RNView
+            ref={ref}
             className={cn(getVariantClasses(variant), className)}
             style={[
                 {
@@ -62,7 +64,7 @@ export const View: React.FC<ViewProps> = ({
             {children}
         </RNView>
     )
-}
+})
 
 // Предустановленные компоненты для частых случаев использования
 export const Card = ({ className, ...props }: ViewProps) => (
@@ -88,6 +90,18 @@ export const Container = ({ className, ...props }: ViewProps) => (
         {...props}
     />
 )
+
+export const ContainerScreen = ({ className, ...props }: ViewProps) => {
+    const insets = useSafeAreaInsets()
+    return (
+        <View
+            variant="default"
+            className={cn(`px-4 py-2 flex-1`, className)}
+            style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
+            {...props}
+        />
+    )
+}
 
 // Компонент с тенью
 export const ElevatedView = ({ className, style, ...props }: ViewProps) => (

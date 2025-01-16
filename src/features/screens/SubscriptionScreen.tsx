@@ -1,3 +1,4 @@
+import { SubscriptionType } from '@shared/types/subscription/SubscriptionType'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Button } from '@shared/ui/button'
 import { Icon, IconName } from '@shared/ui/icon'
@@ -115,7 +116,7 @@ const SubscriptionItem: React.FC<SubscriptionItemProps & { isLast?: boolean }> =
 )
 
 
-const SubscriptionScreen = () => {
+export const SubscriptionScreen = ({ subscription }: { subscription: SubscriptionType | null }) => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [selectedPlan, setSelectedPlan] = useState<'premium' | 'premiumPlus'>('premium')
@@ -133,7 +134,7 @@ const SubscriptionScreen = () => {
 
   return (
     <BackgroundWithNoise
-      className="flex-1 bg-surface-paper dark:bg-surface-paper-dark mt-6"
+      className="flex-1 bg-surface-paper dark:bg-surface-paper-dark"
       style={{ paddingTop: insets.top }}
     >
       <View className="flex-1">
@@ -214,5 +215,3 @@ const SubscriptionScreen = () => {
     </BackgroundWithNoise>
   )
 }
-
-export default SubscriptionScreen

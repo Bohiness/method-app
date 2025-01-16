@@ -23,10 +23,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import './global.css'
 
+
 export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true)
-
-
   return (
     <I18nextProvider i18n={i18n}>
       <LanguageProvider>
@@ -45,6 +44,9 @@ export default function RootLayout() {
                           ) : (
                             <Stack screenOptions={{ headerShown: false }}>
                               <Stack.Screen name="index" />
+                              <Stack.Screen name="(tabs)" />
+                              <Stack.Screen name="onboarding" />
+                              <Stack.Screen name="(coach)" options={{ headerShown: false }} />
                               <Stack.Screen name="+not-found" />
                             </Stack>
                           )}

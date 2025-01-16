@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { StorageKeysType } from '@shared/types/user/StorageKeysType'
 import { decrypt, encrypt } from './crypto.service'
 
+
 export class StorageService {
   private readonly prefix: string = '@method-app:';
 

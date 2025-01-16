@@ -26,7 +26,7 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                 />
 
                 {/* Группа элементов */}
-                <MenuGroup label={t('settings.preferences.title')} className="mt-6">
+                <MenuGroup label={t('settings.preferences.title')} className="mt-6 mb-6">
                     <MenuItem
                         label={t('settings.theme.title')}
                         leftIcon={'Moon'}
@@ -47,6 +47,28 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                         }}
                     />
                 </MenuGroup>
+
+                <MenuItem
+                    label={t('settings.storage.title')}
+                    leftIcon={'Box'}
+                    isFirst
+                    isLast
+                    showSeparator
+                    onPress={() => {
+                        onNavigate('storage')
+                    }}
+                />
+
+                <MenuItem
+                    label={t('settings.logs.title')}
+                    leftIcon={'Box'}
+                    isFirst
+                    isLast
+                    showSeparator
+                    onPress={() => {
+                        onNavigate('logs')
+                    }}
+                />
             </View>
         </View>
     )

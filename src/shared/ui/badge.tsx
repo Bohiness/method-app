@@ -41,8 +41,8 @@ const getVariantStyles = (variant: BadgeVariant = 'default', isDark: boolean) =>
             text: 'text-tint'
         },
         outline: {
-            container: 'bg-transparent',
-            text: 'text-text'
+            container: 'bg-transparent border border-border dark:border-border-dark',
+            text: 'text-text dark:text-text-dark'
         },
         secondary: {
             container: 'bg-secondary-light/20',
@@ -113,7 +113,7 @@ export const Badge: React.FC<BadgeProps> = ({
         <Container
             {...containerProps}
             className={`
-        flex-row items-center justify-center rounded-lg
+        flex-row items-center justify-center rounded-full
         ${variantStyles.container}
         ${sizeStyles.container}
         ${disabled ? 'opacity-50' : ''}

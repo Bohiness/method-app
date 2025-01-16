@@ -1,10 +1,9 @@
 import { useStreakStats } from '@hooks/gamification/useGamification'
 import { useModal } from '@shared/context/modal-provider'
 import { useUser } from '@shared/context/user-provider'
-import { useScreenNavigation } from '@shared/hooks/modal/useScreenNavigation'
 import { Icon } from '@shared/ui/icon'
 import { Text } from '@shared/ui/text'
-import { ScreenType, SettingModal } from '@widgets/profile/SettingModal'
+import { SettingModal } from '@widgets/profile/SettingModal'
 import { useRouter } from 'expo-router'
 import { Image, Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -22,13 +21,11 @@ export const Header: React.FC<HeaderProps> = ({
     const { user } = useUser()
     const insets = useSafeAreaInsets()
     const { current_streak } = useStreakStats()
-    const navigation = useScreenNavigation<ScreenType>('main')
 
     const { showBottomSheet } = useModal()
 
     const handleProfilePress = () => {
         showBottomSheet(<SettingModal />)
-        navigation.navigate('main')
     }
 
     return (

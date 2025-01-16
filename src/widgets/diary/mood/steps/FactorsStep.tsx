@@ -67,70 +67,74 @@ export const FactorsStep: React.FC<FactorsStepProps> = ({
     }
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <Animated.View
-                className="flex-1 p-4"
-                entering={SlideInRight}
-                exiting={SlideOutLeft}
-            >
-                <TitleWithHighlights />
 
-                <TextInput
-                    placeholder={t('diary.moodcheckin.step4.placeholder')}
-                    multiline
-                    numberOfLines={3}
-                    onChangeText={onNotesChange}
-                    className='mb-6'
-                />
+        <Animated.View
+            className="flex-1 p-4 bg-background dark:bg-background-dark"
+            entering={SlideInRight}
+            exiting={SlideOutLeft}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <>
+                    <TitleWithHighlights />
 
-                <ScrollView
-                    className="flex-1 mb-20"
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View className="flex-row flex-wrap gap-2 gap-y-4">
-                        {factors
-                            .sort((a, b) => a.name.localeCompare(b.name))
-                            .map((factor) => (
-                                <Button
-                                    key={factor.id}
-                                    onPress={() => {
-                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                        onSelect(factor.id)
-                                    }}
-                                    variant={selectedFactors.includes(factor.id) ? "default" : "secondary"}
-                                >
-                                    {factor.name}
-                                </Button>
-                            ))
-                        }
-                    </View>
-                </ScrollView>
+                    <TextInput
+                        placeholder={t('diary.moodcheckin.step4.placeholder')}
+                        multiline
+                        numberOfLines={3}
+                        onChangeText={onNotesChange}
+                        className='mb-6'
+                    />
 
-                <View className="px-4 pb-6 pt-4 bg-background dark:bg-background-dark">
-                    <Animated.View
-                        entering={FadeIn}
-                        className="flex-row justify-between align-center"
+                    <ScrollView
+                        className="flex-1 mb-20"
+                        showsVerticalScrollIndicator={false}
                     >
-                        <Button
-                            onPress={onBack}
-                            variant="outline"
-                            className="px-4"
-                        >
-                            <Icon
-                                name="ChevronLeft"
-                                size={20}
-                            />
-                        </Button>
+                        <View className="flex-row flex-wrap gap-2 gap-y-4">
+                            {factors
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map((factor) => (
+                                    <Button
+                                        key={factor.id}
+                                        onPress={() => {
+                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                            onSelect(factor.id)
+                                        }}
+                                        variant={selectedFactors.includes(factor.id) ? "default" : "secondary"}
+                                    >
+                                        {factor.name}
+                                    </Button>
+                                ))
+                            }
+                        </View>
+                    </ScrollView>
 
-                        <Button
-                            onPress={onNext}
-                            variant="outline"
+                    <View className="px-4 pb-6 pt-4 bg-background dark:bg-background-dark">
+                        <Animated.View
+                            entering={FadeIn}
+                            className="flex-row justify-between align-center"
                         >
-                            {t('common.next')} ({selectedFactors.length})
-                        </Button>
-                    </Animated.View>
-                </View>
-            </Animated.View>
-        </TouchableWithoutFeedback>
+                            <Button
+                                onPress={onBack}
+                                variant="outline"
+                                className="px-4"
+                            >
+                                <Icon
+                                    name="ChevronLeft"
+                                    size={20}
+                                />
+                            </Button>
+
+                            <Button
+                                onPress={onNext}
+                                variant="outline"
+                            >
+                                {t('common.next')} ({selectedFactors.length})
+                            </Button>
+                        </Animated.View>
+                    </View>
+                </>
+            </TouchableWithoutFeedback>
+        </Animated.View >
+
     )
 }

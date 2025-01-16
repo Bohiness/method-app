@@ -8,7 +8,12 @@
       "error": "Ошибка",
       "loading": "Загрузка",
       "success": "Успешно",
-      "done": "Готово"
+      "done": "Готово",
+      "age": {
+        "year": "{{age}} год",
+        "years2to4": "{{age}} года",
+        "years": "{{age}} лет"
+      }
     },
     "auth": {
       "signIn": "Войти",

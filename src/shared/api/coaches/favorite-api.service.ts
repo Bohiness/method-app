@@ -1,17 +1,16 @@
 import { apiClient } from '@shared/config/api-client'
+import { API_ROUTES } from '@shared/constants/api-routes'
 import { FavoriteType } from '@shared/types/coaches/FavoriteType'
 
 
 class FavoriteApiService {
-
-    private readonly BASE_URL = `/api/favorites`;
 
     /**
      * Получение списка избранных коучей
      * @returns {Promise<FavoriteType[]>} Список избранных коучей
      */
     async getFavorites(): Promise<FavoriteType[]> {
-        const response = await apiClient.get<FavoriteType[]>(`${this.BASE_URL}/`)
+        const response = await apiClient.get<FavoriteType[]>(API_ROUTES.FAVORITES.BASE)
         return response
     }
 
@@ -21,7 +20,7 @@ class FavoriteApiService {
      * @returns {Promise<{status: string}>} Статус операции
      */
     async toggleFavorite(coachId: number): Promise<{ status: string }> {
-        const response = await apiClient.post<{ status: string }>(`${this.BASE_URL}/toggle/`, {
+        const response = await apiClient.post<{ status: string }>(API_ROUTES.FAVORITES.TOGGLE, {
             coach_id: coachId,
         })
         return response

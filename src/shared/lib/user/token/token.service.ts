@@ -1,5 +1,6 @@
 // src/shared/lib/user/token/token.service.ts
 import { apiClient } from '@shared/config/api-client'
+import { logger } from '@shared/lib/logger/logger.service'
 import { storage } from '@shared/lib/storage/storage.service'
 import { AuthTokensType } from '@shared/types/user/AuthTokensType'
 
@@ -16,17 +17,17 @@ class TokenService {
    */
   async getSession(): Promise<AuthTokensType | null> {
     try {
-      console.debug('TokenService: Getting session...')
+      logger.debug('TokenService: Getting session...')
       const session = await storage.get<AuthTokensType>(this.SESSION_KEY, true)
       
       if (!this.isValidSession(session)) {
-        console.debug('TokenService: No session found')
+        logger.debug('TokenService: No session found')
         return null
       }
 
       return session
     } catch (error) {
-      console.error('TokenService: Error getting session:', error)
+      logger.error('TokenService: Error getting session:', error)
       return null
     }
   }
@@ -36,7 +37,7 @@ class TokenService {
    */
   async setSession(newTokens: AuthTokensType): Promise<void> {
     try {
-      console.debug('TokenService: Setting new session...')
+      logger.debug('TokenService: Setting new session...')
 
       const tokens: AuthTokensType = {
         access: newTokens.access,
@@ -45,14 +46,14 @@ class TokenService {
       }
 
       if (!tokens.access || !tokens.refresh) {
-        console.error('TokenService: Invalid token data', tokens)
+        logger.error('TokenService: Invalid token data', tokens)
         throw new Error('Invalid token data')
       }
 
       await storage.set(this.SESSION_KEY, tokens, true)
-      console.debug('TokenService: Session set successfully')
+      logger.debug('TokenService: Session set successfully')
     } catch (error) {
-      console.error('TokenService: Error setting session:', error)
+      logger.error('TokenService: Error setting session:', error)
       throw error
     }
   }
@@ -69,7 +70,7 @@ class TokenService {
       const bufferTime = 60 * 1000
       return !session.access || (session.expiresAt && Date.now() + bufferTime >= session.expiresAt)
     } catch (error) {
-      console.error('TokenService: Error checking refresh:', error)
+      logger.error('TokenService: Error checking refresh:', error)
       return true
     }
   }
@@ -79,11 +80,11 @@ class TokenService {
    */
   async refreshTokens(): Promise<AuthTokensType> {
     try {
-      console.debug('TokenService: Starting token refresh...')
+      logger.debug('TokenService: Starting token refresh...')
       const session = await this.getSession()
       
       if (!session?.refresh) {
-        console.error('TokenService: No refresh token available for refresh')
+        logger.error('TokenService: No refresh token available for refresh')
         throw new Error('No refresh token available')
       }
 
@@ -104,7 +105,7 @@ class TokenService {
       
       return tokens
     } catch (error) {
-      console.error('TokenService: Error refreshing tokens:', error)
+      logger.error('TokenService: Error refreshing tokens:', error)
       await this.clearSession()
       throw error
     }
@@ -116,11 +117,11 @@ class TokenService {
    */
   async clearSession(): Promise<void> {
     try {
-      console.debug('TokenService: Clearing session...')
+      logger.debug('TokenService: Clearing session...')
       await storage.remove(this.SESSION_KEY)
-      console.debug('TokenService: Session cleared successfully')
+      logger.debug('TokenService: Session cleared successfully')
     } catch (error) {
-      console.error('TokenService: Error clearing session:', error)
+      logger.error('TokenService: Error clearing session:', error)
       throw error
     }
   }

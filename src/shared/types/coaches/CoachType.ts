@@ -81,4 +81,5 @@ export interface Education {
   endYear?: number;
   certificate: number[];
   education_images: EducationImage[];
+  certificate_images: CoachCertificateImage[];
 }

@@ -4,7 +4,7 @@
     "slug": "method-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icons/icon-trans.png",
+    "icon": "./assets/images/icons/icon-light.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -23,12 +23,12 @@
       },
       "bundleIdentifier": "com.anonymous.methodapp",
       "buildNumber": "1",
-      "icon": "./assets/images/icons/icon-trans.png"
+      "icon": "./assets/images/icons/icon-light.png"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icons/icon-trans.png"
+      "favicon": "./assets/images/icons/icon-light.png"
     },
     "plugins": [
       "expo-router",
@@ -52,6 +52,8 @@
       "enabled": true,
       "checkAutomatically": "ON_ERROR_RECOVERY",
       "fallbackToCacheTimeout": 0
-    }
-  }
+    },
+    "sdkVersion": "52.0.0"
+  },
+  "name": "method-app"
 }

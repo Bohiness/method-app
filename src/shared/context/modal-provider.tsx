@@ -4,7 +4,8 @@ import BottomSheet, {
     BottomSheetBackdropProps,
     BottomSheetView
 } from '@gorhom/bottom-sheet'
-import React, {
+import { FullScreenModal } from '@shared/ui/modals/fullscreen-modal'
+import {
     createContext,
     ReactNode,
     useCallback,
@@ -14,41 +15,66 @@ import React, {
     useState
 } from 'react'
 import { View } from 'react-native'
-import { useColorScheme } from './theme-provider'
+import { useTheme } from './theme-provider'
 
 interface ModalContextType {
     showBottomSheet: (content: ReactNode) => void
     hideBottomSheet: () => void
+    showFullScreenModal: (content: ReactNode) => void
+    hideFullScreenModal: () => void
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined)
 
 export const ModalProvider = ({ children }: { children: ReactNode }) => {
     const bottomSheetRef = useRef<BottomSheet>(null)
-    const [content, setContent] = useState<ReactNode | null>(null)
-    const colorScheme = useColorScheme()
-
-    // Определяем фиксированные точки привязки
+    const [bottomSheetContent, setBottomSheetContent] = useState<ReactNode | null>(null)
+    const [fullScreenContent, setFullScreenContent] = useState<ReactNode | null>(null)
+    const [isFullScreenVisible, setIsFullScreenVisible] = useState(false)
+    const { isDark, colors } = useTheme()
     const snapPoints = useMemo(() => ['90%'], [])
     const [index, setIndex] = useState(-1)
+    const modalIdRef = useRef(0)
 
     const showBottomSheet = useCallback((content: ReactNode) => {
-        setContent(content)
+        if (!content) {
+            console.warn('Attempted to show BottomSheet without content')
+            return
+        }
+        setBottomSheetContent(content)
         setIndex(0)
-        // Принудительно раскрываем на 90%
         bottomSheetRef.current?.snapToIndex(0)
     }, [])
 
     const hideBottomSheet = useCallback(() => {
+        console.log('Hiding BottomSheet')
         bottomSheetRef.current?.close()
-        setContent(null)
+        setBottomSheetContent(null)
         setIndex(-1)
     }, [])
 
+    const showFullScreenModal = useCallback((content: ReactNode) => {
+        if (!content) {
+            console.warn('Attempted to show FullScreenModal without content')
+            return
+        }
+        setFullScreenContent(content)
+        setIsFullScreenVisible(true)
+        modalIdRef.current += 1
+    }, [])
+
+    const hideFullScreenModal = useCallback(() => {
+        setIsFullScreenVisible(false)
+        setTimeout(() => {
+            setFullScreenContent(null)
+        }, 300)
+    }, [])
+
     const handleSheetChanges = useCallback((index: number) => {
+        console.log('BottomSheet index changed to:', index)
         setIndex(index)
         if (index === -1) {
-            setContent(null)
+            setBottomSheetContent(null)
         }
     }, [])
 
@@ -62,8 +88,14 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
     ), [])
 
     return (
-        <ModalContext.Provider value={{ showBottomSheet, hideBottomSheet }}>
+        <ModalContext.Provider value={{
+            showBottomSheet,
+            hideBottomSheet,
+            showFullScreenModal,
+            hideFullScreenModal
+        }}>
             {children}
+
             <BottomSheet
                 ref={bottomSheetRef}
                 index={index}
@@ -73,15 +105,15 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                 enablePanDownToClose
                 backdropComponent={renderBackdrop}
                 backgroundStyle={{
-                    backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF'
+                    backgroundColor: colors.background
                 }}
                 handleIndicatorStyle={{
                     width: 40,
-                    backgroundColor: colorScheme === 'dark' ? '#404040' : '#E5E7EB'
+                    backgroundColor: colors.border
                 }}
                 handleStyle={{
-                    backgroundColor: colorScheme === 'dark' ? '#000000' : '#FFFFFF',
-                    borderColor: colorScheme === 'dark' ? '#404040' : '#E5E7EB',
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
                     borderRadius: 16,
                 }}
                 enableContentPanningGesture
@@ -96,10 +128,21 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                     }}
                 >
                     <View className="px-4 pt-2 pb-8 flex-1">
-                        {content}
+                        {bottomSheetContent}
                     </View>
                 </BottomSheetView>
             </BottomSheet>
+
+            {fullScreenContent && (
+                <FullScreenModal
+                    key={modalIdRef.current}
+                    isVisible={isFullScreenVisible}
+                    onClose={hideFullScreenModal}
+                    showCloseButton={true}
+                >
+                    {fullScreenContent}
+                </FullScreenModal>
+            )}
         </ModalContext.Provider>
     )
 }

@@ -20,6 +20,8 @@ export interface UserType {
     language: string
     timezone: string
     is_online: boolean
+    device_id: string
+    is_anonymous_user: boolean
     last_online?: Date
     confirmation_link: string
     verification_code?: string

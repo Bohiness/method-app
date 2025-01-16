@@ -34,7 +34,6 @@ export const DayCard: React.FC<DayCardProps> = ({ date, formatDateTime, style })
                         title="diary.startYourDay.title"
                         description="diary.startYourDay.description"
                         icon="Sun"
-                        modalContent={<MoodCheckin date={date} />}
                     />
                 </View>
 

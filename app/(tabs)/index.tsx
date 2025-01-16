@@ -1,5 +1,5 @@
+import { View } from '@shared/ui/view'
 import CalendarGreeting from '@widgets/calendar/CalendarGreeting'
-import { View } from 'react-native'
 
 export default function HomeScreen() {
   return (

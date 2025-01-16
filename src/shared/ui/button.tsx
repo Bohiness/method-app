@@ -21,6 +21,7 @@ interface ButtonProps extends PressableProps {
     disabled?: boolean
     fullWidth?: boolean
     leftIcon?: IconName
+    iconSize?: number
     rightIcon?: IconName
     className?: string
     children?: React.ReactNode
@@ -37,6 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
     fullWidth = false,
     leftIcon,
     rightIcon,
+    iconSize = 24,
     className = '',
     children,
     haptic = true,
@@ -65,8 +67,8 @@ export const Button: React.FC<ButtonProps> = ({
                 background: 'transparent'
             },
             ghost: {
-                text: colors.text,
-                icon: colors.text,
+                text: colors.secondary.dark,
+                icon: colors.secondary.dark,
                 background: 'transparent'
             },
             tint: {
@@ -75,8 +77,8 @@ export const Button: React.FC<ButtonProps> = ({
                 background: colors.tint
             },
             destructive: {
-                text: colors.background,
-                icon: colors.background,
+                text: colors.text,
+                icon: colors.text,
                 background: colors.error
             }
         }
@@ -92,11 +94,17 @@ export const Button: React.FC<ButtonProps> = ({
         lg: 'py-6 px-12',
     }[size]
 
+    const sizeClassesButtonIcon = {
+        sm: 'py-2 px-2',
+        md: 'py-2 px-4',
+        lg: 'py-2 px-6',
+    }[size]
+
     // Варианты стилей
     const getVariantClasses = () => {
         const baseClasses = {
             default: `bg-background-dark dark:bg-background`,
-            secondary: `bg-surface-stone dark:bg-surface-stone`,
+            secondary: `bg-surface-paper dark:bg-surface-paper-dark`,
             outline: `border border-border dark:border-border bg-transparent`,
             ghost: `bg-transparent`,
             tint: `bg-tint dark:bg-tint`,
@@ -126,6 +134,33 @@ export const Button: React.FC<ButtonProps> = ({
         onPress?.(e)
     }
 
+    if (!children && leftIcon) {
+        return (
+            <AnimatedPressable
+                disabled={disabled || loading}
+                onPressIn={() => { pressed.value = 1 }}
+                onPressOut={() => { pressed.value = 0 }}
+                onPress={handlePress}
+                style={animatedStyle}
+                className={cn(
+                    'rounded-full active:opacity-90 flex-row items-center justify-center',
+                    getVariantClasses(),
+                    sizeClassesButtonIcon,
+                    disabledClasses,
+                    widthClasses,
+                    className,
+                )}
+                {...props}
+            >
+                <Icon
+                    name={leftIcon}
+                    size={iconSize}
+                    color={variantColors.icon}
+                />
+            </AnimatedPressable>
+        )
+    }
+
     return (
         <AnimatedPressable
             disabled={disabled || loading}
@@ -152,27 +187,29 @@ export const Button: React.FC<ButtonProps> = ({
                 ) : (
                     <>
                         {leftIcon && (
-                            <View className="mr-2 -ml-2">
+                            <View className={'mr-2 -ml-2'}>
                                 <Icon
                                     name={leftIcon}
-                                    size={24}
+                                    size={iconSize}
                                     color={variantColors.icon}
                                 />
                             </View>
                         )}
-                        <Text
-                            className="text-inherit"
-                            style={{ color: variantColors.text }}
-                            size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'base'}
-                            weight="medium"
-                        >
-                            {children}
-                        </Text>
+                        {children &&
+                            <Text
+                                className="text-inherit"
+                                style={{ color: variantColors.text }}
+                                size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'base'}
+                                weight="medium"
+                            >
+                                {children}
+                            </Text>
+                        }
                         {rightIcon && (
                             <View className="ml-2">
                                 <Icon
                                     name={rightIcon}
-                                    size={24}
+                                    size={iconSize}
                                     color={variantColors.icon}
                                 />
                             </View>

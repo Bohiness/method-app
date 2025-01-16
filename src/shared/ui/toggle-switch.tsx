@@ -168,11 +168,12 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
                                     size={currentSize.textSize}
                                     weight="medium"
                                     className={cn(
+                                        'rounded-r-none',
                                         labelClassName,
-                                        !value ? activeLabelClassName : inactiveLabelClassName,
-                                        !value
-                                            ? 'text-background dark:text-background'
-                                            : 'text-secondary-dark dark:text-secondary-light'
+                                        value ? activeLabelClassName : inactiveLabelClassName,
+                                        value
+                                            ? 'text-secondary-dark dark:text-text-dark'
+                                            : 'text-text-dark dark:text-text'
                                     )}
                                 >
                                     {leftLabel}
@@ -197,8 +198,8 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
                                         labelClassName,
                                         value ? activeLabelClassName : inactiveLabelClassName,
                                         value
-                                            ? 'text-background dark:text-background'
-                                            : 'text-secondary-dark dark:text-secondary-light'
+                                            ? 'text-text-dark dark:text-text'
+                                            : 'text-secondary-dark dark:text-text-dark'
                                     )}
                                 >
                                     {rightLabel}

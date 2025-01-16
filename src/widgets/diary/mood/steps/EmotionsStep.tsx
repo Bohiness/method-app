@@ -1,4 +1,4 @@
-import { useColorScheme } from '@shared/context/theme-provider'
+import { useTheme } from '@shared/context/theme-provider'
 import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
@@ -31,7 +31,7 @@ export const EmotionsStep: React.FC<EmotionsStepProps> = ({
     const [filteredEmotions, setFilteredEmotions] = useState<Emotion[]>([])
     const [showNextButton, setShowNextButton] = useState(false)
     const { t } = useTranslation()
-    const colorScheme = useColorScheme()
+    const { isDark } = useTheme()
 
     const animatedIconStyle = useAnimatedStyle(() => ({
         transform: [{ scale: withSpring(1.1) }],
@@ -57,7 +57,7 @@ export const EmotionsStep: React.FC<EmotionsStepProps> = ({
 
     return (
         <Animated.View
-            className="flex-1 p-4"
+            className="flex-1 p-4 bg-background dark:bg-background-dark"
             entering={SlideInRight}
             exiting={SlideOutLeft}
         >
@@ -77,8 +77,8 @@ export const EmotionsStep: React.FC<EmotionsStepProps> = ({
                             style={selectedMood === mood.level ? animatedIconStyle : undefined}
                         >
                             {mood.icon(selectedMood === mood.level ?
-                                (colorScheme === 'dark' ? '#FFFFFF' : '#374151') :
-                                (colorScheme === 'dark' ? '#9CA3AF' : '#9CA3AF')
+                                (isDark ? '#FFFFFF' : '#374151') :
+                                (isDark ? '#9CA3AF' : '#9CA3AF')
                             )}
                         </Animated.View>
                         <Text className="text-xs">

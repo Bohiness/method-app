@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics'
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { EmotionsStep } from './steps/EmotionsStep'
 import { ExplanationStep } from './steps/ExplanationStep'
 import { FactorsStep } from './steps/FactorsStep'
@@ -30,6 +31,7 @@ interface MoodCheckinProps {
 }
 
 export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
+    const insets = useSafeAreaInsets()
     const [step, setStep] = useState(1)
     const [moodLevel, setMoodLevel] = useState(3)
     const [selectedEmotions, setSelectedEmotions] = useState<number[]>([])
@@ -53,10 +55,14 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
     }, [])
 
     const loadSound = async () => {
-        const { sound } = await Audio.Sound.createAsync(
-            require('@assets/sounds/tap.mp3')
-        )
-        setSound(sound)
+        try {
+            const { sound: loadedSound } = await Audio.Sound.createAsync(
+                require('@assets/sounds/tap.mp3')
+            )
+            setSound(loadedSound)
+        } catch (error) {
+            console.error('Error loading sound:', error)
+        }
     }
 
     const playFeedback = async () => {
@@ -67,6 +73,17 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
             console.error('Error playing feedback:', error)
         }
     }
+
+    // Сброс состояния при монтировании компонента
+    useEffect(() => {
+        setStep(1)
+        setMoodLevel(3)
+        setSelectedEmotions([])
+        setSelectedFactors([])
+        setExplanation('')
+        setNotes('')
+        setDateNow(date)
+    }, [date])
 
     // Обработчики для каждого шага
     const handleMoodLevelChange = async (level: number) => {
@@ -200,8 +217,7 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
     }
 
     return (
-        <View className="flex-1 bg-white pt-10">
-            {/* Индикатор прогресса */}
+        <View className="flex-1 bg-background dark:bg-background-dark pt-12" style={{ marginTop: insets.top }}>
             <View className=" absolute top-7 left-1/2 transform -translate-x-1/2 flex flex-row justify-center gap-x-1">
                 {[1, 2, 3, 4].map(i => (
                     <HapticTab
@@ -216,7 +232,7 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
                 ))}
             </View>
             <Animated.View
-                className="flex-1"
+                className="flex-1 bg-background dark:bg-background-dark"
             >
                 {renderStep()}
             </Animated.View>

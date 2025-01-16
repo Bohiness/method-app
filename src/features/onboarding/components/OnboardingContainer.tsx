@@ -1,7 +1,6 @@
 // src/features/onboarding/screens/OnboardingContainer.tsx
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Button } from '@shared/ui/button'
-import { Text } from '@shared/ui/text'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
@@ -43,7 +42,7 @@ const OnboardingContent = () => {
                         variant="ghost"
                         onPress={setNextScreen}
                     >
-                        <Text className="">{t('common.skip')}</Text>
+                        {t('common.skip')}
                     </Button>
                 </View>
             )}

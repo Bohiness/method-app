@@ -1,8 +1,10 @@
 import { Link, Stack } from 'expo-router'
+import { useTranslation } from 'react-i18next'
 import { Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function NotFoundScreen() {
+  const { t } = useTranslation()
   return (
     <>
       <Stack.Screen options={{
@@ -20,12 +22,10 @@ export default function NotFoundScreen() {
           </Text>
 
           <Link
-            href="/home"
+            href="/(tabs)"
             className="bg-primary px-6 py-3 rounded-lg active:opacity-80"
           >
-            <Text className="text-white font-medium">
-              Вернуться на главную
-            </Text>
+            {t('common.backToHome')}
           </Link>
         </View>
       </SafeAreaView>

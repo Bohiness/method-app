@@ -46,17 +46,19 @@ const RadioButton = ({
         <View>
             <Pressable
                 onPress={onPress}
-                className={`flex-row justify-between items-center py-4 px-4 bg-white dark:bg-black ${isFirst ? 'rounded-t-xl' : ''
-                    } ${isLast ? 'rounded-b-xl' : ''} ${className}`}
+                className={`flex-row justify-between items-center py-4 px-4 bg-text-dark dark:bg-text
+                    ${isFirst ? 'rounded-t-xl' : ''}
+                    ${isLast ? 'rounded-b-xl' : ''}
+                    ${className}`}
             >
                 <Text variant="default" size={textSize}>
                     {label}
                 </Text>
                 <View className={`
-          w-5 h-5 rounded-full border-2 
-          items-center justify-center
-          ${isSelected ? 'bg-background-dark dark:bg-surface-paper border-background-dark dark:border-surface-paper' : 'border-inactive'}
-        `}>
+                        w-5 h-5 rounded-full border-2 
+                        items-center justify-center
+                        ${isSelected ? 'bg-background-dark dark:bg-surface-paper border-background-dark dark:border-surface-paper' : 'border-inactive'}
+                        `}>
                     {isSelected && (
                         <Animated.View style={animatedStyle}>
                             <Check

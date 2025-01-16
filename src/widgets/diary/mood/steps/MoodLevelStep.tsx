@@ -5,7 +5,7 @@ import { Slider } from '@shared/ui/slider'
 import { Text, Title } from '@shared/ui/text'
 import * as Haptics from 'expo-haptics'
 import { Angry, Frown, Laugh, Meh, Smile } from 'lucide-react-native'
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import Animated, {
@@ -132,7 +132,7 @@ export const MoodLevelStep: React.FC<MoodLevelStepProps> = ({
   }))
 
   return (
-    <View className="flex-1 relative">
+    <View className="flex-1 relative bg-background dark:bg-background-dark">
       {/* Основной контент */}
       <View className="flex-1 justify-center -mt-10 px-4">
         <Animated.View

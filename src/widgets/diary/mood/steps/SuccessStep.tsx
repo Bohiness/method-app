@@ -63,7 +63,7 @@ export const SuccessStep: React.FC<SuccessStepProps> = ({
 
     return (
         <Animated.View
-            className="flex-1 p-4"
+            className="flex-1 p-4 bg-background dark:bg-background-dark"
             entering={SlideInRight}
             exiting={SlideOutLeft}
         >

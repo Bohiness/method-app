@@ -2,7 +2,7 @@
 import { useColors, useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { icons } from 'lucide-react-native'
-import { memo } from 'react'
+import React, { memo } from 'react'
 import { StyleProp, ViewStyle } from 'react-native'
 
 export type IconName = keyof typeof icons
@@ -28,6 +28,7 @@ interface IconProps {
     invertInDark?: boolean
     disabled?: boolean
     disabledOpacity?: number
+    fill?: string
 }
 
 export const Icon = memo(({
@@ -41,6 +42,7 @@ export const Icon = memo(({
     invertInDark = false,
     disabled = false,
     disabledOpacity = 0.5,
+    fill = 'transparent'
 }: IconProps) => {
     const { isDark } = useTheme()
     const colors = useColors()
@@ -99,6 +101,7 @@ export const Icon = memo(({
                 style
             ]}
             strokeWidth={strokeWidth}
+            fill={fill}
         />
     )
 })
