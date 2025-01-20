@@ -22,6 +22,10 @@ interface ButtonProps extends PressableProps {
     fullWidth?: boolean
     leftIcon?: IconName
     iconSize?: number
+    iconProps?: {
+        color?: string
+        size?: number
+    }
     rightIcon?: IconName
     className?: string
     children?: React.ReactNode
@@ -43,6 +47,7 @@ export const Button: React.FC<ButtonProps> = ({
     children,
     haptic = true,
     onPress,
+    iconProps,
     ...props
 }) => {
     const { isDark } = useTheme()
@@ -106,7 +111,7 @@ export const Button: React.FC<ButtonProps> = ({
             default: `bg-background-dark dark:bg-background`,
             secondary: `bg-surface-paper dark:bg-surface-paper-dark`,
             outline: `border border-border dark:border-border bg-transparent`,
-            ghost: `bg-transparent`,
+            ghost: `bg-transparent border border-transparent dark:border-transparent`,
             tint: `bg-tint dark:bg-tint`,
             destructive: `bg-error dark:bg-error`,
         }[variant]
@@ -155,7 +160,7 @@ export const Button: React.FC<ButtonProps> = ({
                 <Icon
                     name={leftIcon}
                     size={iconSize}
-                    color={variantColors.icon}
+                    color={iconProps?.color || variantColors.icon}
                 />
             </AnimatedPressable>
         )
@@ -190,8 +195,8 @@ export const Button: React.FC<ButtonProps> = ({
                             <View className={'mr-2 -ml-2'}>
                                 <Icon
                                     name={leftIcon}
-                                    size={iconSize}
-                                    color={variantColors.icon}
+                                    size={iconProps?.size || iconSize}
+                                    color={iconProps?.color || variantColors.icon}
                                 />
                             </View>
                         )}
@@ -209,8 +214,8 @@ export const Button: React.FC<ButtonProps> = ({
                             <View className="ml-2">
                                 <Icon
                                     name={rightIcon}
-                                    size={iconSize}
-                                    color={variantColors.icon}
+                                    size={iconProps?.size || iconSize}
+                                    color={iconProps?.color || variantColors.icon}
                                 />
                             </View>
                         )}

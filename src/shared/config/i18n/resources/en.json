@@ -1,448 +1,475 @@
 {
-	"common": {
-		"back": "Back",
-		"next": "Next",
-		"save": "Save",
-		"cancel": "Cancel",
-		"confirm": "Confirm",
-		"delete": "Delete",
-		"error": "Error",
-		"loading": "Loading",
-		"success": "Success",
-		"done": "Done",
-		"skip": "Skip",
-		"allow": "Allow",
-		"swipe": "Swipe to continue",
-		"continue": "Continue",
-		"more": "More",
-		"moreCount": "More {{count}}",
-		"readLess": "Read less",
-		"readMore": "Read more",
-		"showAll": "Show all",
-		"select": "Select",
-		"backToHome": "Back to home",
-		"age": {
-			"year": "{{age}} year",
-			"years": "{{age}} years"
-		}
-	},
-	"auth": {
-		"signIn": "Sign In",
-		"signUp": "Sign Up",
-		"email": "Email",
-		"password": "Password"
-	},
-	"errors": {
-		"notFound": {
-			"title": "404",
-			"description": "Page not found",
-			"backHome": "Back to home"
-		}
-	},
-	"calendar": {
-		"yesterday": "yesterday",
-		"tomorrow": "tomorrow",
-		"dayInfo": "Information about the selected day..."
-	},
-	"diary": {
-		"moodcheckin": {
-			"step1": {
-				"title": "How are you feeling now?",
-				"description": "at"
-			},
-			"step2": {
-				"title": "What emotions are you experiencing?"
-			},
-			"step3": {
-				"title": "What factors influenced you to feel"
-			},
-			"step4": {
-				"title1": "How",
-				"title2": "influenced how you feel",
-				"titleNoFactors": "Why do you think you are feeling",
-				"titleNoFactors2": "Were there any events or thoughts that triggered them?",
-				"placeholder": "Write your thoughts here..."
-			},
-			"success": {
-				"title": "Good job! Mood recorded",
-				"description": "Keep tracking your mood every day for better self-awareness"
-			}
-		},
-		"mood": {
-			"eveningReflection": "Evening reflection",
-			"sumUpYourDay": "Sum up your day",
-			"moods": {
-				"terrible": "Terrible",
-				"bad": "Bad",
-				"normal": "Normal",
-				"good": "Good",
-				"excellent": "Excellent"
-			}
-		},
-		"moodCheckin": {
-			"title": "Mood check-in",
-			"description": "Check how you're feeling today"
-		},
-		"startYourDay": {
-			"title": "Start your day",
-			"description": "Let's plan your day",
-			"start": "Start"
-		}
-	},
-	"plans": {
-		"comingSoon": "Coming Soon",
-		"description": "We're working on exciting new features that will help you achieve your goals more effectively",
-		"features": {
-			"taskManagement": {
-				"title": "Task Management",
-				"description": "Create, organize and track your tasks. Use tags, priorities and deadlines for effective planning."
-			},
-			"goalAlignment": {
-				"title": "Goal Alignment",
-				"description": "Link tasks to long-term goals. Track progress and visualize your path to achievement."
-			},
-			"habitTracker": {
-				"title": "Habit Tracker",
-				"description": "Form beneficial habits. Set reminders and monitor completion statistics."
-			},
-			"aiAssistant": {
-				"title": "AI Assistant",
-				"description": "Get smart recommendations for planning, task decomposition and workflow optimization."
-			},
-			"calendarSync": {
-				"title": "Calendar Sync",
-				"description": "Integrate your tasks with Google Calendar and Apple Calendar. Manage all events in one place."
-			}
-		},
-		"nextDayPlan": {
-			"title": "Next Day Plan",
-			"description": "Plan your day ahead and stay organized"
-		}
-	},
-	"explore": {
-		"comingSoon": "Coming Soon",
-		"description": "We're working on a platform that will help you find the perfect specialist for personal growth",
-		"features": {
-			"smartMatching": {
-				"title": "Smart Specialist Matching",
-				"description": "Find coaches and psychologists by specialization, experience, price and other parameters. AI algorithm will help match a specialist to your specific request."
-			},
-			"videoChat": {
-				"title": "Video & Chat",
-				"description": "Communicate with specialists through secure video chat right in the app. Save chat history and session materials."
-			},
-			"scheduling": {
-				"title": "Convenient Scheduling",
-				"description": "Book sessions at convenient times. Automatic reminders and calendar synchronization."
-			},
-			"security": {
-				"title": "Security & Privacy",
-				"description": "All specialists undergo thorough verification. Your data and communications are securely protected."
-			}
-		}
-	},
-	"profile": {
-		"title": "Profile",
-		"description": "Manage your profile and settings",
-		"email": "Email",
-		"phone": "Phone",
-		"deleteAccount": {
-			"title": "Delete Account",
-			"message": "Are you sure you want to delete your account? This action cannot be undone.",
-			"button": "Delete Account"
-		}
-	},
-	"settings": {
-		"viewProfile": "View Profile",
-		"settings": "Settings",
-		"title": "Settings",
-		"theme": {
-			"title": "Theme",
-			"description": "Choose a theme that suits you",
-			"automatic": "Automatic",
-			"light": "Light",
-			"dark": "Dark"
-		},
-		"language": {
-			"title": "Language",
-			"description": "Select your preferred language",
-			"english": "English",
-			"russian": "Russian"
-		},
-		"notifications": {
-			"title": "Notifications",
-			"description": "Enable notifications"
-		},
-		"storage": {
-			"title": "Storage",
-			"totalUsed": "Storage used",
-			"clearCache": {
-				"button": "Clear cache",
-				"title": "Clear cache",
-				"message": "Are you sure you want to clear all data? This action cannot be undone."
-			},
-			"items": {
-				"title": "Saved data"
-			}
-		},
-		"subscription": {
-			"title": "Subscription",
-			"active": "Active Subscription",
-			"noActive": "No Active Subscription",
-			"plan": "Plan: {{plan}}",
-			"expires": "Valid until: {{date}}",
-			"autoRenewEnabled": "Auto-renewal enabled",
-			"autoRenewDisabled": "Auto-renewal disabled",
-			"cancelSubscription": "Cancel subscription",
-			"tryPremium": "Get access to all premium features of the app",
-			"activatePremium": "Activate Premium",
-			"restorePurchases": "Restore purchases",
-			"terms": "Terms of Use",
-			"privacy": "Privacy Policy"
-		}
-	},
-	"threads": {
-		"title": "trends.",
-		"description": "We're working on exciting new features that will help you achieve your goals more effectively"
-	},
-	"screens": {
-		"splashscreen": {
-			"yourgoals": "your goals.",
-			"yourenergy": "your energy.",
-			"yourjourney": "your journey."
-		},
-		"onboarding": {
-			"welcome": {
-				"title": "Method is your partner\nin achieving goals\nand finding inner peace.",
-				"description": "Let’s start this journey together!",
-				"button": "Let's go"
-			},
-			"aboutyou": {
-				"title": "Tailor your journey\nby sharing a bit\nabout yourself",
-				"description": "Answer a few questions\nto get personalized",
-				"button": "Okay"
-			},
-			"ask1": {
-				"title": "How old are you?",
-				"description": "Your age is used to\npersonalize your content",
-				"option1": "13-17",
-				"option2": "18-24",
-				"option3": "25-34",
-				"option4": "35-44",
-				"option5": "45-54",
-				"option6": "55+"
-			},
-			"ask2": {
-				"title": "What’s your gender?",
-				"description": "",
-				"option1": "Female",
-				"option2": "Male",
-				"option3": "Prefer not to say"
-			},
-			"ask3": {
-				"title": "What are you currently\nfocused on?",
-				"description": "",
-				"option1": "Work",
-				"option2": "Personal",
-				"option3": "Relationships",
-				"option4": "Health",
-				"option5": "Financial",
-				"option6": "Other"
-			},
-			"notifications": {
-				"title": "Step by step you can\nchange your life",
-				"subtitle": "When would you prefer to receive reminders for self-reflection?",
-				"morning": "Morning",
-				"evening": "Evening",
-				"smart_system": "Smart notification system is enabled,\nwhich adapts to your schedule",
-				"alert_description": "Hey, buddy! It's time to plan your day. Let's get started!",
-				"allow": "Allow notifications"
-			},
-			"last": {
-				"title": "Welcome to Method",
-				"subtitle": "You journey starts here"
-			},
-			"ask4": {
-				"title": "What's your name?",
-				"description": "We'll use this to personalize your experience",
-				"label": "First name",
-				"placeholder": "Enter your first name",
-				"errors": {
-					"required": "Name is required",
-					"tooShort": "Name must be at least 2 characters",
-					"tooLong": "Name must be less than 50 characters"
-				}
-			}
-		},
-		"subscription": {
-			"title": "Do you want fast growth?",
-			"subtitle": "Get premium and begin the journey to your goals in inner peace.",
-			"restorePurchase": "Restore purchase",
-			"termsAndConditions": "Terms and conditions",
-			"disclaimer": "This subscription will renew at the end of your current period. You can cancel anytime.",
-			"toggle": {
-				"premium": "Premium",
-				"premiumPlus": "Premium + AI"
-			},
-			"plans": {
-				"premium": {
-					"title": "Premium",
-					"description": "Advanced features for productivity",
-					"features": {
-						"planning": {
-							"title": "Smart Planning",
-							"description": "Create tasks, set priorities and deadlines"
-						},
-						"motivation": {
-							"title": "Motivational Phrases",
-							"description": "Daily inspiring quotes and reminders to maintain motivation"
-						},
-						"reminders": {
-							"title": "Smart Reminder System",
-							"description": "Flexible setup of notifications and recurring reminders"
-						},
-						"state": {
-							"title": "State Assessment",
-							"description": "Regular analysis of your mood and productivity"
-						},
-						"goals": {
-							"title": "Goal Setting",
-							"description": "Link tasks to long-term goals, track progress"
-						},
-						"habits": {
-							"title": "Habit Tracker",
-							"description": "Form beneficial habits with reminders and statistics"
-						},
-						"analytics": {
-							"title": "Advanced Analytics",
-							"description": "Detailed reports and insights about your productivity"
-						}
-					}
-				},
-				"premiumPlus": {
-					"title": "Premium + AI",
-					"description": "All Premium features + advanced AI assistant",
-					"features": {
-						"voice": {
-							"title": "Voice Input",
-							"description": "Create records and notes using voice input"
-						},
-						"voiceTasks": {
-							"title": "Voice Planning",
-							"description": "Plan your day using voice commands"
-						},
-						"smartInput": {
-							"title": "Smart Suggestions",
-							"description": "AI helps formulate tasks and plans more effectively"
-						},
-						"aiAnalytics": {
-							"title": "AI Analytics",
-							"description": "Deep analysis of your days and automatic report generation"
-						},
-						"smartReminders": {
-							"title": "Smart Reminders",
-							"description": "Personalized reminders based on your habits and preferences"
-						}
-					}
-				}
-			},
-			"trial": {
-				"title": "{{days}} days free",
-				"button": "Try {{days}} days free"
-			},
-			"price": {
-				"annual": "{{price}} per year (${{monthly}}/month)"
-			},
-			"cancel": {
-				"anytime": "Cancel subscription at any time"
-			}
-		}
-	},
-	"validation": {
-		"required": "This field is required",
-		"minLength": "Must be at least {{min}} characters",
-		"maxLength": "Must be less than {{max}} characters",
-		"invalidFormat": "Invalid format"
-	},
-	"subscription": {
-		"unlock_premium": "Unlock Premium Features",
-		"choose_plan": "Choose Your Plan",
-		"current_plan": "Current Plan",
-		"subscribe_button": "Subscribe",
-		"success_title": "Success!",
-		"success_message": "Thank you for your subscription!",
-		"restore_purchases": "Restore Purchases",
-		"restore_success_title": "Purchases Restored",
-		"restore_success_message": "Your purchases have been successfully restored",
-		"restore_empty_title": "No Purchases Found",
-		"restore_empty_message": "No previous purchases were found to restore",
-		"error_title": "Subscription Error",
-		"error_message": "Failed to complete subscription. Please try again",
-		"restore_error_title": "Restore Failed",
-		"restore_error_message": "Failed to restore purchases. Please try again",
-		"terms_text": "By subscribing you agree to our Terms of Service and Privacy Policy. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period."
-	},
-	"coaches": {
-		"list": {
-			"mini": {
-				"title": "Coaches"
-			},
-			"item": {
-				"perSession": "per session",
-				"topics": "topics",
-				"methods": "methods"
-			}
-		},
-		"coach": {
-			"aboutMe": {
-				"title": "About Me"
-			},
-			"languages": {
-				"subtitle": "Languages"
-			},
-			"photos": "Photos",
-			"whatIWorkWith": {
-				"title": "What I Work With"
-			},
-			"workMethods": {
-				"title": "Work Methods"
-			},
-			"coachTypes": {
-				"subtitle": "Coach Types"
-			},
-			"industries": {
-				"subtitle": "Industries"
-			},
-			"icfCertificationLevel": {
-				"subtitle": "ICF Certification Level"
-			},
-			"directions": {
-				"subtitle": "Coaching Directions"
-			},
-			"additionalPhotos": "Additional Photos",
-			"education": {
-				"title": "Education",
-				"higher": "Higher education",
-				"additional": "Additional education",
-				"noProgram": "No program specified"
-			},
-			"booking": {
-				"button": "Book a session",
-				"noPackages": "No packages or times available",
-				"noPackagesDescription": "The coach has no packages available for booking at the moment",
-				"contact": "Contact"
-			},
-			"share": {
-				"title": "Check out {{name}}'s coaching profile",
-				"message": "I found an amazing coach - {{name}}! Professional coach with {{experience}} years of experience. {{about}}",
-				"dialog_title": "Share Coach Profile",
-				"error": "Unable to share coach profile"
-			}
-		},
-		"booking": {
-			"noPackages": "No packages available",
-			"noPackagesDescription": "The coach has no packages available for booking at the moment",
-			"contact": "Contact"
-		}
-	}
+    "common": {
+        "back": "Back",
+        "next": "Next",
+        "save": "Save",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "delete": "Delete",
+        "error": "Error",
+        "loading": "Loading",
+        "success": "Success",
+        "edit": "Edit",
+        "done": "Done",
+        "skip": "Skip",
+        "allow": "Allow",
+        "swipe": "Swipe to continue",
+        "continue": "Continue",
+        "more": "More",
+        "moreCount": "More {{count}}",
+        "readLess": "Read less",
+        "readMore": "Read more",
+        "showAll": "Show all",
+        "select": "Select",
+        "backToHome": "Back to home",
+        "create": "Create",
+        "offline": "Offline",
+        "offlineMode": "Offline mode",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "week": "Week",
+        "later": "Later",
+        "age": {
+            "year": "{{age}} year",
+            "years": "{{age}} years"
+        }
+    },
+    "auth": {
+        "signIn": "Sign In",
+        "signUp": "Sign Up",
+        "email": "Email",
+        "password": "Password"
+    },
+    "errors": {
+        "notFound": {
+            "title": "404",
+            "description": "Page not found",
+            "backHome": "Back to home"
+        }
+    },
+    "calendar": {
+        "yesterday": "yesterday",
+        "tomorrow": "tomorrow",
+        "dayInfo": "Information about the selected day..."
+    },
+    "diary": {
+        "moodcheckin": {
+            "step1": {
+                "title": "How are you feeling now?",
+                "description": "at"
+            },
+            "step2": {
+                "title": "What emotions are you experiencing?"
+            },
+            "step3": {
+                "title": "What factors influenced you to feel"
+            },
+            "step4": {
+                "title1": "How",
+                "title2": "influenced how you feel",
+                "titleNoFactors": "Why do you think you are feeling",
+                "titleNoFactors2": "Were there any events or thoughts that triggered them?",
+                "placeholder": "Write your thoughts here..."
+            },
+            "success": {
+                "title": "Good job! Mood recorded",
+                "description": "Keep tracking your mood every day for better self-awareness"
+            }
+        },
+        "mood": {
+            "eveningReflection": "Evening reflection",
+            "sumUpYourDay": "Sum up your day",
+            "moods": {
+                "terrible": "Terrible",
+                "bad": "Bad",
+                "normal": "Normal",
+                "good": "Good",
+                "excellent": "Excellent"
+            }
+        },
+        "moodCheckin": {
+            "title": "Mood check-in",
+            "description": "Check how you're feeling today"
+        },
+        "startYourDay": {
+            "title": "Start your day",
+            "description": "Let's plan your day",
+            "start": "Start"
+        }
+    },
+    "plans": {
+        "comingSoon": "Coming Soon",
+        "description": "We're working on exciting new features that will help you achieve your goals more effectively",
+        "features": {
+            "taskManagement": {
+                "title": "Task Management",
+                "description": "Create, organize and track your tasks. Use tags, priorities and deadlines for effective planning."
+            },
+            "goalAlignment": {
+                "title": "Goal Alignment",
+                "description": "Link tasks to long-term goals. Track progress and visualize your path to achievement."
+            },
+            "habitTracker": {
+                "title": "Habit Tracker",
+                "description": "Form beneficial habits. Set reminders and monitor completion statistics."
+            },
+            "aiAssistant": {
+                "title": "AI Assistant",
+                "description": "Get smart recommendations for planning, task decomposition and workflow optimization."
+            },
+            "calendarSync": {
+                "title": "Calendar Sync",
+                "description": "Integrate your tasks with Google Calendar and Apple Calendar. Manage all events in one place."
+            }
+        },
+        "nextDayPlan": {
+            "title": "Next Day Plan",
+            "description": "Plan your day ahead and stay organized"
+        }
+    },
+    "explore": {
+        "comingSoon": "Coming Soon",
+        "description": "We're working on a platform that will help you find the perfect specialist for personal growth",
+        "features": {
+            "smartMatching": {
+                "title": "Smart Specialist Matching",
+                "description": "Find coaches and psychologists by specialization, experience, price and other parameters. AI algorithm will help match a specialist to your specific request."
+            },
+            "videoChat": {
+                "title": "Video & Chat",
+                "description": "Communicate with specialists through secure video chat right in the app. Save chat history and session materials."
+            },
+            "scheduling": {
+                "title": "Convenient Scheduling",
+                "description": "Book sessions at convenient times. Automatic reminders and calendar synchronization."
+            },
+            "security": {
+                "title": "Security & Privacy",
+                "description": "All specialists undergo thorough verification. Your data and communications are securely protected."
+            }
+        }
+    },
+    "profile": {
+        "title": "Profile",
+        "description": "Manage your profile and settings",
+        "email": "Email",
+        "phone": "Phone",
+        "deleteAccount": {
+            "title": "Delete Account",
+            "message": "Are you sure you want to delete your account? This action cannot be undone.",
+            "button": "Delete Account"
+        }
+    },
+    "settings": {
+        "viewProfile": "View Profile",
+        "settings": "Settings",
+        "title": "Settings",
+        "theme": {
+            "title": "Theme",
+            "description": "Choose a theme that suits you",
+            "automatic": "Automatic",
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "language": {
+            "title": "Language",
+            "description": "Select your preferred language",
+            "english": "English",
+            "russian": "Russian"
+        },
+        "notifications": {
+            "title": "Notifications",
+            "description": "Enable notifications"
+        },
+        "storage": {
+            "title": "Storage",
+            "totalUsed": "Storage used",
+            "clearCache": {
+                "button": "Clear cache",
+                "title": "Clear cache",
+                "message": "Are you sure you want to clear all data? This action cannot be undone."
+            },
+            "items": {
+                "title": "Saved data"
+            }
+        },
+        "subscription": {
+            "title": "Subscription",
+            "active": "Active Subscription",
+            "noActive": "No Active Subscription",
+            "plan": "Plan: {{plan}}",
+            "expires": "Valid until: {{date}}",
+            "autoRenewEnabled": "Auto-renewal enabled",
+            "autoRenewDisabled": "Auto-renewal disabled",
+            "cancelSubscription": "Cancel subscription",
+            "tryPremium": "Get access to all premium features of the app",
+            "activatePremium": "Activate Premium",
+            "restorePurchases": "Restore purchases",
+            "terms": "Terms of Use",
+            "privacy": "Privacy Policy"
+        }
+    },
+    "threads": {
+        "title": "trends.",
+        "description": "We're working on exciting new features that will help you achieve your goals more effectively"
+    },
+    "screens": {
+        "splashscreen": {
+            "yourgoals": "your goals.",
+            "yourenergy": "your energy.",
+            "yourjourney": "your journey."
+        },
+        "onboarding": {
+            "welcome": {
+                "title": "Method is your partner\nin achieving goals\nand finding inner peace.",
+                "description": "Let’s start this journey together!",
+                "button": "Let's go"
+            },
+            "aboutyou": {
+                "title": "Tailor your journey\nby sharing a bit\nabout yourself",
+                "description": "Answer a few questions\nto get personalized",
+                "button": "Okay"
+            },
+            "ask1": {
+                "title": "How old are you?",
+                "description": "Your age is used to\npersonalize your content",
+                "option1": "13-17",
+                "option2": "18-24",
+                "option3": "25-34",
+                "option4": "35-44",
+                "option5": "45-54",
+                "option6": "55+"
+            },
+            "ask2": {
+                "title": "What’s your gender?",
+                "description": "",
+                "option1": "Female",
+                "option2": "Male",
+                "option3": "Prefer not to say"
+            },
+            "ask3": {
+                "title": "What are you currently\nfocused on?",
+                "description": "",
+                "option1": "Work",
+                "option2": "Personal",
+                "option3": "Relationships",
+                "option4": "Health",
+                "option5": "Financial",
+                "option6": "Other"
+            },
+            "notifications": {
+                "title": "Step by step you can\nchange your life",
+                "subtitle": "When would you prefer to receive reminders for self-reflection?",
+                "morning": "Morning",
+                "evening": "Evening",
+                "smart_system": "Smart notification system is enabled,\nwhich adapts to your schedule",
+                "alert_description": "Hey, buddy! It's time to plan your day. Let's get started!",
+                "allow": "Allow notifications"
+            },
+            "last": {
+                "title": "Welcome to Method",
+                "subtitle": "You journey starts here"
+            },
+            "ask4": {
+                "title": "What's your name?",
+                "description": "We'll use this to personalize your experience",
+                "label": "First name",
+                "placeholder": "Enter your first name",
+                "errors": {
+                    "required": "Name is required",
+                    "tooShort": "Name must be at least 2 characters",
+                    "tooLong": "Name must be less than 50 characters"
+                }
+            }
+        },
+        "subscription": {
+            "title": "Do you want fast growth?",
+            "subtitle": "Get premium and begin the journey to your goals in inner peace.",
+            "restorePurchase": "Restore purchase",
+            "termsAndConditions": "Terms and conditions",
+            "disclaimer": "This subscription will renew at the end of your current period. You can cancel anytime.",
+            "toggle": {
+                "premium": "Premium",
+                "premiumPlus": "Premium + AI"
+            },
+            "plans": {
+                "premium": {
+                    "title": "Premium",
+                    "description": "Advanced features for productivity",
+                    "features": {
+                        "planning": {
+                            "title": "Smart Planning",
+                            "description": "Create tasks, set priorities and deadlines"
+                        },
+                        "motivation": {
+                            "title": "Motivational Phrases",
+                            "description": "Daily inspiring quotes and reminders to maintain motivation"
+                        },
+                        "reminders": {
+                            "title": "Smart Reminder System",
+                            "description": "Flexible setup of notifications and recurring reminders"
+                        },
+                        "state": {
+                            "title": "State Assessment",
+                            "description": "Regular analysis of your mood and productivity"
+                        },
+                        "goals": {
+                            "title": "Goal Setting",
+                            "description": "Link tasks to long-term goals, track progress"
+                        },
+                        "habits": {
+                            "title": "Habit Tracker",
+                            "description": "Form beneficial habits with reminders and statistics"
+                        },
+                        "analytics": {
+                            "title": "Advanced Analytics",
+                            "description": "Detailed reports and insights about your productivity"
+                        }
+                    }
+                },
+                "premiumPlus": {
+                    "title": "Premium + AI",
+                    "description": "All Premium features + advanced AI assistant",
+                    "features": {
+                        "voice": {
+                            "title": "Voice Input",
+                            "description": "Create records and notes using voice input"
+                        },
+                        "voiceTasks": {
+                            "title": "Voice Planning",
+                            "description": "Plan your day using voice commands"
+                        },
+                        "smartInput": {
+                            "title": "Smart Suggestions",
+                            "description": "AI helps formulate tasks and plans more effectively"
+                        },
+                        "aiAnalytics": {
+                            "title": "AI Analytics",
+                            "description": "Deep analysis of your days and automatic report generation"
+                        },
+                        "smartReminders": {
+                            "title": "Smart Reminders",
+                            "description": "Personalized reminders based on your habits and preferences"
+                        }
+                    }
+                }
+            },
+            "trial": {
+                "title": "{{days}} days free",
+                "button": "Try {{days}} days free"
+            },
+            "price": {
+                "annual": "{{price}} per year (${{monthly}}/month)"
+            },
+            "cancel": {
+                "anytime": "Cancel subscription at any time"
+            }
+        }
+    },
+    "validation": {
+        "required": "This field is required",
+        "minLength": "Must be at least {{min}} characters",
+        "maxLength": "Must be less than {{max}} characters",
+        "invalidFormat": "Invalid format"
+    },
+    "subscription": {
+        "unlock_premium": "Unlock Premium Features",
+        "choose_plan": "Choose Your Plan",
+        "current_plan": "Current Plan",
+        "subscribe_button": "Subscribe",
+        "success_title": "Success!",
+        "success_message": "Thank you for your subscription!",
+        "restore_purchases": "Restore Purchases",
+        "restore_success_title": "Purchases Restored",
+        "restore_success_message": "Your purchases have been successfully restored",
+        "restore_empty_title": "No Purchases Found",
+        "restore_empty_message": "No previous purchases were found to restore",
+        "error_title": "Subscription Error",
+        "error_message": "Failed to complete subscription. Please try again",
+        "restore_error_title": "Restore Failed",
+        "restore_error_message": "Failed to restore purchases. Please try again",
+        "terms_text": "By subscribing you agree to our Terms of Service and Privacy Policy. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period."
+    },
+    "coaches": {
+        "list": {
+            "mini": {
+                "title": "Coaches"
+            },
+            "item": {
+                "perSession": "per session",
+                "topics": "topics",
+                "methods": "methods"
+            }
+        },
+        "coach": {
+            "aboutMe": {
+                "title": "About Me"
+            },
+            "languages": {
+                "subtitle": "Languages"
+            },
+            "photos": "Photos",
+            "whatIWorkWith": {
+                "title": "What I Work With"
+            },
+            "workMethods": {
+                "title": "Work Methods"
+            },
+            "coachTypes": {
+                "subtitle": "Coach Types"
+            },
+            "industries": {
+                "subtitle": "Industries"
+            },
+            "icfCertificationLevel": {
+                "subtitle": "ICF Certification Level"
+            },
+            "directions": {
+                "subtitle": "Coaching Directions"
+            },
+            "additionalPhotos": "Additional Photos",
+            "education": {
+                "title": "Education",
+                "higher": "Higher education",
+                "additional": "Additional education",
+                "noProgram": "No program specified"
+            },
+            "booking": {
+                "button": "Book a session",
+                "noPackages": "No packages or times available",
+                "noPackagesDescription": "The coach has no packages available for booking at the moment",
+                "contact": "Contact"
+            },
+            "share": {
+                "title": "Check out {{name}}'s coaching profile",
+                "message": "I found an amazing coach - {{name}}! Professional coach with {{experience}} years of experience. {{about}}",
+                "dialog_title": "Share Coach Profile",
+                "error": "Unable to share coach profile"
+            }
+        },
+        "booking": {
+            "noPackages": "No packages available",
+            "noPackagesDescription": "The coach has no packages available for booking at the moment",
+            "contact": "Contact"
+        }
+    },
+    "tasks": {
+        "new": {
+            "inputPlaceholder": "What needs to be done?",
+            "subtaskPlaceholder": "Add subtask",
+            "addSubtask": "Add subtask"
+        },
+        "priority": {
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High"
+        },
+        "status": {
+            "pending": "Pending",
+            "completed": "Completed"
+        },
+        "list": {
+            "noTasks": "No tasks"
+        }
+    }
 }

@@ -2,7 +2,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useLocale } from '@shared/hooks/systems/locale/useLocale'
 import { Button } from '@shared/ui/button'
-import { Checkbox } from '@shared/ui/checkbox'
+import { Checkbox } from '@shared/ui/checkbox-radio'
 import { NotificationsContainer } from '@shared/ui/notifications/notification'
 import { Separator } from '@shared/ui/separator'
 import { Text } from '@shared/ui/text'

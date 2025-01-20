@@ -1,9 +1,11 @@
 // src/features/nav/bottom-menu/AddButtonMenu.tsx
 import { useAddMenu } from '@shared/context/add-menu-context'
+import { useModal } from '@shared/context/modal-provider'
 import { Button } from '@shared/ui/button'
 import { IconName } from '@shared/ui/icon'
 import { FullScreenModal } from '@shared/ui/modals/fullscreen-modal'
 import { MoodCheckin } from '@widgets/diary/mood/MoodCheckin'
+import NewTask from '@widgets/plans/NewTask'
 import React, { useState } from 'react'
 import { Dimensions, Pressable } from 'react-native'
 import Animated, {
@@ -13,25 +15,46 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated'
 
-const menuItems: Array<{
-    id: string
-    icon: IconName
-    title: string
-    route?: string
-    type?: string
-}> = [
-        {
-            id: 'mood',
-            icon: 'Rabbit',
-            title: 'Mood\nCheck-In',
-            type: 'modal',
-        },
-    ]
 
 export const AddButtonMenu = () => {
     const { isVisible, hide } = useAddMenu()
     const { height: screenHeight } = Dimensions.get('window')
     const [isMoodModalVisible, setIsMoodModalVisible] = useState(false)
+    const { showBottomSheet, showFullScreenModal } = useModal()
+
+    const handleOpenNewTask = () => {
+        showBottomSheet(<NewTask />)
+    }
+
+    const handleOpenMoodCheckin = () => {
+        showFullScreenModal(<MoodCheckin date={new Date()} />)
+    }
+
+
+    const menuItems: Array<{
+        id: string
+        icon: IconName
+        title: string
+        route?: string
+        type?: string
+        onPress?: () => void
+    }> = [
+            {
+                id: 'mood',
+                icon: 'Rabbit',
+                title: 'Mood\nCheck-In',
+                type: 'modal',
+                onPress: handleOpenMoodCheckin,
+            },
+            {
+                id: 'task',
+                icon: 'Plus',
+                title: 'New Task',
+                type: 'modal',
+                onPress: handleOpenNewTask,
+            },
+        ]
+
 
     const menuAnimatedStyle = useAnimatedStyle(() => {
         return {
@@ -61,15 +84,8 @@ export const AddButtonMenu = () => {
     })
 
     const handleItemPress = (item: typeof menuItems[0]) => {
-        hide() // Скрываем меню
-
-        if (item.type === 'modal') {
-            // Если это модальное окно настроения
-            setIsMoodModalVisible(true)
-        } else if (item.route) {
-            // Здесь будет навигация для других пунктов
-            console.log('Navigate to:', item.route)
-        }
+        hide()
+        item.onPress?.()
     }
 
     return (
@@ -121,7 +137,7 @@ export const AddButtonMenu = () => {
                             key={item.id}
                             onPress={() => handleItemPress(item)}
                             className="mb-2"
-                            leftIcon={'Rabbit'}
+                            leftIcon={item.icon}
                         >
                             {item.title}
                         </Button>

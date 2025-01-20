@@ -1,6 +1,6 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { SupportedLanguage, useLanguage } from '@shared/context/language-provider'
-import { RadioGroup } from '@shared/ui/radio-group-button'
+import { RadioGroup } from '@shared/ui/radio'
 import { ScreenType } from '@widgets/profile/SettingModal'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

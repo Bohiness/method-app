@@ -1,6 +1,7 @@
 // src/shared/api/gamification/hooks/useGamification.ts
-import { DailyProgressData, gamificationApiService } from '@shared/api/gamification/gamification-api.service'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { DailyProgressData, gamificationApiService } from '@shared/api/gamification/gamification-api.service';
+import { useUser } from '@shared/context/user-provider';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 /**
 // Получение статистики
@@ -38,10 +39,13 @@ const GAMIFICATION_KEYS = {
 };
 
 export const useStreakStats = () => {
+    const isAuthenticated = useUser();
+
     const response = useQuery({
         queryKey: GAMIFICATION_KEYS.streak,
         queryFn: () => gamificationApiService.getStreakStats(),
         staleTime: 1000 * 60 * 5, // 5 минут
+        enabled: !!isAuthenticated,
     });
 
     return {
@@ -51,7 +55,7 @@ export const useStreakStats = () => {
         total_days: response.data?.total_days,
         last_completed_date: response.data?.last_completed_date,
         daily_progress: response.data?.daily_progress,
-        refetchStreak: response.refetch
+        refetchStreak: response.refetch,
     };
 };
 
@@ -59,7 +63,7 @@ export const useDailyProgress = () => {
     const queryClient = useQueryClient();
 
     return useMutation<DailyProgressData, Error, Partial<DailyProgressData>>({
-        mutationFn: (data) => gamificationApiService.updateDailyProgress(data),
+        mutationFn: data => gamificationApiService.updateDailyProgress(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: GAMIFICATION_KEYS.streak });
         },
@@ -94,8 +98,13 @@ export const useUpdateDailyGoal = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ id, data }: { id: number; data: Parameters<typeof gamificationApiService.updateDailyGoal>[1] }) =>
-            gamificationApiService.updateDailyGoal(id, data),
+        mutationFn: ({
+            id,
+            data,
+        }: {
+            id: number;
+            data: Parameters<typeof gamificationApiService.updateDailyGoal>[1];
+        }) => gamificationApiService.updateDailyGoal(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: GAMIFICATION_KEYS.dailyGoals });
         },

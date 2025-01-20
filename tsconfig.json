@@ -65,7 +65,9 @@
     "tailwind.config.ts",
     "tailwind.config.js",
     "./app/**/*.{js,jsx,ts,tsx}",
-    "./src/**/*.{js,jsx,ts,tsx}"
+    "./src/**/*.{js,jsx,ts,tsx}",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ],
   "exclude": [
     "node_modules"

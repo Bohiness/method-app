@@ -1,5 +1,5 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
-import { Checkbox, CheckboxGroup } from '@shared/ui/checkbox'
+import { Checkbox, CheckboxGroup } from '@shared/ui/checkbox-radio'
 import { ScreenType } from '@widgets/profile/SettingModal'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

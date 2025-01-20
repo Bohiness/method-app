@@ -70,7 +70,6 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = React.memo(({
         },
     })
 
-    console.log('Rendering CarouselDayDetails with styles:', { currentStyle, prevStyle, nextStyle })
 
     return (
         <View style={{ position: 'relative' }}>

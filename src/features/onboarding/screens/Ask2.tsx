@@ -1,4 +1,4 @@
-import { RadioGroup } from '@shared/ui/radio-group-button'
+import { RadioGroup } from '@shared/ui/radio'
 import { Text, Title } from '@shared/ui/text'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -1,60 +1,24 @@
 // src/shared/ui/inputs/TextInput.tsx
-import { Colors } from '@shared/constants/colors'
-import { useColorScheme } from '@shared/context/theme-provider'
+import { useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { Text } from '@shared/ui/text'
 import { SearchIcon } from 'lucide-react-native'
 import React, { forwardRef } from 'react'
-import { Platform, TextInput as RNTextInput, TextInputProps, View } from 'react-native'
+import { Platform, Pressable, TextInput as RNTextInput, TextInputProps, View } from 'react-native'
 
 export interface StyledTextInputProps extends TextInputProps {
-    /**
-     * Лейбл над инпутом
-     */
     label?: string
-    /**
-     * Текст ошибки
-     */
     error?: string
-    /**
-     * Вспомогательный текст под инпутом
-     */
     helperText?: string
-    /**
-     * Размер инпута
-     */
     size?: 'sm' | 'md' | 'lg'
-    /**
-     * Вариант отображения
-     */
-    variant?: 'default' | 'filled' | 'outline'
-    /**
-     * Полная ширина
-     */
+    variant?: 'default' | 'filled' | 'outline' | 'underline'
     fullWidth?: boolean
-    /**
-     * Показывать счетчик символов
-     */
     showCount?: boolean
-    /**
-     * Иконка слева
-     */
     leftIcon?: React.ReactNode
-    /**
-     * Иконка справа
-     */
     rightIcon?: React.ReactNode
-    /**
-     * Классы для контейнера
-     */
+    rightIconFunction?: () => void
     containerClassName?: string
-    /**
-     * Классы для инпута
-     */
     inputClassName?: string
-    /**
-     * Заполнить всю доступную высоту
-     */
     flex?: boolean
 }
 
@@ -79,31 +43,53 @@ export const TextInput = forwardRef<RNTextInput, StyledTextInputProps>(
             editable = true,
             flex = false,
             multiline = false,
+            rightIconFunction,
             ...props
         },
         ref
     ) => {
-        const colorScheme = useColorScheme()
-        const colors = Colors[colorScheme]
+        const { colors } = useTheme()
 
         // Размеры для разных вариантов
-        const sizeStyles = {
-            sm: 'py-2 px-3 text-sm',
-            md: 'py-3 px-4 text-lg',
-            lg: 'py-4 px-5 text-lg'
+        const getSizeStyles = () => {
+            const baseStyles = {
+                sm: {
+                    paddingVertical: Platform.select({ ios: 10, android: 8 }),
+                    paddingHorizontal: 12,
+                    fontSize: 14,
+                    lineHeight: 20,
+                    minHeight: Platform.select({ ios: 36, android: 34 })
+                },
+                md: {
+                    paddingVertical: Platform.select({ ios: 12, android: 10 }),
+                    paddingHorizontal: 16,
+                    fontSize: 16,
+                    lineHeight: 24,
+                    minHeight: Platform.select({ ios: 44, android: 42 })
+                },
+                lg: {
+                    paddingVertical: Platform.select({ ios: 14, android: 12 }),
+                    paddingHorizontal: 20,
+                    fontSize: 18,
+                    lineHeight: 28,
+                    minHeight: Platform.select({ ios: 52, android: 50 })
+                }
+            }
+
+            return baseStyles[size]
         }
 
         // Стили для разных вариантов
         const variantStyles = {
             default: 'bg-background dark:bg-background-dark border border-border dark:border-border-dark text-text dark:text-text-dark',
-            filled: 'bg-gray-100 dark:bg-gray-800 border-transparent',
-            outline: 'bg-transparent border border-border dark:border-border-dark'
+            filled: 'bg-surface-paper dark:bg-surface-paper-dark border-transparent',
+            outline: 'bg-transparent border border-border dark:border-border-dark',
+            underline: 'bg-transparent border-b border-border dark:border-border-dark text-text dark:text-text-dark rounded-none'
         }
 
         // Состояния
         const disabledStyles = !editable ? 'opacity-50' : ''
         const errorStyles = error ? 'border-error dark:border-error' : ''
-        const activeStyles = ''
 
         // Стили для контейнера
         const containerStyles = cn(
@@ -116,18 +102,17 @@ export const TextInput = forwardRef<RNTextInput, StyledTextInputProps>(
         // Базовые стили для инпута
         const baseInputStyles = cn(
             'rounded-xl w-full',
-            sizeStyles[size],
             variantStyles[variant],
             disabledStyles,
             errorStyles,
-            activeStyles,
             flex && 'h-full',
             inputClassName
         )
 
+        const sizeStyle = getSizeStyles()
+
         return (
             <View className={containerStyles}>
-                {/* Label */}
                 {label && (
                     <Text
                         className="mb-1.5 text-sm font-medium text-text dark:text-text-dark"
@@ -137,16 +122,13 @@ export const TextInput = forwardRef<RNTextInput, StyledTextInputProps>(
                     </Text>
                 )}
 
-                {/* Input Container */}
                 <View className={cn('relative', flex && 'flex-1')}>
-                    {/* Left Icon */}
                     {leftIcon && (
                         <View className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
                             {leftIcon}
                         </View>
                     )}
 
-                    {/* Input */}
                     <RNTextInput
                         ref={ref}
                         {...props}
@@ -155,7 +137,7 @@ export const TextInput = forwardRef<RNTextInput, StyledTextInputProps>(
                         placeholder={placeholder}
                         editable={editable}
                         multiline={multiline}
-                        placeholderTextColor={colors.secondaryText}
+                        placeholderTextColor={colors.secondary.light}
                         className={cn(
                             baseInputStyles,
                             leftIcon && 'pl-10',
@@ -163,27 +145,28 @@ export const TextInput = forwardRef<RNTextInput, StyledTextInputProps>(
                             className
                         )}
                         style={[
-                            Platform.select({
-                                ios: {
-                                    paddingVertical: size === 'sm' ? 8 : size === 'md' ? 12 : 16
-                                }
-                            }),
+                            sizeStyle,
+                            multiline && {
+                                textAlignVertical: 'top',
+                                minHeight: sizeStyle.minHeight ? sizeStyle.minHeight * 3 : undefined
+                            },
                             flex && {
-                                height: '100%',
-                                textAlignVertical: multiline ? 'top' : 'center'
+                                flex: 1,
+                                height: undefined
                             }
                         ]}
                     />
 
-                    {/* Right Icon */}
                     {rightIcon && (
-                        <View className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+                        <Pressable
+                            onPress={rightIconFunction}
+                            className="absolute p-2 right-3 top-1/2 -translate-y-1/2 z-10"
+                        >
                             {rightIcon}
-                        </View>
+                        </Pressable>
                     )}
                 </View>
 
-                {/* Bottom Row: Error, Helper Text, and Character Count */}
                 <View className="flex-row justify-between mt-1">
                     <View className="flex-1">
                         {error ? (
@@ -197,7 +180,6 @@ export const TextInput = forwardRef<RNTextInput, StyledTextInputProps>(
                         ) : null}
                     </View>
 
-                    {/* Character Counter */}
                     {showCount && maxLength && (
                         <Text
                             variant="secondary"
@@ -218,7 +200,6 @@ export const TextInput = forwardRef<RNTextInput, StyledTextInputProps>(
 
 TextInput.displayName = 'TextInput'
 
-// Предустановленные варианты компонента
 export const MultilineTextInput = forwardRef<RNTextInput, StyledTextInputProps>(
     (props, ref) => (
         <TextInput
@@ -226,11 +207,6 @@ export const MultilineTextInput = forwardRef<RNTextInput, StyledTextInputProps>(
             multiline
             textAlignVertical="top"
             {...props}
-            style={{
-                flex: props.flex ? 1 : undefined,
-                height: props.flex ? '100%' : undefined,
-                ...props.style
-            }}
         />
     )
 )
@@ -244,7 +220,7 @@ export const SearchInput = forwardRef<RNTextInput, StyledTextInputProps>(
             size="sm"
             variant="filled"
             placeholder={props.placeholder || 'Поиск...'}
-            leftIcon={<SearchIcon size={20} />}
+            leftIcon={<SearchIcon size={20} color={props.editable !== false ? undefined : '#9CA3AF'} />}
             {...props}
         />
     )

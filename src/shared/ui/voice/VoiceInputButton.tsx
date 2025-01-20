@@ -47,6 +47,11 @@ export const VoiceInputButton = ({
     const handlePress = async () => {
         if (!isInitialized) {
             setIsInitialized(true)
+
+            setTimeout(async () => {
+                await startRecording()
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+            }, 100)
             return
         }
 
