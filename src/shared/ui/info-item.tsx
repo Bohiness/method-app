@@ -9,6 +9,7 @@ interface InfoItemProps {
     label: string
     value: string
     verified?: boolean
+    empty?: boolean
     onPress?: () => void
     rightIcon?: ReactNode
     haptic?: boolean
@@ -18,6 +19,7 @@ export const InfoItem = ({
     label,
     value,
     verified,
+    empty,
     onPress,
     rightIcon = <ChevronRight size={20} className="text-inactive dark:text-inactive-dark" />,
     haptic = true
@@ -35,6 +37,7 @@ export const InfoItem = ({
                 <Text variant="secondary" size="sm">{label}</Text>
                 <View className="flex-row items-center mt-1">
                     {value && <Text className='mr-2'>{value}</Text>}
+                    {empty && <Text className='mr-2'>-</Text>}
                     {verified !== undefined && (
                         <View className={`px-2 py-1 rounded ${verified ? 'bg-success/10' : 'bg-warning/10'}`}>
                             <Text

@@ -1,18 +1,13 @@
 import { HighlightedText } from '@shared/lib/utils/HighlightedText'
 import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
-import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
-import { TextInput } from '@shared/ui/text-input'
+import { MultilineTextInput } from '@shared/ui/text-input'
+import { View } from '@shared/ui/view'
 import * as Haptics from 'expo-haptics'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Keyboard, ScrollView, TouchableWithoutFeedback, View } from 'react-native'
-import Animated, {
-    FadeIn,
-    SlideInRight,
-    SlideOutLeft
-} from 'react-native-reanimated'
+import { Keyboard, ScrollView, TouchableWithoutFeedback } from 'react-native'
 
 // FactorsStep
 interface FactorsStepProps {
@@ -21,25 +16,20 @@ interface FactorsStepProps {
     selectedEmotions: number[]
     onSelect: (id: number) => void
     onNotesChange: (text: string) => void
-    onNext: () => void
-    onBack: () => void
     emotions: Emotion[]
     onRemoveEmotion: (id: number) => void
 }
 
-export const FactorsStep: React.FC<FactorsStepProps> = ({
+export function FactorsStep({
     factors,
     selectedFactors,
     selectedEmotions,
     onSelect,
     onNotesChange,
-    onNext,
-    onBack,
     emotions,
     onRemoveEmotion
-}) => {
+}: FactorsStepProps) {
     const { t } = useTranslation()
-
     const TitleWithHighlights = () => {
         const selectedEmotionsCount = selectedEmotions.length
 
@@ -67,26 +57,21 @@ export const FactorsStep: React.FC<FactorsStepProps> = ({
     }
 
     return (
-
-        <Animated.View
-            className="flex-1 p-4 bg-background dark:bg-background-dark"
-            entering={SlideInRight}
-            exiting={SlideOutLeft}
-        >
+        <View className="flex-1 px-4" >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <>
                     <TitleWithHighlights />
 
-                    <TextInput
+                    <MultilineTextInput
                         placeholder={t('diary.moodcheckin.step4.placeholder')}
                         multiline
-                        numberOfLines={3}
                         onChangeText={onNotesChange}
-                        className='mb-6'
+                        containerClassName='mb-6'
+                        voiceInput
                     />
 
                     <ScrollView
-                        className="flex-1 mb-20"
+                        className="flex-1 mb-6"
                         showsVerticalScrollIndicator={false}
                     >
                         <View className="flex-row flex-wrap gap-2 gap-y-4">
@@ -107,34 +92,8 @@ export const FactorsStep: React.FC<FactorsStepProps> = ({
                             }
                         </View>
                     </ScrollView>
-
-                    <View className="px-4 pb-6 pt-4 bg-background dark:bg-background-dark">
-                        <Animated.View
-                            entering={FadeIn}
-                            className="flex-row justify-between align-center"
-                        >
-                            <Button
-                                onPress={onBack}
-                                variant="outline"
-                                className="px-4"
-                            >
-                                <Icon
-                                    name="ChevronLeft"
-                                    size={20}
-                                />
-                            </Button>
-
-                            <Button
-                                onPress={onNext}
-                                variant="outline"
-                            >
-                                {t('common.next')} ({selectedFactors.length})
-                            </Button>
-                        </Animated.View>
-                    </View>
                 </>
             </TouchableWithoutFeedback>
-        </Animated.View >
-
+        </View >
     )
 }

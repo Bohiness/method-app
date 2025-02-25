@@ -1,10 +1,10 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { useLanguage } from '@shared/context/language-provider'
+import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { MenuGroup, MenuItem } from '@shared/ui/modals/menu-item'
 import { Text } from '@shared/ui/text'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { ScreenType } from '../SettingModal'
 
 export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (screen: ScreenType) => void }) => {
     const { t } = useTranslation()
@@ -13,7 +13,7 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
     return (
         <View>
             <HeaderMenuItem onBack={onBack} title={'settings.title'} />
-            <View className="p-4">
+            <View className="p-4 gap-y-4">
                 <MenuItem
                     label={t('settings.notifications.title')}
                     leftIcon={'Bell'}
@@ -26,7 +26,7 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                 />
 
                 {/* Группа элементов */}
-                <MenuGroup label={t('settings.preferences.title')} className="mt-6 mb-6">
+                <MenuGroup label={t('settings.preferences.title')}>
                     <MenuItem
                         label={t('settings.theme.title')}
                         leftIcon={'Moon'}

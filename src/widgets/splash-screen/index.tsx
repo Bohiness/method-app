@@ -2,12 +2,13 @@ import { useTheme } from '@shared/context/theme-provider'
 import { useUser } from '@shared/context/user-provider'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Text } from '@shared/ui/text'
+import { View } from '@shared/ui/view'
 import Constants from 'expo-constants'
 import { Image } from 'expo-image'
 import * as Updates from 'expo-updates'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useWindowDimensions, View } from 'react-native'
+import { useWindowDimensions } from 'react-native'
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
@@ -93,8 +94,6 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     const logoTopX = useSharedValue(0)
     const logoBottomX = useSharedValue(-950 / 2)
 
-    console.log('screenWidth', screenWidth)
-
     useEffect(() => {
         // Анимация текста остается прежней
         textProgress.value = withSpring(1, {
@@ -137,8 +136,8 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     return (
         <BackgroundWithNoise className="flex-1 bg-surface-paper dark:bg-surface-paper-dark" noiseOpacity={0.3}>
             {/* Верхний текст */}
-            <View className="absolute px-8" style={{ right: 0, top: insets.top + 8 }}>
-                <View className="items-end space-y-2">
+            <View variant="transparent" className="absolute px-8" style={{ right: 0, top: insets.top + 8 + 20 }}>
+                <View variant="transparent" className="items-end space-y-2">
                     {[
                         { text: t('screens.splashscreen.yourgoals'), delay: 0 },
                         { text: t('screens.splashscreen.yourenergy'), delay: 500 },
@@ -146,12 +145,11 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                     ].map(({ text, delay }) => (
                         <Animated.View
                             key={text}
-                            style={createTextStyle(delay)}
+                            style={[createTextStyle(delay),]}
                         >
                             <Text
                                 variant="secondary"
                                 size="xl"
-                                className="text-secondary-light dark:text-secondary-light-dark"
                             >
                                 {text}
                             </Text>

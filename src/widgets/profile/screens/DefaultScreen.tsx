@@ -30,6 +30,16 @@ export const DefaultScreen = ({ onNavigate }: DefaultScreenProps) => {
 
                     <View className="gap-y-3 mt-6">
                         <MenuItem
+                            label={t('settings.myDiary')}
+                            leftIcon={'BookHeart'}
+                            isFirst
+                            isLast
+                            showSeparator
+                            onPress={() => {
+                                onNavigate('diary')
+                            }}
+                        />
+                        <MenuItem
                             label={t('settings.viewProfile')}
                             leftIcon={'User'}
                             isFirst

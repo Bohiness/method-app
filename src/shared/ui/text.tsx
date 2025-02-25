@@ -13,6 +13,7 @@ export interface StyledTextProps extends TextProps {
     weight?: Weight
     italic?: boolean
     className?: string
+    align?: 'left' | 'center' | 'right'
 }
 
 const getVariantClasses = (variant: Variant, isDark: boolean): string => {
@@ -44,6 +45,16 @@ const getSizeClasses = (size: Size): string => {
     return sizes[size]
 }
 
+const getAlignClasses = (align: 'left' | 'center' | 'right'): string => {
+    const aligns = {
+        left: 'text-left',
+        center: 'text-center',
+        right: 'text-right'
+    }
+    return aligns[align]
+}
+
+
 const getWeightClasses = (weight: Weight): string => {
     const weights = {
         normal: 'font-normal',
@@ -61,6 +72,7 @@ export const Text = ({
     weight = 'normal',
     italic = false,
     className = '',
+    align = 'left',
     style,
     ...props
 }: StyledTextProps) => {
@@ -70,8 +82,10 @@ export const Text = ({
         getVariantClasses(variant, isDark),
         getSizeClasses(size),
         getWeightClasses(weight),
+        getAlignClasses(align),
         italic && 'italic',
-        className
+        className,
+
     )
 
     return (
@@ -89,8 +103,11 @@ export const Text = ({
 export const Title = (props: StyledTextProps) => (
     <Text
         size="2xl"
-        weight="bold"
-        className="text-text dark:text-text-dark"
+        weight="medium"
+        className={cn(
+            'text-text dark:text-text-dark',
+            props.className
+        )}
         {...props}
     />
 )

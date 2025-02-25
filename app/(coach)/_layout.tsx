@@ -24,6 +24,7 @@ export default function CoachLayout() {
                     header: () => (
                         <CustomHeader
                             title={t('coaches.list.mini.title')}
+                            showBackButton
                         />
                     ),
                 }}
@@ -44,6 +45,7 @@ export default function CoachLayout() {
                         return (
                             <>
                                 <CustomHeader
+                                    showBackButton
                                     rightElement={
                                         <View className="flex-row items-center gap-x-2">
                                             <CoachShareButton coachId={+coachID} />

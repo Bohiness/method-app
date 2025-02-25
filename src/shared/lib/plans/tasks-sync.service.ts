@@ -1,6 +1,8 @@
 // src/shared/lib/tasks/tasks-sync.service.ts
 import { tasksApiService } from '@shared/api/plans/tasks-api.service';
 import { networkService } from '@shared/lib/network/network.service';
+import { SubTaskType } from '@shared/types/plans/TasksTypes';
+import { AxiosError } from 'axios';
 import { tasksStorageService } from './tasks-storage.service';
 
 class TasksSyncService {
@@ -10,7 +12,7 @@ class TasksSyncService {
 
     constructor() {
         networkService.addListener(this.handleNetworkChange);
-        this.processSyncQueue(); // Запускаем обработку очереди
+        this.processSyncQueue();
     }
 
     private handleNetworkChange = (isConnected: boolean) => {
@@ -83,24 +85,53 @@ class TasksSyncService {
         try {
             switch (change.type) {
                 case 'create':
-                    const createdTask = await tasksApiService.createTask(change.data);
+                    console.log('create task', change.data);
+                    // Создаем копию данных для изменения
+                    const taskData = { ...change.data };
+
+                    // Если есть подзадачи, убираем их id перед отправкой на сервер
+                    if (taskData.subtasks?.length) {
+                        taskData.subtasks = taskData.subtasks.map((subtask: SubTaskType) => ({
+                            text: subtask.text,
+                            // Другие поля подзадачи, если они есть, кроме id
+                            status: subtask.status || 'pending',
+                            is_completed: subtask.is_completed || false,
+                        }));
+                    }
+
+                    const createdTask = await tasksApiService.createTask(taskData);
+                    console.log('created task', createdTask);
                     await tasksStorageService.updateTaskServerId(change.taskId, createdTask.id);
                     break;
 
                 case 'update':
                     if (change.taskId) {
                         const task = await tasksStorageService.getTaskByLocalId(change.taskId);
+                        console.log('update task', task);
                         if (task?.serverId) {
-                            await tasksApiService.updateTask(task.serverId, change.data);
+                            const updateData = {
+                                ...change.data,
+                                subtasks: change.data.subtasks || task.subtasks,
+                            };
+                            console.log('update data', updateData);
+                            await tasksApiService.updateTask(task.serverId, updateData);
                         }
                     }
                     break;
 
                 case 'delete':
                     if (change.taskId) {
-                        const task = await tasksStorageService.getTaskByLocalId(change.taskId);
-                        if (task?.serverId) {
-                            await tasksApiService.deleteTask(task.serverId);
+                        try {
+                            console.debug('Processing delete change for task:', change.taskId);
+                            await tasksApiService.deleteTask(change.taskId);
+                            console.debug('Task deleted on server successfully');
+                        } catch (error) {
+                            // Проверяем, не была ли задача уже удалена
+                            if (error instanceof AxiosError && error.response?.status === 404) {
+                                console.debug('Task already deleted on server');
+                            } else {
+                                throw error;
+                            }
                         }
                     }
                     break;
@@ -109,7 +140,12 @@ class TasksSyncService {
             await tasksStorageService.removePendingChange(change.id);
         } catch (error) {
             console.error(`Failed to sync change:`, change, error);
-            await tasksStorageService.markChangeAsFailed(change.id, error);
+            await tasksStorageService.markChangeAsFailed(change.id, error as Error);
+
+            // Добавляем повторную попытку для важных операций
+            if (change.type === 'delete' && change.retryCount < 3) {
+                setTimeout(() => this.processChange(change), 5000);
+            }
         }
     }
 

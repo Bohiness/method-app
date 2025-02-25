@@ -1,8 +1,14 @@
 // src/shared/ui/modal/FullScreenModal.tsx
 import { HapticTab } from '@shared/lib/utils/HapticTab'
-import React from 'react'
-import { Modal, View } from 'react-native'
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
+import React, { useCallback, useEffect } from 'react'
+import { BackHandler, Modal, View } from 'react-native'
+import Animated, {
+    FadeIn,
+    FadeOut,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Icon } from '../icon'
 
@@ -20,6 +26,36 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
     showCloseButton = true
 }) => {
     const insets = useSafeAreaInsets()
+    const opacity = useSharedValue(0)
+
+    // Обработка аппаратной кнопки "Назад" на Android
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            if (isVisible) {
+                onClose()
+                return true
+            }
+            return false
+        })
+
+        return () => backHandler.remove()
+    }, [isVisible, onClose])
+
+    // Анимация появления/исчезновения
+    useEffect(() => {
+        opacity.value = withTiming(isVisible ? 1 : 0, {
+            duration: 300
+        })
+    }, [isVisible])
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value
+    }))
+
+    // Обработчик закрытия с haptic feedback
+    const handleClose = useCallback(() => {
+        requestAnimationFrame(onClose)
+    }, [onClose])
 
     return (
         <Modal
@@ -27,11 +63,13 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
             transparent={true}
             visible={isVisible}
             onRequestClose={onClose}
+            statusBarTranslucent
         >
             <Animated.View
-                entering={FadeIn}
-                exiting={FadeOut}
+                entering={FadeIn.duration(300)}
+                exiting={FadeOut.duration(300)}
                 className="flex-1 bg-background dark:bg-background-dark"
+                style={[animatedStyle]}
             >
                 {showCloseButton && (
                     <View
@@ -55,9 +93,11 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
                 )}
 
                 {/* Контент модального окна */}
-                <View className="flex-1">
+                <Animated.View
+                    className="flex-1"
+                >
                     {children}
-                </View>
+                </Animated.View>
             </Animated.View>
         </Modal>
     )

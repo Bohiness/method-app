@@ -11,11 +11,12 @@ import { UserType } from '../types/user/UserType'
 interface UserContextValue {
     user: UserType | null
     isAuthenticated: boolean
-    isAnonymous: boolean
-    isLoading: boolean
+    isAnonymous: boolean | undefined
+    isLoading: boolean | undefined
     checkAuth: () => Promise<void>
-    signIn: (email: string, password: string) => Promise<void>
-    signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
+    updateUser: (userData: Partial<UserType>) => Promise<UserType>
+    signIn: (variables: { email: string; password: string }) => Promise<void>
+    signUp: (variables: { email: string; password: string; firstName: string; lastName: string }) => Promise<void>
     signOut: () => Promise<void>
     convertToRegistered: (userData: Partial<UserType>) => Promise<UserType>
 }
@@ -24,65 +25,82 @@ const UserContext = createContext<UserContextValue | undefined>(undefined)
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<UserType | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
     const storage = useStorage()
     const queryClient = useQueryClient()
 
-
-    // Выход из системы
-    const signOut = async () => {
-        try {
-            console.debug('UserProvider: Signing out...')
-            setIsLoading(true)
-            await authApiService.logout()
-
-            // Очищаем кэш запросов
+    const signOutMutation = useMutation({
+        mutationFn: async () => {
+            return authApiService.logout()
+        },
+        onSuccess: async () => {
             queryClient.clear()
-
-            // После выхода создаем нового анонимного пользователя
+            setUser(null)
+            await storage.clear()
             await signInAnonymously()
-        } catch (error) {
-            console.error('UserProvider: Sign out failed:', error)
-            throw error
-        } finally {
-            setIsLoading(false)
         }
-    }
+    })
 
+    const signInMutation = useMutation({
+        mutationFn: async ({ email, password }: { email: string; password: string }) => {
+            return authApiService.login({ email, password })
+        },
+        onSuccess: async ({ user, tokens }) => {
+            setUser(user)
+        }
+    })
 
-    // Проверка текущей сессии
+    const signUpMutation = useMutation({
+        mutationFn: async (data: {
+            email: string
+            password: string
+            firstName: string
+            lastName: string
+        }) => {
+            return authApiService.register({
+                email: data.email,
+                password: data.password,
+                first_name: data.firstName,
+                last_name: data.lastName
+            })
+        },
+        onSuccess: async ({ user, tokens }) => {
+            await tokenService.setSession(tokens)
+            await storage.set('user-data', user)
+            setUser(user)
+        }
+    })
+
+    const convertToRegisteredMutation = useMutation({
+        mutationFn: async (userData: Partial<UserType>) => {
+            return anonymousUserService.convertToRegisteredUser(userData)
+        },
+        onSuccess: async ({ user: registeredUser }) => {
+            setUser(registeredUser)
+            await storage.set('user-data', registeredUser)
+        }
+    })
+
     const checkAuth = async () => {
-        try {
-            console.debug('UserProvider: Checking authentication...')
-            setIsLoading(true)
+        console.debug('UserProvider: Checking authentication...')
 
-            const session = await tokenService.getSession()
-            console.debug('UserProvider: Session status:', !!session)
+        const session = await tokenService.getSession()
+        console.debug('UserProvider: Session status:', !!session)
 
-            if (session) {
-                try {
-                    // Проверяем авторизацию на сервере
-                    const checkResponse = await authApiService.checkAuth()
-                    console.debug('UserProvider: Got user data:', !!checkResponse)
-                    setUser(checkResponse.userData)
-                    // Сохраняем данные
-                    await storage.set('user-data', checkResponse.userData)
-                    await storage.set('csrf-token', checkResponse.csrfToken)
-
-                } catch (error) {
-                    console.error('UserProvider: Auth check failed:', error)
-                    // Если проверка не удалась, пробуем получить анонимного пользователя
-                    await signInAnonymously()
-                }
-            } else {
-                // Если нет сессии, создаем анонимного пользователя
+        if (session) {
+            try {
+                const checkResponse = await authApiService.checkAuth()
+                console.debug('UserProvider: Got user data:', !!checkResponse)
+                setUser(checkResponse.userData)
+                await storage.set('user-data', checkResponse.userData)
+                await storage.set('csrf-token', checkResponse.csrfToken)
+            } catch (error) {
+                console.error('UserProvider: Auth check failed:', error)
                 await signInAnonymously()
             }
-        } finally {
-            setIsLoading(false)
+        } else {
+            await signInAnonymously()
         }
     }
-
 
     const signInAnonymously = async () => {
         try {
@@ -102,84 +120,33 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    // Вход в систему
-    const signIn = async (email: string, password: string) => {
-        try {
-            setIsLoading(true)
-            const { user, tokens } = await authApiService.login({ email, password })
-
-            // Сохраняем данные
-            await tokenService.setSession(tokens)
-            await storage.set('user-data', user)
-
-            setUser(user)
-        } catch (error) {
-            console.error('Sign in failed:', error)
-            throw error
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    // Регистрация
-    const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
-        try {
-            setIsLoading(true)
-            const { user, tokens } = await authApiService.register({
-                email,
-                password,
-                first_name: firstName,
-                last_name: lastName
-            })
-
-            // Сохраняем данные
-            await tokenService.setSession(tokens)
-            await storage.set('user-data', user)
-
-            setUser(user)
-        } catch (error) {
-            console.error('Sign up failed:', error)
-            throw error
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    // Конвертация анонимного пользователя в зарегистрированного
-    const convertToRegistered = async (userData: Partial<UserType>) => {
-        try {
-            console.debug('UserProvider: Converting anonymous user...')
-            setIsLoading(true)
-
-            const { user: registeredUser } = await anonymousUserService.convertToRegisteredUser(userData)
-            console.debug('UserProvider: User converted successfully')
-            setUser(registeredUser)
-
-            return registeredUser
-        } catch (error) {
-            console.error('UserProvider: Failed to convert user:', error)
-            throw error
-        } finally {
-            setIsLoading(false)
-        }
+    const updateUser = async (userData: Partial<UserType>) => {
+        const result = await userApiService.updateProfile(user!.id, userData)
+        await storage.set('user-data', result)
+        setUser(result)
+        return result
     }
 
     useEffect(() => {
         checkAuth()
     }, [])
 
-    const isAnonymous = !user?.email
 
     const value: UserContextValue = {
         user,
-        isAuthenticated: !!user?.email,
-        isAnonymous,
-        isLoading,
+        isAuthenticated: !!user?.email && !user?.is_anonymous_user,
+        isAnonymous: user?.is_anonymous_user,
+        isLoading: signInMutation.isPending || signUpMutation.isPending ||
+            signOutMutation.isPending || convertToRegisteredMutation.isPending,
         checkAuth,
-        signIn,
-        signUp,
-        signOut,
-        convertToRegistered
+        updateUser,
+        signIn: (variables) => signInMutation.mutateAsync(variables).then(),
+        signUp: (variables) => signUpMutation.mutateAsync(variables).then(),
+        signOut: () => signOutMutation.mutateAsync().then(),
+        convertToRegistered: async (userData) => {
+            const result = await convertToRegisteredMutation.mutateAsync(userData)
+            return result.user
+        }
     }
 
     return (
@@ -196,7 +163,6 @@ export function useUser() {
     }
     return context
 }
-
 
 export const useUpdateProfile = () => {
     const { user } = useUser()

@@ -1,12 +1,9 @@
 // src/features/nav/bottom-menu/AddButtonMenu.tsx
 import { useAddMenu } from '@shared/context/add-menu-context'
-import { useModal } from '@shared/context/modal-provider'
 import { Button } from '@shared/ui/button'
 import { IconName } from '@shared/ui/icon'
-import { FullScreenModal } from '@shared/ui/modals/fullscreen-modal'
-import { MoodCheckin } from '@widgets/diary/mood/MoodCheckin'
-import NewTask from '@widgets/plans/NewTask'
-import React, { useState } from 'react'
+import { router } from 'expo-router'
+import React from 'react'
 import { Dimensions, Pressable } from 'react-native'
 import Animated, {
     Easing,
@@ -17,19 +14,25 @@ import Animated, {
 
 
 export const AddButtonMenu = () => {
-    const { isVisible, hide } = useAddMenu()
+    const { isVisible, hide, currentTab } = useAddMenu()
     const { height: screenHeight } = Dimensions.get('window')
-    const [isMoodModalVisible, setIsMoodModalVisible] = useState(false)
-    const { showBottomSheet, showFullScreenModal } = useModal()
+
+    // Если мы на странице plans, не отображаем меню
+    if (currentTab === 'plans') {
+        return null
+    }
 
     const handleOpenNewTask = () => {
-        showBottomSheet(<NewTask />)
+        router.push('/(modals)/(plans)/new-task')
     }
 
     const handleOpenMoodCheckin = () => {
-        showFullScreenModal(<MoodCheckin date={new Date()} />)
+        router.push('/(modals)/(diary)/mood')
     }
 
+    const handleOpenNewHabit = () => {
+        router.push('/(modals)/(plans)/new-habit')
+    }
 
     const menuItems: Array<{
         id: string
@@ -53,6 +56,13 @@ export const AddButtonMenu = () => {
                 type: 'modal',
                 onPress: handleOpenNewTask,
             },
+            // {
+            //     id: 'habit',
+            //     icon: 'Plus',
+            //     title: 'New Habit',
+            //     type: 'modal',
+            //     onPress: handleOpenNewHabit,
+            // }
         ]
 
 
@@ -144,18 +154,6 @@ export const AddButtonMenu = () => {
                     ))}
                 </Animated.View>
             </Animated.View>
-
-            {/* Добавляем модальное окно MoodCheckin */}
-            <FullScreenModal
-                isVisible={isMoodModalVisible}
-                onClose={() => setIsMoodModalVisible(false)}
-                showCloseButton={true}
-            >
-                <MoodCheckin
-                    date={new Date()}
-                    onClose={() => setIsMoodModalVisible(false)}
-                />
-            </FullScreenModal>
 
         </>
     )

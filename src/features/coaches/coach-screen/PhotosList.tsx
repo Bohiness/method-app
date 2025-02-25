@@ -1,10 +1,11 @@
 // src/widgets/coach/CoachProfile/CoachPhotos/index.tsx
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { CoachImage } from '@shared/types/coaches/CoachType'
+import { ExpandableImage } from '@shared/ui/image/ExpandableImage'
 import { Text } from '@shared/ui/text'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Image, useWindowDimensions, View } from 'react-native'
+import { useWindowDimensions, View } from 'react-native'
 import Animated, {
     useAnimatedScrollHandler,
     useSharedValue,
@@ -14,6 +15,7 @@ interface CoachPhotosProps {
     photos: CoachImage[]
     gallery?: string
     title?: string
+    className: string
 }
 
 const SPACING = 8
@@ -21,7 +23,8 @@ const SPACING = 8
 export const PhotosList: React.FC<CoachPhotosProps> = ({
     photos,
     gallery,
-    title
+    title,
+    className
 }) => {
     const { width } = useWindowDimensions()
     const { t } = useTranslation()
@@ -44,13 +47,13 @@ export const PhotosList: React.FC<CoachPhotosProps> = ({
         <View
             key={index}
             style={{ width: ITEM_SIZE }}
-            className="m-2"
+            className={index === 0 ? "mr-2" : "mx-2"}
         >
-            <Image
+            <ExpandableImage
                 source={{ uri: photo.image }}
-                className="w-full rounded-2xl"
                 style={{ height: ITEM_SIZE }}
                 resizeMode="cover"
+                className='rounded-2xl'
             />
         </View>
     )
@@ -60,9 +63,9 @@ export const PhotosList: React.FC<CoachPhotosProps> = ({
     }
 
     return (
-        <View>
+        <View className={className}>
             {/* Заголовок с кнопкой "Показать все" */}
-            <View className="flex-row justify-between items-center px-4 mb-2">
+            <View className="flex-row justify-between items-center mb-2">
                 <Text weight="semibold">
                     {title}
                 </Text>
@@ -83,7 +86,7 @@ export const PhotosList: React.FC<CoachPhotosProps> = ({
             <Animated.ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: SPACING }}
+                contentContainerStyle={{ paddingRight: SPACING }}
                 onScroll={scrollHandler}
                 scrollEventThrottle={16}
                 className="overflow-visible"

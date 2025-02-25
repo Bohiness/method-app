@@ -1,24 +1,33 @@
 import { useUpdateProfile } from '@shared/context/user-provider'
 import { useScreenNavigation } from '@shared/hooks/modal/useScreenNavigation'
-import React, { useEffect } from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from '@shared/ui/view'
+import React from 'react'
+import { ScrollView } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
     SlideInLeft,
     SlideInRight,
     SlideOutLeft,
-    SlideOutRight
+    SlideOutRight,
+    runOnJS
 } from 'react-native-reanimated'
 import { SCREEN_CONFIG, ScreenType } from './screens/configs/screens.config'
 
-export const SettingModal = () => {
-    const navigation = useScreenNavigation<ScreenType>('main')
+interface SettingModalProps {
+    startScreen?: ScreenType
+}
+
+export const SettingModal = ({ startScreen = 'main' }: SettingModalProps) => {
+    const navigation = useScreenNavigation<ScreenType>(startScreen)
     const { mutateAsync } = useUpdateProfile()
 
-    useEffect(() => {
-        console.log('current screen', navigation.currentScreen)
-        console.log('previous screen', navigation.previousScreen)
-        console.log('is going back', navigation.isGoingBack)
-    }, [navigation.currentScreen, navigation.previousScreen, navigation.isGoingBack])
+    const swipeGesture = Gesture.Pan()
+        .activeOffsetX([-20, 20])
+        .onEnd((event) => {
+            if (event.velocityX > 500 && navigation.currentScreen !== 'main') {
+                runOnJS(navigation.goBack)()
+            }
+        })
 
     const AnimatedView: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         return (
@@ -78,10 +87,12 @@ export const SettingModal = () => {
     }
 
     return (
-        <View className="flex-1">
-            <ScrollView className="flex-1 relative">
-                {renderScreen()}
-            </ScrollView>
+        <View variant='default' className="flex-1">
+            <GestureDetector gesture={swipeGesture}>
+                <ScrollView className="flex-1 relative px-4">
+                    {renderScreen()}
+                </ScrollView>
+            </GestureDetector>
         </View>
     )
 }

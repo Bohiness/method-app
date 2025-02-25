@@ -1,10 +1,8 @@
 // CarouselDayDetails.tsx
 
 import { DayCard } from '@features/calendar/DayCard'
-import { NextDayCard } from '@features/calendar/NextDayCard'
 import { useCarouselAnimation } from '@shared/hooks/animations/useCarouselAnimation'
-import React from 'react'
-import { View } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
 import { PanGestureHandler } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 
@@ -17,29 +15,32 @@ interface CarouselDayDetailsProps {
 const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = React.memo(({
     selectedDate,
     onDateChange,
-    formatDateTime,
 }) => {
-    const today = new Date()
-    const canSwipeLeft = selectedDate < today
+    const today = useMemo(() => new Date(), [])
+    const canSwipeLeft = useMemo(() => selectedDate < today, [selectedDate, today])
 
-    const prevDate = new Date(selectedDate)
-    prevDate.setDate(prevDate.getDate() - 1)
+    const prevDate = useMemo(() => {
+        const date = new Date(selectedDate)
+        date.setDate(date.getDate() - 1)
+        return date
+    }, [selectedDate])
 
-    const nextDate = new Date(selectedDate)
-    nextDate.setDate(nextDate.getDate() + 1)
+    const nextDate = useMemo(() => {
+        const date = new Date(selectedDate)
+        date.setDate(date.getDate() + 1)
+        return date
+    }, [selectedDate])
 
-    const isTomorrow = (date?: Date) => {
-        const tomorrow = new Date(today)
+    const isTomorrow = useCallback((date?: Date) => {
+        if (!date) return false
+        const tomorrow = new Date()
         tomorrow.setDate(tomorrow.getDate() + 1)
-        const result =
-            date?.getDate() === tomorrow.getDate() &&
+        return date.getDate() === tomorrow.getDate() &&
             date.getMonth() === tomorrow.getMonth() &&
             date.getFullYear() === tomorrow.getFullYear()
-        console.log('isTomorrow check:', result)
-        return result
-    }
+    }, [])
 
-    const handleDateChange = (direction: 'left' | 'right', source: 'swipe' | 'tap' = 'tap') => {
+    const handleDateChange = useCallback((direction: 'left' | 'right') => {
         const newDate = new Date(selectedDate)
         if (direction === 'right') {
             newDate.setDate(newDate.getDate() - 1)
@@ -47,16 +48,15 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = React.memo(({
             newDate.setDate(newDate.getDate() + 1)
         }
         onDateChange(newDate)
-    }
+    }, [selectedDate, canSwipeLeft, onDateChange])
+
+    const selectedTimestamp = useMemo(() => selectedDate.getTime(), [selectedDate])
 
     const { gestureHandler, currentStyle, prevStyle, nextStyle } = useCarouselAnimation({
-        onChangePage: (direction) => {
-            console.log('onChangePage called with direction:', direction)
-            handleDateChange(direction, 'swipe')
-        },
+        onChangePage: handleDateChange,
         canSwipeLeft,
         canSwipeRight: true,
-        selectedTimestamp: selectedDate.getTime(),
+        selectedTimestamp,
         animationConfig: {
             duration: 300,
         },
@@ -70,52 +70,44 @@ const CarouselDayDetails: React.FC<CarouselDayDetailsProps> = React.memo(({
         },
     })
 
+    const prevCardMemo = useMemo(() => (
+        <DayCard
+            key={`prev-${prevDate.toISOString()}`}
+            date={prevDate}
+            isTomorrow={isTomorrow(prevDate)}
+            style={prevStyle}
+        />
+    ), [prevDate, isTomorrow, prevStyle])
+
+    const currentCardMemo = useMemo(() => (
+        <DayCard
+            key={`current-${selectedDate.toISOString()}`}
+            date={selectedDate}
+            isTomorrow={isTomorrow(selectedDate)}
+            style={currentStyle}
+        />
+    ), [selectedDate, isTomorrow, currentStyle])
+
+    const nextCardMemo = useMemo(() => canSwipeLeft ? (
+        <DayCard
+            key={`next-${nextDate.toISOString()}`}
+            date={nextDate}
+            isTomorrow={isTomorrow(nextDate)}
+            style={nextStyle}
+        />
+    ) : null, [canSwipeLeft, nextDate, isTomorrow, nextStyle])
 
     return (
-        <View style={{ position: 'relative' }}>
+        <Animated.View style={{ position: 'relative' }}>
             <PanGestureHandler onGestureEvent={gestureHandler}>
-                <Animated.View>
-                    <DayCard
-                        date={prevDate}
-                        formatDateTime={formatDateTime}
-                        style={prevStyle}
-                    />
-                    {isTomorrow(selectedDate) ? (
-                        <NextDayCard
-                            date={selectedDate}
-                            formatDateTime={formatDateTime}
-                            style={currentStyle}
-                        />
-                    ) : (
-                        <DayCard
-                            date={selectedDate}
-                            formatDateTime={formatDateTime}
-                            style={currentStyle}
-                        />
-                    )}
-                    {canSwipeLeft && (
-                        isTomorrow(nextDate) ? (
-                            <NextDayCard
-                                date={nextDate}
-                                formatDateTime={formatDateTime}
-                                style={nextStyle}
-                            />
-                        ) : (
-                            <DayCard
-                                date={nextDate}
-                                formatDateTime={formatDateTime}
-                                style={nextStyle}
-                            />
-                        )
-                    )}
+                <Animated.View style={{ width: '100%' }}>
+                    {prevCardMemo}
+                    {currentCardMemo}
+                    {nextCardMemo}
                 </Animated.View>
             </PanGestureHandler>
-        </View>
+        </Animated.View>
     )
-}, (prevProps, nextProps) => {
-    return prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
-        prevProps.onDateChange === nextProps.onDateChange &&
-        prevProps.formatDateTime === nextProps.formatDateTime
 })
 
 export default CarouselDayDetails

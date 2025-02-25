@@ -76,7 +76,8 @@ export const CoachProfile = ({
                             <PhotosList
                                 photos={coach.coach_images_data}
                                 gallery={'gallery1'}
-                                title={t('coach.photos')}
+                                title={t('coaches.coach.photos')}
+                                className="mt-4"
                             />
                         )}
                     </View>

@@ -25,7 +25,7 @@ export const PriorityButton = memo(({
                 return '!!'
             case 'high':
                 return '!!!'
-            default:
+            case 'none':
                 return ''
         }
     }
@@ -39,13 +39,13 @@ export const PriorityButton = memo(({
                 return colors.warning
             case 'high':
                 return colors.error
-            default:
-                return colors.inactive
+            case 'none':
+                return colors.text
         }
     }
 
     const handlePress = () => {
-        const priorities: TaskPriority[] = ['low', 'medium', 'high']
+        const priorities: TaskPriority[] = ['none', 'low', 'medium', 'high']
         const currentIndex = priority ? priorities.indexOf(priority) : -1
         onPriorityChange(priorities[(currentIndex + 1) % priorities.length])
     }

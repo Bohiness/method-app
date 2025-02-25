@@ -32,7 +32,7 @@ export const TasksList = ({
                     />
                 ))
             ) : (
-                <Text variant='secondary'>{t('tasks.list.noTasks')}</Text>
+                <Text variant='secondary'>{t('plans.tasks.list.noTasks')}</Text>
             )}
         </Animated.View>
     )

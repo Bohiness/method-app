@@ -1,25 +1,24 @@
-import { useColorScheme } from '@shared/context/theme-provider'
+import { useTheme } from '@shared/context/theme-provider'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
-import { Button } from '@shared/ui/button'
 import { Slider } from '@shared/ui/slider'
 import { Text, Title } from '@shared/ui/text'
+import { TransitionScreenProps } from '@widgets/transitions/TransitionContext'
 import * as Haptics from 'expo-haptics'
 import { Angry, Frown, Laugh, Meh, Smile } from 'lucide-react-native'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import Animated, {
   FadeIn,
-  FadeOut,
   useAnimatedStyle,
   withSpring
 } from 'react-native-reanimated'
 
-interface MoodLevelStepProps {
+interface MoodLevelStepProps extends TransitionScreenProps {
   value: number
   onChange: (value: number) => void
-  onNext: () => void
   dateNow: Date
+  setEnabledNextButton: (enabled: boolean) => void
 }
 
 export const moods = [
@@ -55,19 +54,32 @@ export const moods = [
   },
 ]
 
-export const MoodLevelStep: React.FC<MoodLevelStepProps> = ({
+
+
+export function MoodLevelStep({
   value,
   onChange,
-  onNext,
-  dateNow
-}) => {
+  dateNow,
+  setEnabledNextButton
+}: MoodLevelStepProps) {
   const { t } = useTranslation()
-  const colorScheme = useColorScheme()
+  const { isDark } = useTheme()
   const { formatDateTime } = useDateTime()
-  const [sliderValue, setSliderValue] = useState(50)
-  const [previousMoodLevel, setPreviousMoodLevel] = useState(value)
-  const [showNextButton, setShowNextButton] = useState(false)
+  const [sliderValue, setSliderValue] = useState(() => {
+    const initialMood = moods.find(m => m.level === value)
+    return initialMood ? (initialMood.range[0] + initialMood.range[1]) / 2 : 50
+  })
 
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    opacity: withSpring(1),
+    transform: [{
+      scale: withSpring(1.0, {
+        mass: 0.5,
+        damping: 8,
+        stiffness: 100
+      })
+    }]
+  }))
 
   const triggerHaptic = useCallback(async () => {
     try {
@@ -77,139 +89,84 @@ export const MoodLevelStep: React.FC<MoodLevelStepProps> = ({
     }
   }, [])
 
-  const getMoodLevel = (sliderValue: number) => {
-    const mood = moods.find(
-      m => sliderValue >= m.range[0] && sliderValue <= m.range[1]
-    )
-    return mood?.level || 3
-  }
-
-  // Обработчик изменения значения слайдера (во время движения)
-  const handleValueChange = useCallback((newValue: number) => {
+  // Обработчик для изменения значения слайдера
+  const handleSliderChange = useCallback((newValue: number) => {
     setSliderValue(newValue)
-    const newMoodLevel = getMoodLevel(newValue)
-
-    if (newMoodLevel !== previousMoodLevel) {
+    const foundMood = moods.find(
+      mood => newValue >= mood.range[0] && newValue <= mood.range[1]
+    )
+    if (foundMood && foundMood.level !== value) {
       triggerHaptic()
-      setPreviousMoodLevel(newMoodLevel)
-      onChange(newMoodLevel)
-      setShowNextButton(true)
+      onChange(foundMood.level)
+      setEnabledNextButton?.(true)
     }
-  }, [value, previousMoodLevel, triggerHaptic, onChange])
+  }, [value, onChange, triggerHaptic])
 
-  // Обработчик завершения движения слайдера
-  const handleSlidingComplete = useCallback((newValue: number) => {
-    const newMoodLevel = getMoodLevel(newValue)
-    onChange(newMoodLevel)
-    setTimeout(onNext, 800)
-  }, [onChange, onNext])
-
+  // Обработчик для нажатия на иконки
   const handleMoodPress = useCallback((level: number) => {
-    const mood = moods[level - 1]
-    const newSliderValue = (mood.range[0] + mood.range[1]) / 2
-    setSliderValue(newSliderValue)
-
-    if (level !== previousMoodLevel) {
-      triggerHaptic()
-      setPreviousMoodLevel(level)
-      onChange(level)
-      setTimeout(onNext, 800)
-      setShowNextButton(true)
+    const selectedMood = moods.find(m => m.level === level)
+    if (selectedMood) {
+      const newSliderValue = (selectedMood.range[0] + selectedMood.range[1]) / 2
+      setSliderValue(newSliderValue)
+      if (level !== value) {
+        triggerHaptic()
+        onChange(level)
+        setEnabledNextButton?.(true)
+      }
     }
-  }, [moods, previousMoodLevel, triggerHaptic, onChange, onNext])
-
-
-  useEffect(() => {
-    const initialMood = moods.find(m => m.level === value)
-    if (initialMood) {
-      setSliderValue((initialMood.range[0] + initialMood.range[1]) / 2)
-      setPreviousMoodLevel(value)
-    }
-  }, [])
-
-  const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: withSpring(1.1) }],
-  }))
+  }, [value, onChange, triggerHaptic])
 
   return (
-    <View className="flex-1 relative bg-background dark:bg-background-dark">
-      {/* Основной контент */}
+    <View className="flex-1 relative px-4">
       <View className="flex-1 justify-center -mt-10 px-4">
-        <Animated.View
-          entering={FadeIn}
-          exiting={FadeOut}
-        >
-          <Title weight='medium' className="mb-2 text-center">
-            {t('diary.moodcheckin.step1.title')}
-          </Title>
-          <Text variant='secondary' className="mb-8 text-center">
-            {`${t('diary.moodcheckin.step1.description')} ${formatDateTime(dateNow)}`}
-          </Text>
+        <Title weight='medium' className="mb-2 text-center">
+          {t('diary.moodcheckin.step1.title')}
+        </Title>
+        <Text variant='secondary' className="mb-8 text-center">
+          {`${t('diary.moodcheckin.step1.description')} ${formatDateTime(dateNow)}`}
+        </Text>
 
-          <View className="flex-row justify-between px-4 mb-6">
-            {moods.map((mood) => (
-              <Pressable
-                key={mood.level}
-                onPress={() => handleMoodPress(mood.level)}
-                className="items-center"
+        <View className="flex-row justify-between px-4 mb-6">
+          {moods.map((mood) => (
+            <Pressable
+              key={mood.level}
+              onPress={() => handleMoodPress(mood.level)}
+              className="items-center"
+            >
+              <Animated.View
+                className={`p-4 rounded-full`}
+                style={value === mood.level ? animatedIconStyle : undefined}
               >
-                <Animated.View
-                  className={`p-4 rounded-full ${value === mood.level
-                    ? 'bg-gray-200 border-gray-300 dark:bg-gray-700 dark:border-gray-600'
-                    : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
-                    }`}
-                  style={value === mood.level ? animatedIconStyle : undefined}
-                >
-                  {mood.icon(value === mood.level ?
-                    (colorScheme === 'dark' ? '#FFFFFF' : '#374151') :
-                    (colorScheme === 'dark' ? '#9CA3AF' : '#9CA3AF')
-                  )}
-                </Animated.View>
-              </Pressable>
-            ))}
-          </View>
+                {mood.icon(value === mood.level ?
+                  (isDark ? '#FFFFFF' : '#374151') :
+                  (isDark ? '#9CA3AF' : '#9CA3AF')
+                )}
+              </Animated.View>
+            </Pressable>
+          ))}
+        </View>
 
-          <View className="px-4">
-            <Slider
-              value={sliderValue}
-              minimumValue={1}
-              maximumValue={100}
-              step={1}
-              onValueChange={handleValueChange}
-              onSlidingComplete={handleSlidingComplete}
-            />
-          </View>
+        <View className="px-4">
+          <Slider
+            defaultValue={sliderValue}
+            minimumValue={1}
+            maximumValue={100}
+            step={1}
+            onValueChange={handleSliderChange}
+            onSlidingComplete={handleSliderChange}
+          />
+        </View>
 
-          {value > 0 && (
-            <Animated.View
-              entering={FadeIn}
-              className="mt-8"
-            >
-              <Text variant="secondary" className="text-center">
-                {t(moods[value - 1].label)}
-              </Text>
-            </Animated.View>
-          )}
-        </Animated.View>
-      </View>
-
-      {/* Контейнер для кнопки с фиксированной позицией внизу */}
-      <View className="absolute bottom-0 px-8 pb-8 w-full">
-        <Animated.View
-          entering={FadeIn}
-          className="flex-row justify-end align-center"
-        >
-          {showNextButton && (
-            <Button
-              onPress={onNext}
-              variant="outline"
-              disabled={!showNextButton}
-            >
-              {t('common.next')}
-            </Button>
-          )}
-
-        </Animated.View>
+        {value > 0 && (
+          <Animated.View
+            entering={FadeIn}
+            className="mt-8"
+          >
+            <Text variant="secondary" className="text-center">
+              {t(moods[value - 1].label)}
+            </Text>
+          </Animated.View>
+        )}
       </View>
     </View>
   )

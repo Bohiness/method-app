@@ -17,11 +17,11 @@ export const Alert = React.forwardRef<View, AlertProps>(
         const getBackgroundColor = () => {
             switch (variant) {
                 case 'destructive':
-                    return isDark ? 'bg-dark-surface-paper/80' : 'bg-light-surface-paper/80'
+                    return isDark ? 'bg-error/20' : 'bg-error/10'
                 case 'warning':
-                    return isDark ? 'bg-dark-surface-paper/80' : 'bg-light-surface-paper/80'
+                    return isDark ? 'bg-warning/10' : 'bg-warning/10'
                 case 'success':
-                    return isDark ? 'bg-dark-surface-paper/80' : 'bg-light-surface-paper/80'
+                    return isDark ? 'bg-success/10' : 'bg-success/10'
                 default:
                     return isDark ? 'bg-dark-surface-paper/80' : 'bg-light-surface-paper/80'
             }
@@ -30,7 +30,7 @@ export const Alert = React.forwardRef<View, AlertProps>(
         const getBorderColor = () => {
             switch (variant) {
                 case 'destructive':
-                    return isDark ? 'border-error/30' : 'border-error/30'
+                    return isDark ? 'border-error/40' : 'border-error/30'
                 case 'warning':
                     return isDark ? 'border-warning/30' : 'border-warning/30'
                 case 'success':

@@ -2,13 +2,16 @@
 import { useAddMenu } from '@shared/context/add-menu-context'
 import { useTheme } from '@shared/context/theme-provider'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
-import { Plus } from 'lucide-react-native'
+import { Icon } from '@shared/ui/icon'
+import { View } from '@shared/ui/view'
 import React, { useEffect, useRef } from 'react'
-import { Animated, View } from 'react-native'
+import { Animated } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export const AddButton = () => {
     const { colors } = useTheme()
-    const { isVisible, show, hide } = useAddMenu()
+    const { isVisible, show, hide, currentTab, createNewTask } = useAddMenu()
+    const insets = useSafeAreaInsets()
     const rotateAnim = useRef(new Animated.Value(0)).current
 
     // Обновляем анимацию при изменении состояния
@@ -22,10 +25,16 @@ export const AddButton = () => {
     }, [isVisible])
 
     const handlePress = () => {
-        if (isVisible) {
-            hide()
+        // Если мы на странице plans, сразу открываем форму создания задачи
+        if (currentTab === 'plans') {
+            createNewTask()
         } else {
-            show()
+            // На других страницах показываем/скрываем меню как обычно
+            if (isVisible) {
+                hide()
+            } else {
+                show()
+            }
         }
     }
 
@@ -36,20 +45,17 @@ export const AddButton = () => {
     })
 
     return (
-        <View className="
+        <View variant='inverse' className={`
             absolute 
-            bottom-5 
             self-center 
-            bg-background-dark
-            dark:bg-background
-            w-16 
-            h-16 
+            w-16 h-16 
             rounded-full 
             justify-center 
             items-center 
             shadow-lg
             z-50
-        ">
+        `}
+        >
             <HapticTab
                 onPress={handlePress}
                 hapticStyle="medium"
@@ -61,7 +67,8 @@ export const AddButton = () => {
                 "
             >
                 <Animated.View style={{ transform: [{ rotate: spin }] }}>
-                    <Plus
+                    <Icon
+                        name='Plus'
                         size={30}
                         color={colors.background}
                     />

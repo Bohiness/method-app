@@ -1,8 +1,8 @@
 // src/shared/ui/view/view.tsx
-import { useColors, useColorScheme } from '@shared/context/theme-provider'
+import { useColors, useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import React, { forwardRef } from 'react'
-import { View as RNView, ViewProps as RNViewProps } from 'react-native'
+import { View as RNView, ViewProps as RNViewProps, StyleProp, ViewStyle } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export type ViewVariant =
@@ -11,54 +11,41 @@ export type ViewVariant =
     | 'canvas'   // Для фоновых элементов
     | 'stone'    // Для выделенных элементов
     | 'inverse'  // Инвертированный цвет относительно темы
+    | 'transparent' // Прозрачный цвет
 
 interface ViewProps extends RNViewProps {
     variant?: ViewVariant
     className?: string
     children?: React.ReactNode
+    style?: StyleProp<ViewStyle>
 }
 
 const getVariantClasses = (variant: ViewVariant) => {
     const variants = {
-        default: 'bg-background dark:bg-background',
-        paper: 'bg-surface-paper dark:bg-surface-paper',
-        canvas: 'bg-surface-canvas dark:bg-surface-canvas',
-        stone: 'bg-surface-stone dark:bg-surface-stone',
-        inverse: 'bg-text dark:bg-background'
+        default: 'bg-background dark:bg-background-dark',
+        paper: 'bg-surface-paper dark:bg-surface-paper-dark',
+        canvas: 'bg-surface-canvas dark:bg-surface-canvas-dark',
+        stone: 'bg-surface-stone dark:bg-surface-stone-dark',
+        inverse: 'bg-background-dark dark:bg-background',
+        transparent: 'bg-transparent dark:bg-transparent'
     }
     return variants[variant]
 }
 
 export const View = forwardRef<RNView, ViewProps>(({
-    variant = 'default',
+    variant = 'transparent',
     className,
     style,
     children,
     ...props
 }, ref) => {
-    const colorScheme = useColorScheme()
-    const colors = useColors()
+    const { colors, isDark } = useTheme()
 
     return (
         <RNView
             ref={ref}
             className={cn(getVariantClasses(variant), className)}
-            style={[
-                {
-                    backgroundColor: variant === 'default'
-                        ? colors.background
-                        : variant === 'paper'
-                            ? colors.surface.paper
-                            : variant === 'canvas'
-                                ? colors.surface.canvas
-                                : variant === 'stone'
-                                    ? colors.surface.stone
-                                    : variant === 'inverse'
-                                        ? colorScheme === 'dark' ? colors.background : colors.text
-                                        : undefined
-                },
-                style
-            ]}
+            style={style}
             {...props}
         >
             {children}
@@ -91,7 +78,7 @@ export const Container = ({ className, ...props }: ViewProps) => (
     />
 )
 
-export const ContainerScreen = ({ className, ...props }: ViewProps) => {
+export const ContainerWithSafeArea = ({ className, ...props }: ViewProps) => {
     const insets = useSafeAreaInsets()
     return (
         <View
@@ -100,6 +87,27 @@ export const ContainerScreen = ({ className, ...props }: ViewProps) => {
             style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
             {...props}
         />
+    )
+}
+
+// Добавляем новый компонент для основного контейнера
+export const ContainerScreen = ({ className, style, children, ...props }: ViewProps) => {
+    const colors = useColors()
+
+    return (
+        <View
+            variant="default"
+            className={cn("flex-1", className)}
+            style={[
+                {
+                    backgroundColor: colors.background
+                },
+                style
+            ]}
+            {...props}
+        >
+            {children}
+        </View>
     )
 }
 

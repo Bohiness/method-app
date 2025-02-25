@@ -1,10 +1,9 @@
 // src/widgets/coach/CoachProfile/CoachInfo.tsx
 import { useCalculateAge } from '@shared/lib/utils/coach/calculateAge'
-import { Avatar } from '@shared/ui/avatar'
 import { Icon } from '@shared/ui/icon'
+import { ExpandableImage } from '@shared/ui/image/ExpandableImage'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import { useRouter } from 'expo-router'
 import React from 'react'
 
 interface CoachHeaderProps {
@@ -26,17 +25,18 @@ export const CoachInfo = ({
     date_of_birth,
     marital_status,
 }: CoachHeaderProps) => {
-    const router = useRouter()
     const calculateAge = useCalculateAge()
 
     return (
         <View className="p-4">
             <View className="flex-row gap-x-4">
-                <Avatar
-                    size="xl"
-                    shape="square"
+                <ExpandableImage
+                    style={{
+                        width: 70,
+                        height: 70,
+                        borderRadius: 100,
+                    }}
                     source={{ uri: image }}
-                    fallback={first_name[0]}
                     className="rounded-2xl"
                 />
 

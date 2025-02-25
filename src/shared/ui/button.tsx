@@ -25,11 +25,13 @@ interface ButtonProps extends PressableProps {
     iconProps?: {
         color?: string
         size?: number
+        fill?: string
     }
     rightIcon?: IconName
     className?: string
     children?: React.ReactNode
     haptic?: boolean
+    bgColor?: string
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -48,6 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
     haptic = true,
     onPress,
     iconProps,
+    bgColor,
     ...props
 }) => {
     const { isDark } = useTheme()
@@ -105,8 +108,13 @@ export const Button: React.FC<ButtonProps> = ({
         lg: 'py-2 px-6',
     }[size]
 
+
     // Варианты стилей
     const getVariantClasses = () => {
+        if (bgColor) {
+            console.log(bgColor)
+            return `bg-[${bgColor}] dark:bg-[${bgColor}]`
+        }
         const baseClasses = {
             default: `bg-background-dark dark:bg-background`,
             secondary: `bg-surface-paper dark:bg-surface-paper-dark`,
@@ -161,6 +169,7 @@ export const Button: React.FC<ButtonProps> = ({
                     name={leftIcon}
                     size={iconSize}
                     color={iconProps?.color || variantColors.icon}
+                    fill={iconProps?.fill}
                 />
             </AnimatedPressable>
         )
@@ -172,7 +181,7 @@ export const Button: React.FC<ButtonProps> = ({
             onPressIn={() => { pressed.value = 1 }}
             onPressOut={() => { pressed.value = 0 }}
             onPress={handlePress}
-            style={animatedStyle}
+            style={[animatedStyle, bgColor && { backgroundColor: bgColor }]}
             className={cn(
                 'rounded-full active:opacity-90',
                 getVariantClasses(),
@@ -197,13 +206,18 @@ export const Button: React.FC<ButtonProps> = ({
                                     name={leftIcon}
                                     size={iconProps?.size || iconSize}
                                     color={iconProps?.color || variantColors.icon}
+                                    fill={iconProps?.fill}
                                 />
                             </View>
                         )}
                         {children &&
                             <Text
-                                className="text-inherit"
-                                style={{ color: variantColors.text }}
+                                className="text-inherit truncate"
+                                style={{
+                                    color: variantColors.text,
+                                    maxWidth: '100%'
+                                }}
+                                numberOfLines={1}
                                 size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'base'}
                                 weight="medium"
                             >
@@ -216,6 +230,7 @@ export const Button: React.FC<ButtonProps> = ({
                                     name={rightIcon}
                                     size={iconProps?.size || iconSize}
                                     color={iconProps?.color || variantColors.icon}
+                                    fill={iconProps?.fill}
                                 />
                             </View>
                         )}

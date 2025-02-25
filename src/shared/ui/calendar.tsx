@@ -1,4 +1,3 @@
-// src/shared/ui/calendar/index.tsx
 import { useColors, useTheme } from '@shared/context/theme-provider'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { cn } from '@shared/lib/utils/cn'
@@ -9,93 +8,77 @@ import {
     endOfMonth,
     endOfWeek,
     isEqual,
+    isSameDay,
     isSameMonth,
     isToday,
     startOfMonth,
     startOfWeek,
     subMonths
 } from 'date-fns'
-import React, { useMemo } from 'react'
+import React, { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, View as RNView } from 'react-native'
 import { Button } from './button'
+import { OpenTimePicker } from './open-time-picker'
 import { Text } from './text'
-import { TimePicker } from './time-picker'
 import { View } from './view'
 
-// Типы для кастомизации
-interface CalendarCustomization {
-    headerClassName?: string
-    weekDaysClassName?: string
-    dayClassName?: string
-    selectedDayClassName?: string
-    todayClassName?: string
-    outsideMonthDayClassName?: string
-    disabledDayClassName?: string
-    weekNumberClassName?: string
-    dotClassName?: string
-    timePickerClassName?: string
+// Интерфейсы для стилизации
+export interface CalendarStyles {
+    container?: string
+    header?: string
+    weekDays?: string
+    weekNumber?: string
+    day?: string
+    selectedDay?: string
+    todayDay?: string
+    outsideMonthDay?: string
+    disabledDay?: string
+    markedDot?: string
+    timePicker?: string
 }
 
-interface CalendarColors {
-    headerBackground?: string
+export interface CalendarTextStyles {
     headerText?: string
-    weekDaysText?: string
+    weekDayText?: string
+    weekNumberText?: string
     dayText?: string
-    selectedDayBackground?: string
     selectedDayText?: string
-    todayText?: string
+    todayDayText?: string
     outsideMonthDayText?: string
     disabledDayText?: string
-    weekNumberText?: string
-    defaultDotColor?: string
 }
 
 export interface CalendarProps {
-    /** Выбранная дата */
     value: Date
-    /** Колбэк изменения даты */
     onChange: (date: Date) => void
-    /** Минимальная дата для выбора */
     minDate?: Date
-    /** Максимальная дата для выбора */
     maxDate?: Date
-    /** Отмеченные даты с дополнительной информацией */
     markedDates?: {
         [key: string]: {
             dotColor?: string
             marked?: boolean
         }
     }
-    /** CSS классы для разных частей календаря */
-    customization?: CalendarCustomization
-    /** Цвета для разных элементов календаря */
-    colors?: CalendarColors
-    /** Показывать стрелки для навигации по месяцам */
     showMonthNavigation?: boolean
-    /** Показывать выбор времени */
     showTimePicker?: boolean
-    /** Формат выбора времени (12/24) */
     timeFormat?: '12h' | '24h'
-    /** Шаг для выбора минут */
     minuteInterval?: number
-    /** Показывать номера недель */
     showWeekNumbers?: boolean
-    /** Начало недели (0-воскресенье, 1-понедельник) */
     weekStartsOn?: 0 | 1
-    /** CSS классы */
     className?: string
-    /** Заголовок */
-    title?: string
+    title?: boolean
+    styles?: CalendarStyles
+    textStyles?: CalendarTextStyles
+    disableSelection?: boolean
 }
 
-export const Calendar: React.FC<CalendarProps> = ({
+export const Calendar = ({
     value,
     onChange,
     minDate,
     maxDate,
     markedDates,
-    customization = {},
-    colors = {},
+    disableSelection = false,
     showMonthNavigation = false,
     showTimePicker = false,
     timeFormat = '24h',
@@ -103,38 +86,62 @@ export const Calendar: React.FC<CalendarProps> = ({
     showWeekNumbers = false,
     weekStartsOn = 1,
     className,
-    title = true
-}) => {
+    title = true,
+    styles = {},
+    textStyles = {}
+}: CalendarProps) => {
     const { isDark } = useTheme()
-    const themeColors = useColors()
-    const { formatDateTime, locale, timeZone } = useDateTime()
+    const colors = useColors()
+    const { formatDateTime } = useDateTime()
+    const [currentDate, setCurrentDate] = useState<Date>(value)
+    const isMounted = useRef(false)
 
-    // Объединяем цвета темы и пользовательские цвета
-    const mergedColors = {
-        headerBackground: colors.headerBackground || themeColors.background,
-        headerText: colors.headerText || themeColors.text,
-        weekDaysText: colors.weekDaysText || themeColors.secondary.dark,
-        dayText: colors.dayText || themeColors.text,
-        selectedDayBackground: colors.selectedDayBackground || themeColors.text,
-        selectedDayText: colors.selectedDayText || themeColors.background,
-        todayText: colors.todayText || themeColors.tint,
-        outsideMonthDayText: colors.outsideMonthDayText || themeColors.secondary.light,
-        disabledDayText: colors.disabledDayText || themeColors.inactive,
-        weekNumberText: colors.weekNumberText || themeColors.secondary.light,
-        defaultDotColor: colors.defaultDotColor || themeColors.tint,
+    useLayoutEffect(() => {
+        if (value && !isEqual(value, currentDate)) {
+            setCurrentDate(value)
+        }
+    }, [value])
+
+    // Объединяем дефолтные стили с пользовательскими
+    const defaultStyles: CalendarStyles = {
+        container: "rounded-2xl p-4",
+        header: "flex-row items-center justify-between mb-4",
+        weekDays: "flex-row mb-2",
+        weekNumber: "w-8 items-center justify-center",
+        day: "flex-1 aspect-square items-center justify-center rounded-full",
+        selectedDay: "bg-text dark:bg-text-dark",
+        todayDay: "",
+        outsideMonthDay: "",
+        disabledDay: "opacity-30",
+        markedDot: "w-1 h-1 rounded-full mt-0.5",
+        timePicker: "mt-4 pt-4 border-t border-border dark:border-border-dark"
     }
 
-    // Начало и конец месяца с учетом таймзоны
-    const monthStart = useMemo(() =>
-        startOfMonth(value),
-        [value, timeZone]
-    )
-    const monthEnd = useMemo(() =>
-        endOfMonth(value),
-        [value, timeZone]
-    )
+    const defaultTextStyles: CalendarTextStyles = {
+        headerText: "text-xl font-bold text-center text-text dark:text-text-dark",
+        weekDayText: "text-secondary-dark dark:text-secondary-dark-dark",
+        weekNumberText: "text-secondary-light dark:text-secondary-light-dark",
+        dayText: "text-center text-text dark:text-text-dark",
+        selectedDayText: "text-background dark:text-background-dark",
+        todayDayText: "text-tint dark:text-tint-dark",
+        outsideMonthDayText: "text-secondary-light dark:text-secondary-light-dark",
+        disabledDayText: "text-inactive dark:text-inactive-dark"
+    }
 
-    // Получаем все недели месяца
+    const mergedStyles = {
+        ...defaultStyles,
+        ...styles
+    }
+
+    const mergedTextStyles = {
+        ...defaultTextStyles,
+        ...textStyles
+    }
+
+    // Расчет недель и дат
+    const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate])
+    const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate])
+
     const weeks = useMemo(() => {
         const weeks = eachWeekOfInterval(
             { start: monthStart, end: monthEnd },
@@ -148,7 +155,6 @@ export const Calendar: React.FC<CalendarProps> = ({
         })
     }, [monthStart, monthEnd, weekStartsOn])
 
-    // Получаем названия дней недели с учетом локали
     const weekDays = useMemo(() => {
         const weekStart = startOfWeek(new Date(), { weekStartsOn })
         return eachDayOfInterval({
@@ -163,40 +169,44 @@ export const Calendar: React.FC<CalendarProps> = ({
         return false
     }
 
-    // Навигация по месяцам
+    // Обработчики навигации и выбора даты
     const handlePrevMonth = () => {
-        const newDate = subMonths(value, 1)
+        const newDate = subMonths(currentDate, 1)
         if (!minDate || newDate >= minDate) {
+            setCurrentDate(newDate)
             onChange(newDate)
         }
     }
 
     const handleNextMonth = () => {
-        const newDate = addMonths(value, 1)
+        const newDate = addMonths(currentDate, 1)
         if (!maxDate || newDate <= maxDate) {
+            setCurrentDate(newDate)
             onChange(newDate)
         }
     }
 
-    // Обработчик изменения времени
-    const handleTimeChange = (hours: number, minutes: number) => {
-        const newDate = new Date(value)
-        newDate.setHours(hours)
-        newDate.setMinutes(minutes)
-        onChange(newDate)
+    const handleDateSelect = (date: Date) => {
+        if (!isDateDisabled(date)) {
+            const newDate = new Date(date)
+            newDate.setHours(
+                currentDate.getHours(),
+                currentDate.getMinutes(),
+                currentDate.getSeconds(),
+                currentDate.getMilliseconds()
+            )
+            setCurrentDate(newDate)
+            onChange(newDate)
+        }
     }
 
     return (
         <View
             variant="paper"
-            className={cn("rounded-2xl p-4", className)}
+            className={cn(mergedStyles.container, className)}
         >
-            {/* Заголовок с месяцем и годом */}
-            {title &&
-                <RNView className={cn(
-                    "flex-row items-center justify-between mb-4",
-                    customization.headerClassName
-                )}>
+            {title && (
+                <RNView className={mergedStyles.header}>
                     {showMonthNavigation && (
                         <Button
                             variant="ghost"
@@ -205,14 +215,9 @@ export const Calendar: React.FC<CalendarProps> = ({
                             className="px-2"
                         />
                     )}
-
-                    <Text
-                        className="text-xl font-bold text-center"
-                        style={{ color: mergedColors.headerText }}
-                    >
-                        {formatDateTime(value, 'LLLL yyyy')}
+                    <Text className={mergedTextStyles.headerText}>
+                        {formatDateTime(currentDate, 'LLLL yyyy')}
                     </Text>
-
                     {showMonthNavigation && (
                         <Button
                             variant="ghost"
@@ -222,54 +227,37 @@ export const Calendar: React.FC<CalendarProps> = ({
                         />
                     )}
                 </RNView>
-            }
+            )}
 
-            {/* Сетка календаря */}
             <RNView>
-                {/* Дни недели */}
-                <RNView className="flex-row mb-2">
+                <RNView className={mergedStyles.weekDays}>
                     {showWeekNumbers && (
-                        <RNView className="w-8 items-center justify-center">
-                            <Text
-                                className={cn("text-secondary-light", customization.weekNumberClassName)}
-                                style={{ color: mergedColors.weekNumberText }}
-                            >
-                                #
-                            </Text>
+                        <RNView className={mergedStyles.weekNumber}>
+                            <Text className={mergedTextStyles.weekNumberText}>#</Text>
                         </RNView>
                     )}
                     {weekDays.map(day => (
-                        <RNView
-                            key={day}
-                            className="flex-1 items-center justify-center"
-                        >
-                            <Text
-                                className={cn("text-secondary-light", customization.weekDaysClassName)}
-                                style={{ color: mergedColors.weekDaysText }}
-                            >
+                        <RNView key={day} className="flex-1 items-center justify-center">
+                            <Text className={mergedTextStyles.weekDayText}>
                                 {day}
                             </Text>
                         </RNView>
                     ))}
                 </RNView>
 
-                {/* Недели */}
                 {weeks.map((week, weekIndex) => (
                     <RNView key={weekIndex} className="flex-row mb-2">
                         {showWeekNumbers && (
-                            <RNView className="w-8 items-center justify-center">
-                                <Text
-                                    className={cn("text-secondary-light", customization.weekNumberClassName)}
-                                    style={{ color: mergedColors.weekNumberText }}
-                                >
+                            <RNView className={mergedStyles.weekNumber}>
+                                <Text className={mergedTextStyles.weekNumberText}>
                                     {formatDateTime(week[0], 'w')}
                                 </Text>
                             </RNView>
                         )}
                         {week.map(day => {
-                            const isSelected = isEqual(day, value)
+                            const isSelected = isSameDay(day, currentDate)
                             const isDayToday = isToday(day)
-                            const isCurrentMonth = isSameMonth(day, value)
+                            const isCurrentMonth = isSameMonth(day, currentDate)
                             const disabled = isDateDisabled(day)
                             const dateKey = formatDateTime(day, 'yyyy-MM-dd')
                             const marked = markedDates?.[dateKey]
@@ -277,35 +265,33 @@ export const Calendar: React.FC<CalendarProps> = ({
                             return (
                                 <Pressable
                                     key={day.toString()}
-                                    onPress={() => !disabled && onChange(day)}
+                                    onPress={() => !disabled && handleDateSelect(day)}
                                     className={cn(
-                                        "flex-1 aspect-square items-center justify-center rounded-full",
-                                        customization.dayClassName,
-                                        isSelected && cn("bg-background dark:bg-background-dark", customization.selectedDayClassName),
-                                        !isCurrentMonth && customization.outsideMonthDayClassName,
-                                        disabled && customization.disabledDayClassName,
-                                        isDayToday && customization.todayClassName
+                                        mergedStyles.day,
+                                        !disableSelection && isSelected && mergedStyles.selectedDay,
+                                        isDayToday && (!disableSelection ? !isSelected : true) && mergedStyles.todayDay,
+                                        !isCurrentMonth && mergedStyles.outsideMonthDay,
+                                        disabled && mergedStyles.disabledDay
                                     )}
-                                    style={{
-                                        backgroundColor: isSelected ? mergedColors.selectedDayBackground : undefined
-                                    }}
                                 >
                                     <Text
-                                        className={cn("text-center")}
-                                        style={{
-                                            color: disabled ? mergedColors.disabledDayText :
-                                                isSelected ? mergedColors.selectedDayText :
-                                                    !isCurrentMonth ? mergedColors.outsideMonthDayText :
-                                                        isDayToday ? mergedColors.todayText :
-                                                            mergedColors.dayText
-                                        }}
+                                        className={cn(
+                                            mergedTextStyles.dayText,
+                                            !disableSelection && isSelected && mergedTextStyles.selectedDayText,
+                                            isDayToday && (!disableSelection ? !isSelected : true) && mergedTextStyles.todayDayText,
+                                            !isCurrentMonth && mergedTextStyles.outsideMonthDayText,
+                                            disabled && mergedTextStyles.disabledDayText
+                                        )}
                                     >
                                         {formatDateTime(day, 'd')}
                                     </Text>
                                     {marked?.marked && (
                                         <RNView
-                                            className={cn("w-1 h-1 rounded-full mt-0.5", customization.dotClassName)}
-                                            style={{ backgroundColor: marked.dotColor || mergedColors.defaultDotColor }}
+                                            className={cn(
+                                                mergedStyles.markedDot,
+                                                "bg-tint dark:bg-tint-dark"
+                                            )}
+                                            style={marked.dotColor ? { backgroundColor: marked.dotColor } : undefined}
                                         />
                                     )}
                                 </Pressable>
@@ -315,18 +301,13 @@ export const Calendar: React.FC<CalendarProps> = ({
                 ))}
             </RNView>
 
-            {/* Выбор времени */}
             {showTimePicker && (
-                <View
-                    className={cn("mt-4 pt-4 border-t border-border", customization.timePickerClassName)}
-                >
-                    <TimePicker
-                        value={value}
-                        onChange={handleTimeChange}
-                        format="24h"
-                        minuteInterval={5}
-                    />
-                </View>
+                <OpenTimePicker
+                    initialDate={currentDate}
+                    onChange={onChange}
+                    format={timeFormat}
+                    className={mergedStyles.timePicker}
+                />
             )}
         </View>
     )

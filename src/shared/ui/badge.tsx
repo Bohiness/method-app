@@ -100,7 +100,8 @@ export const Badge: React.FC<BadgeProps> = ({
     icon,
     disabled = false,
     style,
-    removable = false
+    removable = false,
+    ...props
 }) => {
     const { isDark } = useTheme()
     const variantStyles = getVariantStyles(variant, isDark)
@@ -112,12 +113,13 @@ export const Badge: React.FC<BadgeProps> = ({
     return (
         <Container
             {...containerProps}
+            {...props}
             className={`
-        flex-row items-center justify-center rounded-full
-        ${variantStyles.container}
-        ${sizeStyles.container}
-        ${disabled ? 'opacity-50' : ''}
-      `}
+                self-start flex-row items-center justify-center rounded-full
+                ${variantStyles.container}
+                ${sizeStyles.container}
+                ${disabled ? 'opacity-50' : ''}
+            `}
             style={style}
         >
             {icon && (

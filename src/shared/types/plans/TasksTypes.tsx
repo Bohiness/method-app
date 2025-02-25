@@ -1,30 +1,24 @@
 // src/shared/types/tasks/TaskTypes.ts
 
-import { ProjectType } from './ProjectTypes'
 
-export type TaskPriority = 'low' | 'medium' | 'high'
+export type TaskPriority = 'none' | 'low' | 'medium' | 'high'
 export type TaskStatus = 'completed' | 'pending'
 
 export interface TaskType {
     id: number
     text: string
     status: TaskStatus
-    project?: ProjectType | null
-    start_date: string
-    end_date: string
+    project?: number
+    start_datetime: string
+    end_datetime: string
     is_completed: boolean
-    priority: TaskPriority
+    priority?: TaskPriority
     created_at: string
     updated_at: string
+    subtasks?: SubTaskType[]
 }
 
-export interface CreateTaskDtoType {
-    text: string
-    project?: number
-    start_date: string
-    end_date: string
-    priority: TaskPriority
-    status?: TaskStatus
+export interface CreateTaskDtoType extends Omit<TaskType, 'id' | 'created_at' | 'updated_at'> {
 }
 
 export interface UpdateTaskDtoType extends Partial<CreateTaskDtoType> {
@@ -38,4 +32,25 @@ export interface TasksFiltersType {
     project?: number
     ordering?: string
     search?: string
+    start_datetime?: string
+    end_datetime?: string
 }
+
+export interface SubTaskType {
+    id: number
+    task: number
+    text: string
+    status: TaskStatus
+    is_completed: boolean
+    created_at: string
+    updated_at: string
+}
+
+export interface CreateSubTaskDtoType {
+    text: string
+    task: number
+    status?: TaskStatus
+    is_completed?: boolean
+}
+
+export interface UpdateSubTaskDtoType extends Partial<CreateSubTaskDtoType> { }

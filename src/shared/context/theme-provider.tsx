@@ -9,9 +9,9 @@ export type Theme = 'light' | 'dark' | 'system'
 // Интерфейс контекста темы
 interface ThemeContextType {
     theme: Theme
-    colorScheme: 'light' | 'dark' | 'system'
+    colorScheme: 'light' | 'dark'
     setTheme: (theme: Theme) => Promise<void>
-    colors: typeof Colors.light
+    colors: typeof Colors.light | typeof Colors.dark
     isDark: boolean
 }
 
@@ -58,7 +58,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
 
     const context: ThemeContextType = {
         theme,
-        colorScheme,
+        colorScheme: currentColorScheme,
         setTheme,
         colors,
         isDark

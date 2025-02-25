@@ -1,39 +1,24 @@
 // src/widgets/diary/mood/steps/SuccessStep.tsx
 import { streakService } from '@shared/lib/gamification/streak.service'
-import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { StreakWidget } from '@widgets/gamification/streak/StreakWidget'
+import { router } from 'expo-router'
 import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import Animated, {
     FadeIn,
     FadeInDown,
-    SlideInRight,
-    SlideOutLeft,
     useAnimatedStyle,
     withSpring
 } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-interface SuccessStepProps {
-    selectedFactors: number[]
-    selectedEmotions: number[]
-    factors: Factor[]
-    emotions: Emotion[]
-    onClose?: () => void
-}
-
-export const SuccessStep: React.FC<SuccessStepProps> = ({
-    selectedFactors,
-    selectedEmotions,
-    factors,
-    emotions,
-    onClose,
-}) => {
+export function SuccessStep() {
     const { t } = useTranslation()
-
+    const insets = useSafeAreaInsets()
     // Анимация для иконки
     const animatedIconStyle = useAnimatedStyle(() => ({
         transform: [{
@@ -62,22 +47,18 @@ export const SuccessStep: React.FC<SuccessStepProps> = ({
     }, [])
 
     return (
-        <Animated.View
-            className="flex-1 p-4 bg-background dark:bg-background-dark"
-            entering={SlideInRight}
-            exiting={SlideOutLeft}
-        >
+        <View className="flex-1 px-4">
             <View className="flex-1 items-center justify-center">
                 <Animated.View
                     entering={FadeInDown.delay(300)}
                     style={animatedIconStyle}
-                    className="mb-6 p-6 rounded-full"
+                    className="p-6 rounded-full"
                 >
-                    <Icon name="CircleCheck" size={48} />
+                    <Icon name="Check" size={60} />
                 </Animated.View>
 
                 <Animated.View entering={FadeIn.delay(600)}>
-                    <Title weight="medium" className="text-center mb-4">
+                    <Title className="text-center mb-4">
                         {t('diary.moodcheckin.success.title')}
                     </Title>
                     <Text
@@ -96,17 +77,14 @@ export const SuccessStep: React.FC<SuccessStepProps> = ({
                 </Animated.View>
             </View>
 
-            <View className="px-6 pb-6">
-                <Button
-                    variant="default"
-                    className="w-full"
-                    onPress={() => {
-                        onClose?.()
-                    }}
-                >
-                    {t('common.done')}
-                </Button>
-            </View>
-        </Animated.View>
+            <Button
+                variant="default"
+                fullWidth
+                onPress={() => router.back()}
+                style={{ marginBottom: insets.bottom }}
+            >
+                {t('common.done')}
+            </Button>
+        </View>
     )
 }

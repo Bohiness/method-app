@@ -1,8 +1,6 @@
-import { useModal } from '@shared/context/modal-provider'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
-import { Icon, IconName } from '@shared/ui/icon'
+import { Icon, IconName, IconVariant } from '@shared/ui/icon'
 import { Text } from '@shared/ui/text'
-import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
@@ -30,7 +28,6 @@ export const FeatureButtonModal: React.FC<FeatureButtonProps> = ({
     icon: IconComponent,
     iconSize = 48,
     onPress,
-    modalContent,
     className = '',
     iconVariant = 'default',
     titleVariant = 'default',
@@ -42,56 +39,44 @@ export const FeatureButtonModal: React.FC<FeatureButtonProps> = ({
     testID
 }) => {
     const { t } = useTranslation()
-    const { showFullScreenModal } = useModal()
-
-    const showSubscriptionModal = useCallback(() => {
-        if (modalContent) {
-            showFullScreenModal(modalContent)
-        } else {
-            console.warn('modalContent is null or undefined')
-        }
-    }, [showFullScreenModal, modalContent])
-
 
 
     return (
-        <>
-            <HapticTab
-                onPress={showSubscriptionModal}
-                disabled={disabled}
-                testID={testID}
-                className={`flex-1 w-max-full overflow-hidden rounded-3xl bg-surface-paper dark:bg-surface-paper-dark px-6 py-14 shadow-lg ${disabled ? 'opacity-50' : ''} ${className}`}
-                style={style}
-            >
-                <View className="items-center space-y-4">
-                    {IconComponent && (
-                        <Icon
-                            name={IconComponent}
-                            variant={iconVariant}
-                            size={iconSize}
-                        />
-                    )}
-                    <View className="space-y-1">
+        <HapticTab
+            onPress={onPress}
+            disabled={disabled}
+            testID={testID}
+            className={`flex-1 w-max-full overflow-hidden rounded-3xl bg-surface-paper dark:bg-surface-paper-dark px-6 py-14 shadow-lg ${disabled ? 'opacity-50' : ''} ${className}`}
+            style={style}
+        >
+            <View className="items-center space-y-4">
+                {IconComponent && (
+                    <Icon
+                        name={IconComponent}
+                        variant={iconVariant as IconVariant}
+                        size={iconSize}
+                    />
+                )}
+                <View className="space-y-1">
+                    <Text
+                        size={titleSize}
+                        weight="bold"
+                        variant={titleVariant}
+                        className="text-center mt-4 mb-2"
+                    >
+                        {t(title)}
+                    </Text>
+                    {description && (
                         <Text
-                            size={titleSize}
-                            weight="bold"
-                            variant={titleVariant}
-                            className="text-center mt-4 mb-2"
+                            size={descriptionSize}
+                            variant={descriptionVariant}
+                            className="text-center"
                         >
-                            {t(title)}
+                            {t(description)}
                         </Text>
-                        {description && (
-                            <Text
-                                size={descriptionSize}
-                                variant={descriptionVariant}
-                                className="text-center"
-                            >
-                                {t(description)}
-                            </Text>
-                        )}
-                    </View>
+                    )}
                 </View>
-            </HapticTab>
-        </>
+            </View>
+        </HapticTab>
     )
 }

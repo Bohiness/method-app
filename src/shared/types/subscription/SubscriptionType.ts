@@ -1,38 +1,26 @@
 // src/shared/types/subscription/SubscriptionType.ts
 
-export type SubscriptionTierType = 'free' | 'premium' | 'pro';
+export type SubscriptionTier = 'free' | 'premium' | 'premium_ai';
 
-export interface SubscriptionType {
-    id: string;
-    tier: SubscriptionTierType;
-    name: string;
-    description: string;
-    price: number;
-    currency: string;
-    interval: 'month' | 'year';
-    features: string[];
-}
-
-export interface SubscriptionStatusType {
+export interface SubscriptionStatus {
     isActive: boolean;
-    tier: SubscriptionTierType;
+    tier: SubscriptionTier;
     expiresAt: string;
     autoRenew: boolean;
     cancelAtPeriodEnd: boolean;
 }
 
-// Интерфейс для работы с платежными системами
-export interface PaymentProviderType {
-    id: string;
-    type: 'stripe' | 'yookassa';
-    customerId?: string;
-    subscriptionId?: string;
+export interface SubscriptionPackage {
+    identifier: string;
+    title: string;
+    description: string;
+    price: number;
+    priceString: string;
+    period: string;
+    features: string[];
 }
 
-export interface SubscriptionStateType {
-    plans: SubscriptionType[];
-    currentPlan: SubscriptionType | null;
-    status: SubscriptionStatusType | null;
-    paymentProvider: PaymentProviderType | null;
+export interface SubscriptionOffering {
+    identifier: string;
+    packages: SubscriptionPackage[];
 }
-

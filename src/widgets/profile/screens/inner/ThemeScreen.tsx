@@ -1,8 +1,8 @@
 // ThemeScreen.tsx
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { useTheme } from '@shared/context/theme-provider'
+import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { RadioGroup } from '@shared/ui/radio'
-import { ScreenType } from '@widgets/profile/SettingModal'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'

@@ -1,8 +1,8 @@
 import { useVoiceInput } from '@shared/hooks/voice/useVoiceInput'
 import { cn } from '@shared/lib/utils/cn'
 import * as Haptics from 'expo-haptics'
-import React, { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../button'
 import { Icon } from '../icon'
@@ -12,6 +12,7 @@ interface VoiceInputButtonProps {
     size?: 'sm' | 'md' | 'lg'
     className?: string
     asButton?: boolean
+    initialText?: string
 }
 
 export const VoiceInputButton = ({
@@ -19,19 +20,10 @@ export const VoiceInputButton = ({
     size = 'md',
     className,
     asButton = false,
+    initialText = '',
 }: VoiceInputButtonProps) => {
-    const [accumulatedText, setAccumulatedText] = useState('')
+    const [accumulatedText, setAccumulatedText] = useState(initialText)
     const [isInitialized, setIsInitialized] = useState(false)
-
-    // Обработчик транскрибации внутри компонента
-    const handleTranscribe = (newText: string, shouldAppend = true) => {
-        const updatedText = shouldAppend
-            ? (accumulatedText ? `${accumulatedText} ${newText}` : newText)
-            : newText
-
-        setAccumulatedText(updatedText)
-        onTranscribe(updatedText)
-    }
 
     const {
         isRecording,
@@ -40,32 +32,45 @@ export const VoiceInputButton = ({
         startRecording,
         stopRecording,
     } = useVoiceInput({
-        onTranscribe: handleTranscribe,
-        enabled: isInitialized
+        enabled: true
     })
+
+    // Добавляем эффект для синхронизации с внешним текстом
+    useEffect(() => {
+        setAccumulatedText(initialText)
+    }, [initialText])
+
 
     const handlePress = async () => {
         if (!isInitialized) {
             setIsInitialized(true)
-
-            setTimeout(async () => {
-                await startRecording()
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-            }, 100)
+            await startRecording()
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
             return
         }
 
         if (isRecording) {
-            await stopRecording()
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+            try {
+                const result = await stopRecording()
+                if (result?.message) {
+                    onTranscribe(result.message)
+                }
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+            } catch (error) {
+                console.error('[VoiceInputButton] Ошибка при остановке записи:', error)
+            }
         } else {
-            await startRecording()
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+            try {
+                await startRecording()
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+            } catch (error) {
+                console.error('[VoiceInputButton] Ошибка при начале новой записи:', error)
+            }
         }
     }
 
-    const iconSizes = { sm: 16, md: 20, lg: 24 }
-    const buttonSizes = { sm: 'w-8 h-8', md: 'w-10 h-10', lg: 'w-12 h-12' }
+    const iconSizes = { sm: 16, md: 18, lg: 20 }
+    const buttonSizes = { sm: 'w-8 h-8', md: 'w-12 h-12', lg: 'w-14 h-14' }
     const innerScale = 1 + 0.5 * audioLevel
 
     const IconWithPulse = () => (
@@ -115,7 +120,7 @@ export const VoiceInputButton = ({
                 >
                     <IconWithPulse />
                 </Button>
-                <DebugInfo />
+                {/* <DebugInfo /> */}
             </>
         )
     }
@@ -133,9 +138,9 @@ export const VoiceInputButton = ({
                 onPress={handlePress}
                 className={cn(
                     'items-center justify-center rounded-full',
-                    isRecording ? 'bg-error/20' : 'bg-error dark:bg-error-dark',
+                    isRecording ? 'bg-error/20' : 'border border-border dark:border-border-dark',
                     buttonSizes[size],
-                    className
+                    className,
                 )}
             >
                 <View
@@ -144,10 +149,16 @@ export const VoiceInputButton = ({
                         buttonSizes[size]
                     )}
                 >
-                    <IconWithPulse />
+                    {isProcessing ? (
+                        <ActivityIndicator
+                            className="h-5 w-5"
+                        />
+                    ) : (
+                        <IconWithPulse />
+                    )}
                 </View>
             </Pressable>
-            <DebugInfo />
+            {/* <DebugInfo /> */}
         </>
     )
 }

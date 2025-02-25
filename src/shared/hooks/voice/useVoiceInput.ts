@@ -1,159 +1,126 @@
-// src/shared/hooks/voice/useVoiceInput.ts
-
-import { apiClient } from '@shared/config/api-client'
-import { Audio } from 'expo-av'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAI } from '@shared/hooks/ai/useAI';
+import { Audio } from 'expo-av';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseVoiceInputProps {
-    onTranscribe: (text: string, shouldAppend?: boolean) => void;
     enabled?: boolean;
 }
+export const useVoiceInput = ({ enabled = true }: UseVoiceInputProps = {}) => {
+    const [recording, setRecording] = useState<Audio.Recording | null>(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [audioLevel, setAudioLevel] = useState(0);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const levelCheckInterval = useRef<NodeJS.Timeout | null>(null);
+    const recordingRef = useRef<Audio.Recording | null>(null);
 
-export const useVoiceInput = ({ onTranscribe, enabled = true }: UseVoiceInputProps) => {
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
+    const { sendVoice, isSending, currentResponse } = useAI();
 
-  // Храним идентификатор интервала для метеринга звука
-  const levelCheckInterval = useRef<NodeJS.Timeout | null>(null);
-
-  /**
-   * Настройка аудио и запрос разрешений
-   */
-  const setupAudio = async () => {
-    try {
-      // Запрашиваем разрешения
-      const { granted } = await Audio.requestPermissionsAsync();
-      if (!granted) {
-        setError('Разрешения на использование микрофона не предоставлены');
-        return false;
-      }
-
-      // Настраиваем аудио-мод
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-      
-      setIsInitialized(true);
-      return true;
-    } catch (err) {
-      setError('Ошибка при настройке аудио');
-      console.error('Error setting up audio:', err);
-      return false;
-    }
-  };
-
-  // Очистка при размонтировании
-  useEffect(() => {
-    return () => {
-      if (levelCheckInterval.current) {
-        clearInterval(levelCheckInterval.current);
-      }
-    };
-  }, []);
-
-  /**
-   * Начать запись.
-   */
-  const startRecording = useCallback(async () => {
-    if (!enabled) return;
-    
-    try {
-      setError(null);
-
-      // Если аудио еще не инициализировано, инициализируем
-      if (!isInitialized) {
-        const success = await setupAudio();
-        if (!success) return;
-      }
-
-      // Создаём объект записи со всеми нужными опциями
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-
-      setRecording(recording);
-      setIsRecording(true);
-
-      levelCheckInterval.current = setInterval(async () => {
+    const setupAudio = async () => {
         try {
-          if (!recording) return;
+            const { granted } = await Audio.requestPermissionsAsync();
+            if (!granted) {
+                setError('Разрешения на использование микрофона не предоставлены');
+                return false;
+            }
 
-          const status = await recording.getStatusAsync();
-          const meteringValue = status.metering ?? 0;
-        //   console.log('Raw metering value:', meteringValue);
-          
-          const normalizedLevel = Math.min(1, Math.max(0, meteringValue / 100 + 0.5));
-        //   console.log('Normalized audio level:', normalizedLevel);
-          
-          setAudioLevel(normalizedLevel);
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: true,
+                playsInSilentModeIOS: true,
+            });
+
+            setIsInitialized(true);
+            return true;
         } catch (err) {
-          console.error('Error getting audio level:', err);
+            setError('Ошибка при настройке аудио');
+            return false;
         }
-      }, 100);
-    } catch (err) {
-      console.error('Error starting recording:', err);
-      setError('Ошибка при начале записи');
-    }
-  }, []);
+    };
 
-  /**
-   * Остановить запись и отправить аудиофайл на бэкенд.
-   */
-  const stopRecording = useCallback(async () => {
-    if (!recording) return;
+    const startRecording = useCallback(async () => {
+        if (!enabled && isInitialized) return;
 
-    // Останавливаем измерение уровня громкости
-    if (levelCheckInterval.current) {
-      clearInterval(levelCheckInterval.current);
-      levelCheckInterval.current = null;
-    }
+        try {
+            setError(null);
+            setIsRecording(true);
 
-    setIsProcessing(true);
-    try {
-      await recording.stopAndUnloadAsync(); 
-      const uri = recording.getURI();
-      if (!uri) {
-        throw new Error('URI записи не найден');
-      }
+            if (!isInitialized) {
+                const success = await setupAudio();
+                if (!success) {
+                    setIsRecording(false);
+                    return;
+                }
+            }
 
-      // Подготовка к отправке файла на сервер
-      const formData = new FormData();
-      formData.append('file', {
-        uri,
-        type: 'audio/m4a',
-        name: 'audio.m4a',
-      } as any);
+            const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
 
-      // Отправляем файл и ждём расшифровки
-      const response = await apiClient.post<{ text: string }>(
-        '/api/openai/transcribe/',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+            recordingRef.current = recording;
+            setRecording(recording);
 
-      // Вызываем колбэк с полученным текстом
-      onTranscribe(response.text.trim(), true);
-    } catch (err) {
-      console.error('Error processing recording:', err);
-      setError('Ошибка при остановке записи');
-    } finally {
-      // Сбрасываем состояние
-      setRecording(null);
-      setIsRecording(false);
-      setIsProcessing(false);
-      setAudioLevel(0);
-    }
-  }, [recording, onTranscribe]);
+            levelCheckInterval.current = setInterval(async () => {
+                if (!recordingRef.current) return;
+                try {
+                    const status = await recordingRef.current.getStatusAsync();
+                    const meteringValue = status.metering ?? 0;
+                    setAudioLevel(Math.min(1, Math.max(0, meteringValue / 100 + 0.5)));
+                } catch (err) {
+                    console.error('Error getting audio level:', err);
+                }
+            }, 100);
+        } catch (err) {
+            setError('Ошибка при начале записи');
+            setIsRecording(false);
+        }
+    }, [enabled, isInitialized]);
 
-  return {
-    isRecording,
-    isProcessing,
-    error,
-    audioLevel,
-    startRecording,
-    stopRecording,
-  };
+    const stopRecording = useCallback(async () => {
+        const currentRecording = recordingRef.current;
+        if (!currentRecording) return;
+
+        if (levelCheckInterval.current) {
+            clearInterval(levelCheckInterval.current);
+            levelCheckInterval.current = null;
+        }
+
+        try {
+            await currentRecording.stopAndUnloadAsync();
+            const uri = currentRecording.getURI();
+            if (!uri) throw new Error('URI записи не найден');
+
+            const audioFile = {
+                uri,
+                type: 'audio/m4a',
+                name: 'audio.m4a',
+            } as any;
+
+            const response = await sendVoice(audioFile);
+            return response;
+        } catch (err) {
+            setError('Ошибка при остановке записи');
+        } finally {
+            recordingRef.current = null;
+            setRecording(null);
+            setIsRecording(false);
+            setAudioLevel(0);
+        }
+    }, [sendVoice]);
+
+    useEffect(() => {
+        return () => {
+            if (levelCheckInterval.current) {
+                clearInterval(levelCheckInterval.current);
+            }
+        };
+    }, []);
+
+    return {
+        isRecording,
+        isProcessing: isSending,
+        response: currentResponse,
+        error,
+        audioLevel,
+        startRecording,
+        stopRecording,
+        isInitialized,
+    };
 };

@@ -1,119 +1,95 @@
-// src/shared/ui/time-picker/index.tsx
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { useColors } from '@shared/context/theme-provider'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
-import { cn } from '@shared/lib/utils/cn'
-import React, { useCallback, useState } from 'react'
-import { Modal, Platform, Pressable, View as RNView } from 'react-native'
-import Animated from 'react-native-reanimated'
-import { Button } from './button'
-import { Text } from './text'
-import { View } from './view'
+import { HapticTab } from '@shared/lib/utils/HapticTab'
+import { Badge } from '@shared/ui/badge'
+import { Button } from '@shared/ui/button'
+import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Modal, Platform, Pressable, View } from 'react-native'
 
-interface TimePickerProps {
-    value: Date
-    onChange: (hours: number, minutes: number) => void
-    format?: '12h' | '24h'
-    minuteInterval?: 1 | 2 | 3 | 4 | 5 | 6 | 10 | 12 | 15 | 20 | 30
-    className?: string
+export interface TimePickerProps {
+    time?: Date
+    onChange: (time: Date) => void
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
-
-export const TimePicker: React.FC<TimePickerProps> = ({
-    value,
-    onChange,
-    format = '24h',
-    minuteInterval = 1,
-    className
-}) => {
-    const colors = useColors()
+export const TimePicker = ({ time, onChange }: TimePickerProps) => {
+    const { t } = useTranslation()
     const { formatDateTime } = useDateTime()
-    const [tempDate, setTempDate] = useState(value)
-    const [isVisible, setIsVisible] = useState(false)
+    // Показ модального окна для выбора времени
+    const [modalVisible, setModalVisible] = useState(false)
+    // Временная переменная для выбранного времени до подтверждения
+    const [tempTime, setTempTime] = useState<Date>(time || new Date())
 
-    const handleConfirm = useCallback(() => {
-        onChange(tempDate.getHours(), tempDate.getMinutes())
-        setIsVisible(false)
-    }, [tempDate, onChange])
-
-    const handleCancel = useCallback(() => {
-        setTempDate(value)
-        setIsVisible(false)
-    }, [value])
-
-    const handleChange = useCallback((_: any, date?: Date) => {
-        if (date) {
-            setTempDate(date)
-        }
-    }, [])
-
-    if (Platform.OS === 'ios') {
-        return (
-            <View className={className}>
-                <Modal
-                    visible={isVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={handleCancel}
-                >
-                    <RNView className="flex-1 justify-end">
-                        <RNView>
-                            <RNView className="flex-row justify-between items-center px-4 py-2">
-                                <Button
-                                    variant="ghost"
-                                    onPress={handleCancel}
-                                >
-                                    Отмена
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    onPress={handleConfirm}
-                                >
-                                    Готово
-                                </Button>
-                            </RNView>
-
-                            {/* Пикер */}
-                            <DateTimePicker
-                                value={tempDate}
-                                mode="time"
-                                display="spinner"
-                                onChange={handleChange}
-                                minuteInterval={minuteInterval}
-                                is24Hour={format === '24h'}
-                                textColor={colors.text}
-                            />
-                        </RNView>
-                    </RNView>
-                </Modal>
-
-                <Pressable
-                    onPress={() => setIsVisible(true)}
-                    className={cn(
-                        "flex-row items-center justify-center py-2 px-4 rounded-full",
-                    )}
-                >
-                    <Text className="text-lg">
-                        {formatDateTime(value, format === '12h' ? 'hh:mm a' : 'HH:mm')}
-                    </Text>
-                </Pressable>
-            </View>
-        )
+    const handleConfirm = () => {
+        onChange(tempTime)
+        setModalVisible(false)
     }
 
-    // Android версия (можно кастомизировать под дизайн iOS)
+    const handleCancel = () => {
+        // При отмене возвращаем предыдущий выбор
+        setTempTime(time || new Date())
+        setModalVisible(false)
+    }
+
+    const onTimeChange = (event: any, selectedTime?: Date) => {
+        // Если пользователь выбрал новое время, обновляем временное состояние
+        if (selectedTime) {
+            setTempTime(selectedTime)
+        }
+    }
+
     return (
-        <DateTimePicker
-            value={value}
-            mode="time"
-            is24Hour={format === '24h'}
-            onChange={(event, date) => {
-                if (event.type === 'set' && date) {
-                    onChange(date.getHours(), date.getMinutes())
-                }
-            }}
-            minuteInterval={minuteInterval}
-        />
+        <View>
+            {/* Кнопка для открытия модального окна выбора времени */}
+            <HapticTab onPress={() => setModalVisible(true)}>
+                <Badge size="lg">
+                    {formatDateTime(time || tempTime, 'HH:mm')}
+                </Badge>
+            </HapticTab>
+
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                transparent
+                onRequestClose={handleCancel}
+            >
+                <Pressable
+                    style={{
+                        flex: 1,
+                        backgroundColor: 'rgba(0,0,0,0.5)',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                    onPress={handleCancel}
+                >
+                    <Pressable
+                        onPress={(e) => e.stopPropagation()}
+                        style={{
+                            backgroundColor: 'white',
+                            padding: 20,
+                            borderRadius: 10,
+                            width: '80%'
+                        }}
+                    >
+                        {/* Компонент выбора времени */}
+                        <DateTimePicker
+                            value={tempTime}
+                            mode="time"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={onTimeChange}
+                            style={{ width: '100%' }}
+                        />
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginTop: 20 }}>
+                            <Button onPress={handleCancel}>
+                                {t('common.cancel')}
+                            </Button>
+                            <Button onPress={handleConfirm}>
+                                {t('common.confirm')}
+                            </Button>
+                        </View>
+                    </Pressable>
+                </Pressable>
+            </Modal>
+        </View>
     )
 }

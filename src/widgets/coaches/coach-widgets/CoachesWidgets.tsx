@@ -11,15 +11,16 @@ import { CoachListSkeleton } from '../coach-item/CoachItemSkeleton'
 
 interface CoachesWidgetsProps {
     showTitle?: boolean
+    limit?: number
 }
 
-export const CoachesWidgets = ({ showTitle = true }: CoachesWidgetsProps) => {
+export const CoachesWidgets = ({ showTitle = true, limit }: CoachesWidgetsProps) => {
     const { t } = useTranslation()
     const { coaches, isPending } = useCoaches()
     const [hoveredCoach, setHoveredCoach] = useState<{ id: number | null, position?: { top: number, height: number } }>({ id: null })
 
     if (isPending) {
-        return <CoachListSkeleton count={3} />
+        return <CoachListSkeleton count={limit} />
     }
 
     return (
@@ -32,7 +33,7 @@ export const CoachesWidgets = ({ showTitle = true }: CoachesWidgetsProps) => {
             }
             <ScrollView className="mb-2 flex-1">
                 <View className="flex-row flex-wrap gap-2">
-                    {coaches && coaches.map((coach, index) => (
+                    {coaches && coaches.slice(0, limit).map((coach, index) => (
                         <>
                             <CoachItem
                                 key={coach.id}

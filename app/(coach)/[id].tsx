@@ -3,6 +3,7 @@ import { useCoach, usePackages } from '@shared/hooks/coaches/useCoach'
 import { CoachProfile } from '@widgets/coaches/coach-screen/CoachProfile'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect } from 'react'
+import { Linking, Platform } from 'react-native'
 
 export default function CoachScreen() {
     const { id } = useLocalSearchParams<{ id: string }>()
@@ -18,7 +19,13 @@ export default function CoachScreen() {
     }, [coach])
 
     const handleBooking = () => {
-        router.push(`/(coach)/booking?coachID=${id}`)
+        const url = `https://method.do/coach/${id}`
+
+        if (Platform.OS === 'web') {
+            window.open(url, '_blank')
+        } else {
+            Linking.openURL(url)
+        }
     }
 
     // if (isPending || !coach) {

@@ -2,9 +2,10 @@
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { tasksStorageService } from '@shared/lib/plans/tasks-storage.service';
 import { tasksSyncService } from '@shared/lib/plans/tasks-sync.service';
-import { CreateTaskDtoType, TasksFiltersType, UpdateTaskDtoType } from '@shared/types/plans/TasksTypes';
+import { CreateTaskDtoType, TasksFiltersType, TaskType, UpdateTaskDtoType } from '@shared/types/plans/TasksTypes';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import debounce from 'lodash/debounce';
+import { useEffect, useMemo } from 'react';
 
 export const useOfflineTasks = (filters?: TasksFiltersType) => {
     const queryClient = useQueryClient();
@@ -85,48 +86,99 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
     // Удаление задачи
     const deleteTask = useMutation({
         mutationFn: async (id: number) => {
-            // Удаляем из локального хранилища
-            await tasksStorageService.deleteTask(id);
+            try {
+                console.debug('Deleting task:', id);
 
-            // Если онлайн, пытаемся синхронизировать
-            if (isOnline) {
-                try {
-                    await tasksSyncService.syncChanges();
-                } catch (error) {
-                    console.error('Failed to sync after delete:', error);
+                // Удаляем из локального хранилища
+                await tasksStorageService.deleteTask(id);
+                console.debug('Task deleted from local storage');
+
+                // Если онлайн, пытаемся синхронизировать
+                if (isOnline) {
+                    try {
+                        console.debug('Starting sync after delete');
+                        await tasksSyncService.syncChanges();
+                        console.debug('Sync completed after delete');
+                    } catch (error) {
+                        console.error('Failed to sync after delete:', error);
+                        // Добавляем повторную попытку синхронизации
+                        setTimeout(() => tasksSyncService.syncChanges(), 5000);
+                    }
                 }
+            } catch (error) {
+                console.error('Error in deleteTask mutation:', error);
+                throw error;
             }
         },
         onSuccess: () => {
+            console.debug('Delete mutation succeeded, invalidating queries');
             queryClient.invalidateQueries({ queryKey });
+        },
+        onError: error => {
+            console.error('Delete mutation failed:', error);
+            // Можно добавить показ уведомления пользователю
         },
     });
 
     const toggleTaskCompletion = useMutation({
-        mutationFn: async ({ id, isCompleted }: { id: number; isCompleted: boolean }) => {
-            // Обновляем в локальном хранилище немедленно
-            const updatedTask = await tasksStorageService.updateTask(id, {
-                is_completed: isCompleted,
-                status: isCompleted ? 'completed' : 'pending',
-            });
+        mutationFn: async (taskId: string | number) => {
+            try {
+                const tasks = queryClient.getQueryData<{ results: TaskType[] }>(queryKey);
+                const task = tasks?.results.find(t => t.id === Number(taskId));
 
-            // Запускаем синхронизацию в фоне без await
-            if (isOnline) {
-                setTimeout(async () => {
-                    try {
-                        await tasksSyncService.syncChanges();
-                    } catch (error) {
-                        console.error('Failed to sync after status toggle:', error);
-                    }
-                }, 0);
+                if (!task) {
+                    throw new Error('Task not found');
+                }
+
+                const isCompleted = !task.is_completed;
+
+                // Оптимистическое обновление UI
+                queryClient.setQueryData(queryKey, (old: any) => ({
+                    ...old,
+                    results: old.results.map((t: TaskType) =>
+                        t.id === Number(taskId)
+                            ? { ...t, is_completed: isCompleted, status: isCompleted ? 'completed' : 'pending' }
+                            : t
+                    ),
+                }));
+
+                // Обновляем в локальном хранилище
+                const updatedTask = await tasksStorageService.updateTask(task.id, {
+                    is_completed: isCompleted,
+                    status: isCompleted ? 'completed' : 'pending',
+                });
+
+                // Запускаем дебаунсированную синхронизацию если онлайн
+                if (isOnline) {
+                    debouncedSync();
+                }
+
+                return updatedTask;
+            } catch (error) {
+                // В случае ошибки отменяем оптимистическое обновление
+                queryClient.invalidateQueries({ queryKey });
+                throw error;
             }
-
-            return updatedTask;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey });
+        onError: (error, taskId) => {
+            console.error('Error toggling task completion:', error);
+            // Можно добавить уведомление пользователю
         },
     });
+
+    // Создаем дебаунсированную функцию синхронизации
+    const debouncedSync = useMemo(
+        () =>
+            debounce(async () => {
+                try {
+                    await tasksSyncService.syncChanges();
+                    queryClient.invalidateQueries({ queryKey });
+                } catch (error) {
+                    console.error('Failed to sync after status toggle:', error);
+                }
+            }, 1000),
+        [queryClient, queryKey]
+    );
 
     // Принудительная синхронизация
     const syncTasks = async () => {
@@ -145,7 +197,8 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
         createTask,
         updateTask,
         deleteTask,
-        toggleTaskCompletion,
+        toggleTask: (taskId: string | number) => toggleTaskCompletion.mutate(taskId),
+        isToggling: toggleTaskCompletion.isPending,
         syncTasks,
     };
 };

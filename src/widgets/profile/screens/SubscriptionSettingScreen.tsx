@@ -1,5 +1,5 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
-import { useIAP } from '@shared/hooks/subscription/useIAP'
+import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { useSubscription } from '@shared/hooks/subscription/useSubscription'
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { Button } from '@shared/ui/button'
@@ -7,9 +7,11 @@ import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { useTranslation } from 'react-i18next'
-import { ScreenType } from '../SettingModal'
 
-export const SubscriptionSettingScreen = ({ onBack, onNavigate }: {
+export const SubscriptionSettingScreen = ({
+    onBack,
+    onNavigate
+}: {
     onBack: () => void,
     onNavigate: (screen: ScreenType) => void
 }) => {
@@ -17,20 +19,14 @@ export const SubscriptionSettingScreen = ({ onBack, onNavigate }: {
     const { showSubscriptionModal } = useSubscriptionModal()
 
     const {
-        status,
-        hasActiveSubscription,
-        hasPremium,
-        hasPro,
-        cancelSubscription,
-        restoreSubscription,
-        isLoading
-    } = useSubscription()
-
-    const {
-        restorePurchases,
+        subscription,
+        isSubscribed,
+        isPremium,
+        isPremiumAI,
         isRestoring,
-        isPurchasing
-    } = useIAP()
+        isPurchasing,
+        restore
+    } = useSubscription()
 
     // Функция форматирования даты истечения подписки
     const formatExpiryDate = (date: string) => {
@@ -42,29 +38,29 @@ export const SubscriptionSettingScreen = ({ onBack, onNavigate }: {
             <HeaderMenuItem onBack={onBack} title={t('settings.subscription.title')} />
 
             <View>
-                {hasActiveSubscription ? (
+                {isSubscribed && subscription ? (
                     // Информация об активной подписке
                     <View className="mb-4">
                         <View className="flex-row items-center mb-4">
-                            <Icon name="CheckCircle" className="text-success mr-2" />
+                            <Icon name="Check" className="text-success mr-2" />
                             <Title>{t('settings.subscription.active')}</Title>
                         </View>
 
                         <Text className="mb-2">
                             {t('settings.subscription.plan', {
-                                plan: hasPro ? 'Pro' : 'Premium'
+                                plan: isPremiumAI ? 'Premium AI' : 'Premium'
                             })}
                         </Text>
 
-                        {status?.expiresAt && (
+                        {subscription && 'expiresAt' in subscription && subscription.expiresAt && (
                             <Text variant="secondary">
                                 {t('settings.subscription.expires', {
-                                    date: formatExpiryDate(status.expiresAt)
+                                    date: formatExpiryDate(subscription.expiresAt)
                                 })}
                             </Text>
                         )}
 
-                        {status?.autoRenew ? (
+                        {subscription && 'autoRenew' in subscription && subscription.autoRenew ? (
                             <Text variant="success" className="mt-2">
                                 {t('settings.subscription.autoRenewEnabled')}
                             </Text>
@@ -74,14 +70,16 @@ export const SubscriptionSettingScreen = ({ onBack, onNavigate }: {
                             </Text>
                         )}
 
-                        <Button
-                            variant="outline"
-                            className="mt-4"
-                            onPress={() => cancelSubscription()}
-                            loading={isLoading}
-                        >
-                            {t('settings.subscription.cancelSubscription')}
-                        </Button>
+                        {!isPremiumAI && (
+                            <Button
+                                variant="outline"
+                                className="mt-4"
+                                onPress={showSubscriptionModal}
+                                loading={isPurchasing}
+                            >
+                                {t('settings.subscription.upgrade')}
+                            </Button>
+                        )}
                     </View>
                 ) : (
                     // Кнопки для активации подписки
@@ -106,24 +104,24 @@ export const SubscriptionSettingScreen = ({ onBack, onNavigate }: {
                 <View className="mt-4">
                     <Button
                         variant="ghost"
-                        onPress={() => restorePurchases()}
+                        onPress={() => restore()}
                         loading={isRestoring}
                     >
                         {t('settings.subscription.restorePurchases')}
                     </Button>
                 </View>
 
-                {/* Дополнительные ссылки */}
+                {/* Ссылки на документы */}
                 <View>
                     <Button
                         variant="ghost"
-                        onPress={() => {/* Открыть условия использования */ }}
+                        onPress={() => onNavigate('terms')}
                     >
                         {t('settings.subscription.terms')}
                     </Button>
                     <Button
                         variant="ghost"
-                        onPress={() => {/* Открыть политику конфиденциальности */ }}
+                        onPress={() => onNavigate('privacy')}
                     >
                         {t('settings.subscription.privacy')}
                     </Button>

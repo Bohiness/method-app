@@ -1,21 +1,24 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
+import { useModal } from '@shared/context/modal-provider'
+import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { storage } from '@shared/lib/storage/storage.service'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
 import { Separator } from '@shared/ui/separator'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import { ScreenType } from '@widgets/profile/SettingModal'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, ScrollView } from 'react-native'
+import { Alert, ScrollView, TouchableOpacity } from 'react-native'
+import { StorageValueModal } from './StorageValueModal'
 
 interface StorageInfo {
     totalSize: number
-    items: {
+    items: Array<{
         key: string
         size: number
-    }[]
+        value: string
+    }>
 }
 
 export const StorageScreen = ({
@@ -26,31 +29,40 @@ export const StorageScreen = ({
     onNavigate: (screen: ScreenType) => void
 }) => {
     const { t } = useTranslation()
+    const { showModal } = useModal()
     const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
 
-    // Получение информации о хранилище
-    const getStorageInfo = useCallback(async () => {
+    // Загрузка информации о хранилище
+    const loadStorageInfo = useCallback(async () => {
         try {
             setIsLoading(true)
-            const keys = await storage.getAllKeys()
-            let totalSize = 0
-            const items = []
-
-            for (const key of keys) {
-                const value = await storage.get(key)
-                const size = new Blob([JSON.stringify(value)]).size
-                totalSize += size
-                items.push({ key, size })
-            }
-
-            setStorageInfo({ totalSize, items })
+            const info = await storage.getStorageSize()
+            setStorageInfo(info)
         } catch (error) {
-            console.error('Error getting storage info:', error)
+            console.error('Error loading storage info:', error)
+            Alert.alert(
+                t('common.error'),
+                t('settings.storage.errorLoading')
+            )
         } finally {
             setIsLoading(false)
         }
-    }, [])
+    }, [t])
+
+    // Открытие модального окна с детальной информацией
+    const openValueDetails = useCallback((item: StorageInfo['items'][0]) => {
+        showModal(
+            <StorageValueModal
+                storageKey={item.key}
+                value={item.value}
+                size={item.size}
+            />, {
+            type: 'fullScreen',
+            showCloseButton: true
+        }
+        )
+    }, [showModal])
 
     // Очистка кэша
     const clearCache = useCallback(async () => {
@@ -69,9 +81,13 @@ export const StorageScreen = ({
                         try {
                             setIsLoading(true)
                             await storage.clear()
-                            await getStorageInfo()
+                            await loadStorageInfo()
                         } catch (error) {
                             console.error('Error clearing cache:', error)
+                            Alert.alert(
+                                t('common.error'),
+                                t('settings.storage.errorClearing')
+                            )
                         } finally {
                             setIsLoading(false)
                         }
@@ -79,21 +95,28 @@ export const StorageScreen = ({
                 }
             ]
         )
-    }, [t, getStorageInfo])
+    }, [t, loadStorageInfo])
 
     // Удаление конкретного элемента
     const removeItem = useCallback(async (key: string) => {
         try {
+            setIsLoading(true)
             await storage.remove(key)
-            await getStorageInfo()
+            await loadStorageInfo()
         } catch (error) {
             console.error('Error removing item:', error)
+            Alert.alert(
+                t('common.error'),
+                t('settings.storage.errorRemoving')
+            )
+        } finally {
+            setIsLoading(false)
         }
-    }, [getStorageInfo])
+    }, [loadStorageInfo, t])
 
     useEffect(() => {
-        getStorageInfo()
-    }, [getStorageInfo])
+        loadStorageInfo()
+    }, [loadStorageInfo])
 
     const formatSize = (bytes: number): string => {
         if (bytes < 1024) return `${bytes} B`
@@ -112,7 +135,7 @@ export const StorageScreen = ({
                         {t('settings.storage.totalUsed')}
                     </Text>
                     <Text size="xl" weight="bold" className="mt-1" variant='secondary'>
-                        {storageInfo ? formatSize(storageInfo.totalSize) : '...'}
+                        {isLoading ? '...' : storageInfo ? formatSize(storageInfo.totalSize) : '0 B'}
                     </Text>
                 </View>
 
@@ -123,6 +146,7 @@ export const StorageScreen = ({
                         leftIcon="Trash2"
                         onPress={clearCache}
                         loading={isLoading}
+                        disabled={!storageInfo?.totalSize}
                     >
                         {t('settings.storage.clearCache.button')}
                     </Button>
@@ -134,26 +158,44 @@ export const StorageScreen = ({
                         {t('settings.storage.items.title')}
                     </Text>
 
+                    {!isLoading && storageInfo?.items.length === 0 && (
+                        <Text variant="secondary" className="text-center py-4">
+                            {t('settings.storage.noItems')}
+                        </Text>
+                    )}
+
                     {storageInfo?.items.map((item, index) => (
                         <View key={item.key}>
                             {index > 0 && <Separator />}
-                            <View className="flex-row items-center justify-between py-4">
-                                <View className="flex-1">
-                                    <Text numberOfLines={1} className="flex-1">
-                                        {item.key}
-                                    </Text>
-                                    <Text variant="secondary" size="sm">
-                                        {formatSize(item.size)}
-                                    </Text>
+                            <TouchableOpacity
+                                onPress={() => openValueDetails(item)}
+                                className="py-4"
+                            >
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-1">
+                                        <Text numberOfLines={1} className="flex-1">
+                                            {item.key}
+                                        </Text>
+                                        <Text variant="secondary" size="sm">
+                                            {formatSize(item.size)}
+                                        </Text>
+                                    </View>
+                                    <View className="flex-row items-center">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onPress={(e) => {
+                                                e.stopPropagation()
+                                                removeItem(item.key)
+                                            }}
+                                            disabled={isLoading}
+                                        >
+                                            <Icon name="Trash2" size={20} />
+                                        </Button>
+                                        <Icon name="ChevronRight" size={20} variant="secondary" />
+                                    </View>
                                 </View>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onPress={() => removeItem(item.key)}
-                                >
-                                    <Icon name="Trash2" size={20} />
-                                </Button>
-                            </View>
+                            </TouchableOpacity>
                         </View>
                     ))}
                 </View>

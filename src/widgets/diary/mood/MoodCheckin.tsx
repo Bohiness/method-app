@@ -1,12 +1,11 @@
 // src/features/diary/mood/MoodCheckin.tsx
-import { useCreateMoodCheckin, useEmotions, useFactors } from '@shared/hooks/diary/mood/useMoodCheckin'
-import { HapticTab } from '@shared/lib/utils/HapticTab'
+import { useEmotions } from '@shared/hooks/diary/mood/useEmotions'
+import { useFactors } from '@shared/hooks/diary/mood/useFactors'
+import { useCreateMoodCheckin } from '@shared/hooks/diary/mood/useMoodCheckin'
+import { TransitionScreen, TransitionScreenProps } from '@widgets/transitions/TransitionContext'
+import { TransitionLayout } from '@widgets/transitions/TransitionLayout'
 import { Audio } from 'expo-av'
-import * as Haptics from 'expo-haptics'
 import React, { useEffect, useState } from 'react'
-import { View } from 'react-native'
-import Animated from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { EmotionsStep } from './steps/EmotionsStep'
 import { ExplanationStep } from './steps/ExplanationStep'
 import { FactorsStep } from './steps/FactorsStep'
@@ -25,13 +24,18 @@ type Factor = {
     name: string
 }
 
+export interface MoodRouteParams {
+    currentStep?: number
+    onStepPress?: (newStep: number) => void
+    totalSteps?: number
+}
+
 interface MoodCheckinProps {
     date: Date
     onClose?: () => void
 }
 
-export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
-    const insets = useSafeAreaInsets()
+export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date }) => {
     const [step, setStep] = useState(1)
     const [moodLevel, setMoodLevel] = useState(3)
     const [selectedEmotions, setSelectedEmotions] = useState<number[]>([])
@@ -42,7 +46,7 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
 
     const { data: emotions = [] } = useEmotions()
     const { data: factors = [] } = useFactors()
-    const { mutateAsync: createMoodCheckin, isPending: isCreating } = useCreateMoodCheckin()
+    const { mutateAsync: createMoodCheckin } = useCreateMoodCheckin()
 
     // Звуковые эффекты
     const [sound, setSound] = useState<Audio.Sound>()
@@ -68,7 +72,6 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
     const playFeedback = async () => {
         try {
             await sound?.playFromPositionAsync(0)
-            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
         } catch (error) {
             console.error('Error playing feedback:', error)
         }
@@ -123,7 +126,7 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
         }
     }
 
-    const handleComplete = () => {
+    const handleComplete = async () => {
         // Запускаем мутацию без await
         createMoodCheckin({
             mood_level: moodLevel,
@@ -148,94 +151,69 @@ export const MoodCheckin: React.FC<MoodCheckinProps> = ({ date, onClose }) => {
         setStep(5)
     }
 
-    // Рендер текущего шага
-    const renderStep = () => {
-        switch (step) {
-            case 1:
-                return (
-                    <MoodLevelStep
-                        value={moodLevel}
-                        onChange={handleMoodLevelChange}
-                        onNext={() => setStep(2)}
-                        dateNow={dateNow}
-                    />
-                )
-            case 2:
-                return (
-                    <EmotionsStep
-                        moodLevel={moodLevel}
-                        emotions={emotions}
-                        selectedEmotions={selectedEmotions}
-                        onSelect={handleEmotionSelect}
-                        onNext={() => setStep(3)}
-                        onBack={() => setStep(1)}
-                    />
-                )
-            case 3:
-                return (
-                    <FactorsStep
-                        factors={factors}
-                        selectedFactors={selectedFactors}
-                        selectedEmotions={selectedEmotions}
-                        onSelect={handleFactorSelect}
-                        onNotesChange={setNotes}
-                        onNext={() => setStep(4)}
-                        emotions={emotions}
-                        onBack={() => setStep(2)}
-                        onRemoveEmotion={handleRemoveEmotion}
-                    />
-                )
-            case 4:
-                return (
-                    <ExplanationStep
-                        selectedFactors={selectedFactors}
-                        selectedEmotions={selectedEmotions}
-                        factors={factors}
-                        emotions={emotions}
-                        onExplanationChange={handleExplanationChange}
-                        onRemoveEmotion={handleRemoveEmotion}
-                        onRemoveFactor={handleRemoveFactor}
-                        onNext={handleComplete}
-                        onBack={() => setStep(3)}
-                        explanation={explanation}
-                        isLoading={isCreating}
-                    />
-                )
-            case 5:
-                return (
-                    <SuccessStep
-                        selectedFactors={selectedFactors}
-                        selectedEmotions={selectedEmotions}
-                        factors={factors}
-                        emotions={emotions}
-                        onClose={onClose}
-                    />
-                )
-            default:
-                return null
-        }
-    }
+
+    const screens: TransitionScreen[] = [
+        {
+            key: 'screen-1',
+            component: MoodLevelStep as React.ComponentType<TransitionScreenProps>,
+            canSkip: false,
+            canBack: false,
+            props: {
+                value: moodLevel,
+                onChange: handleMoodLevelChange,
+                dateNow: dateNow,
+            }
+        },
+        {
+            key: 'screen-2',
+            component: EmotionsStep as React.ComponentType<TransitionScreenProps>,
+            canSkip: false,
+            props: {
+                emotions: emotions,
+                selectedEmotions: selectedEmotions,
+                onSelect: handleEmotionSelect,
+                moodLevel: moodLevel,
+            }
+        },
+        {
+            key: 'screen-3',
+            component: FactorsStep as React.ComponentType<TransitionScreenProps>,
+            canSkip: true,
+            props: {
+                factors: factors,
+                selectedFactors: selectedFactors,
+                selectedEmotions: selectedEmotions,
+                onSelect: handleFactorSelect,
+                onNotesChange: setNotes,
+                emotions: emotions,
+                onRemoveEmotion: handleRemoveEmotion
+            }
+        },
+        {
+            key: 'screen-4',
+            component: ExplanationStep as React.ComponentType<TransitionScreenProps>,
+            props: {
+                selectedFactors: selectedFactors,
+                selectedEmotions: selectedEmotions,
+                factors: factors,
+                emotions: emotions,
+                onExplanationChange: handleExplanationChange,
+                onRemoveEmotion: handleRemoveEmotion,
+                onRemoveFactor: handleRemoveFactor,
+                explanation: explanation,
+            },
+            canSkip: true,
+        },
+        {
+            key: 'screen-5',
+            component: SuccessStep,
+            canSkip: false,
+            canBack: false,
+            showButtonBlock: false,
+        },
+    ]
 
     return (
-        <View className="flex-1 bg-background dark:bg-background-dark pt-12" style={{ marginTop: insets.top }}>
-            <View className=" absolute top-7 left-1/2 transform -translate-x-1/2 flex flex-row justify-center gap-x-1">
-                {[1, 2, 3, 4].map(i => (
-                    <HapticTab
-                        key={i}
-                        className={`h-2 w-2 rounded-full ${step >= i ? 'bg-background-dark dark:bg-background' : 'bg-secondary-light dark:bg-secondary-dark'}`}
-                        onPress={() => {
-                            if (i < step) {
-                                setStep(i)
-                            }
-                        }}
-                    />
-                ))}
-            </View>
-            <Animated.View
-                className="flex-1 bg-background dark:bg-background-dark"
-            >
-                {renderStep()}
-            </Animated.View>
-        </View>
+        <TransitionLayout screens={screens} onComplete={handleComplete} />
     )
 }

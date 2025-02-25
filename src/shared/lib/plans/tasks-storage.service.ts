@@ -23,6 +23,19 @@ class TasksStorageService {
     private readonly TASKS_KEY = 'offline-tasks';
     private readonly PENDING_CHANGES_KEY = 'tasks-pending-changes';
     private readonly MAX_RETRIES = 3;
+    private taskLocks: Map<number, boolean> = new Map();
+
+    private acquireLock(taskId: number): boolean {
+        if (this.taskLocks.get(taskId)) {
+            return false;
+        }
+        this.taskLocks.set(taskId, true);
+        return true;
+    }
+
+    private releaseLock(taskId: number): void {
+        this.taskLocks.delete(taskId);
+    }
 
     // Получение задачи по локальному ID
     async getTaskByLocalId(localId: number): Promise<LocalTask | null> {
@@ -74,20 +87,10 @@ class TasksStorageService {
 
             const newTask: LocalTask = {
                 localId,
-                id: localId, // используем временный локальный ID
+                id: localId,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                is_completed: false,
-                status: 'pending',
                 ...data,
-                project: data.project
-                    ? {
-                          id: data.project,
-                          name: '',
-                          created_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString(),
-                      }
-                    : null,
             };
 
             tasks.unshift(newTask);
@@ -111,26 +114,33 @@ class TasksStorageService {
 
     // Обновление задачи локально
     async updateTask(id: number, data: UpdateTaskDtoType): Promise<TaskType> {
+        if (!this.acquireLock(id)) {
+            throw new Error('Task is currently being updated');
+        }
+
         try {
-            const tasks = (await storage.get<TaskType[]>(this.TASKS_KEY)) || [];
-            const taskIndex = tasks.findIndex(task => task.id === id);
+            const tasks = (await storage.get<LocalTask[]>(this.TASKS_KEY)) || [];
+            const taskIndex = tasks.findIndex(task => task.id === id || task.localId === id || task.serverId === id);
 
             if (taskIndex === -1) {
+                console.error('Task not found with id:', id);
                 throw new Error('Task not found');
             }
 
+            const existingTask = tasks[taskIndex];
             const updatedTask = {
-                ...tasks[taskIndex],
+                ...existingTask,
                 ...data,
-                project: data.project
-                    ? {
-                          id: data.project,
-                          name: '',
-                          created_at: new Date().toISOString(),
-                          updated_at: new Date().toISOString(),
-                      }
-                    : tasks[taskIndex].project,
+                id: existingTask.id,
+                localId: existingTask.localId,
+                serverId: existingTask.serverId || 0,
                 updated_at: new Date().toISOString(),
+                subtasks:
+                    data.subtasks?.map(subtask => ({
+                        ...subtask,
+                        task: existingTask.id,
+                        updated_at: new Date().toISOString(),
+                    })) || existingTask.subtasks,
             };
 
             tasks[taskIndex] = updatedTask;
@@ -141,7 +151,7 @@ class TasksStorageService {
                 type: 'update',
                 timestamp: Date.now(),
                 data,
-                taskId: id,
+                taskId: existingTask.serverId || existingTask.id,
                 status: 'pending',
             });
 
@@ -149,6 +159,8 @@ class TasksStorageService {
         } catch (error) {
             console.error('Failed to update task in storage:', error);
             throw error;
+        } finally {
+            this.releaseLock(id);
         }
     }
 
@@ -173,19 +185,34 @@ class TasksStorageService {
     }
 
     // Удаление задачи локально
+    // В tasksStorageService
+
     async deleteTask(id: number): Promise<void> {
         try {
-            const tasks = (await storage.get<TaskType[]>(this.TASKS_KEY)) || [];
-            const filteredTasks = tasks.filter(task => task.id !== id);
+            const tasks = (await storage.get<LocalTask[]>(this.TASKS_KEY)) || [];
+
+            // Ищем задачу и по localId, и по serverId
+            const taskToDelete = tasks.find(task => task.localId === id || task.serverId === id || task.id === id);
+
+            if (!taskToDelete) {
+                throw new Error('Task not found');
+            }
+
+            // Фильтруем по всем возможным идентификаторам
+            const filteredTasks = tasks.filter(task => task.localId !== id && task.serverId !== id && task.id !== id);
+
             await storage.set(this.TASKS_KEY, filteredTasks);
 
-            await this.savePendingChange({
-                id: `delete-${Date.now()}`,
-                type: 'delete',
-                timestamp: Date.now(),
-                taskId: id,
-                status: 'pending',
-            });
+            // Сохраняем изменение для синхронизации только если есть serverId
+            if (taskToDelete.serverId) {
+                await this.savePendingChange({
+                    id: `delete-${Date.now()}`,
+                    type: 'delete',
+                    timestamp: Date.now(),
+                    taskId: taskToDelete.serverId,
+                    status: 'pending',
+                });
+            }
         } catch (error) {
             console.error('Failed to delete task from storage:', error);
             throw error;

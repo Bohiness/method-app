@@ -1,27 +1,52 @@
+import { ProjectChoice } from '@entities/plans/projects/ProjectChoise'
 import { TabButton } from '@entities/plans/TabButton'
 import { TasksList } from '@entities/plans/TasksList'
-import { useModal } from '@shared/context/modal-provider'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
-import { Text } from '@shared/ui/text'
-import { View as ThemedView, View } from '@shared/ui/view'
+import { useProjects } from '@shared/hooks/plans/useProjects'
+import { NotOnline } from '@shared/ui/system/NotOnline'
+import { View } from '@shared/ui/view'
+import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable } from 'react-native'
-import NewTask from './NewTask'
+import { Animated, Pressable } from 'react-native'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import {
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring
+} from 'react-native-reanimated'
 
 type Period = 'today' | 'tomorrow' | 'week' | 'later'
 
-export const TasksPeriodNavigation = () => {
+export const TaskManager = () => {
     const [activePeriod, setActivePeriod] = useState<Period>('today')
-    const { tasks, isLoading, error, isOnline, toggleTaskCompletion } = useOfflineTasks()
-    const { showBottomSheet } = useModal()
+    const { tasks, isLoading, error, isOnline, toggleTask } = useOfflineTasks()
+    const { selectedProjectId, onChangeSelectedProject } = useProjects()
     const { t } = useTranslation()
 
+    const translateX = useSharedValue(0)
+
+    const switchPeriod = (direction: 'next' | 'prev') => {
+        const currentIndex = periods.findIndex(p => p.id === activePeriod)
+        let newIndex
+
+        if (direction === 'next' && currentIndex < periods.length - 1) {
+            newIndex = currentIndex + 1
+        } else if (direction === 'prev' && currentIndex > 0) {
+            newIndex = currentIndex - 1
+        }
+
+        if (newIndex !== undefined) {
+            setActivePeriod(periods[newIndex].id as Period)
+        }
+    }
+
     const periods = [
-        { id: 'today', title: t('today') },
-        { id: 'tomorrow', title: t('tomorrow') },
-        { id: 'week', title: t('week') },
-        { id: 'later', title: t('later') }
+        { id: 'today', title: t('common.date.today') },
+        { id: 'tomorrow', title: t('common.date.tomorrow') },
+        { id: 'week', title: t('common.date.week') },
+        { id: 'later', title: t('common.date.later') }
     ]
 
     const getFilteredTasks = () => {
@@ -34,59 +59,67 @@ export const TasksPeriodNavigation = () => {
         const weekEnd = new Date(today)
         weekEnd.setDate(weekEnd.getDate() + 7)
 
+        // Сначала фильтруем по проекту, если он выбран
+        const projectFilteredTasks = selectedProjectId
+            ? tasks?.results.filter(task => task?.project === selectedProjectId)
+            : tasks?.results
+
         switch (activePeriod) {
             case 'today':
-                return tasks?.results.filter(task => {
-                    const taskDate = new Date(task.start_date)
+                return projectFilteredTasks?.filter(task => {
+                    const taskDate = new Date(task.start_datetime)
                     taskDate.setHours(0, 0, 0, 0)
                     return taskDate.getTime() === today.getTime()
                 })
             case 'tomorrow':
-                return tasks?.results.filter(task => {
-                    const taskDate = new Date(task.start_date)
+                return projectFilteredTasks?.filter(task => {
+                    const taskDate = new Date(task.start_datetime)
                     taskDate.setHours(0, 0, 0, 0)
                     return taskDate.getTime() === tomorrow.getTime()
                 })
             case 'week':
-                return tasks?.results.filter(task => {
-                    const taskDate = new Date(task.start_date)
-                    return taskDate >= today && taskDate <= weekEnd
+                return projectFilteredTasks?.filter(task => {
+                    const taskDate = new Date(task.start_datetime)
+                    taskDate.setHours(0, 0, 0, 0)
+                    return taskDate > tomorrow && taskDate <= weekEnd
                 })
             case 'later':
-                return tasks?.results.filter(task => {
-                    const taskDate = new Date(task.start_date)
+                return projectFilteredTasks?.filter(task => {
+                    const taskDate = new Date(task.start_datetime)
+                    taskDate.setHours(0, 0, 0, 0)
                     return taskDate > weekEnd
                 })
             default:
-                return tasks?.results
+                return projectFilteredTasks
         }
     }
 
-    const handleToggleTask = async (taskId: string) => {
-        try {
-            const task = tasks?.results.find(t => t.id === Number(taskId))
-            if (task) {
-                await toggleTaskCompletion.mutateAsync({
-                    id: task.id,
-                    isCompleted: !task.is_completed
-                })
+    // Настройка жестов
+    const gesture = Gesture.Pan()
+        .onUpdate((event) => {
+            translateX.value = event.translationX
+        })
+        .onEnd((event) => {
+            if (Math.abs(event.translationX) > 50) {
+                if (event.translationX > 0) {
+                    runOnJS(switchPeriod)('prev')
+                } else {
+                    runOnJS(switchPeriod)('next')
+                }
             }
-        } catch (error) {
-            console.error('Error toggling task:', error)
-        }
-    }
+            translateX.value = withSpring(0)
+        })
+
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: translateX.value }]
+    }))
 
     return (
-        <ThemedView variant="default" className="flex-1">
-            {!isOnline && (
-                <View className="bg-warning/20 px-4 py-2 mb-2">
-                    <Text className="text-sm text-warning">
-                        {t('common.offlineMode')}
-                    </Text>
-                </View>
-            )}
+        <View variant="default" className="flex-1 relative">
+            {!isOnline && <NotOnline />}
 
-            <View className="flex-row py-2 gap-x-4">
+            <View className="flex-row gap-x-4">
                 {periods.map((period) => (
                     <TabButton
                         key={period.id}
@@ -97,24 +130,34 @@ export const TasksPeriodNavigation = () => {
                 ))}
             </View>
 
-            <TasksList
-                tasks={getFilteredTasks() ?? []}
-                onToggleTask={handleToggleTask}
-                isLoading={isLoading}
-                error={error}
-            />
-            <Pressable
-                onPress={() => {
-                    showBottomSheet(
-                        <NewTask
-                            mode="create"
-                        />
-                    )
-                }}
-                className='flex-1'
-            />
-        </ThemedView>
+            {/* <HabitsList /> */}
+
+            <GestureDetector gesture={gesture}>
+                <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+                    <TasksList
+                        tasks={getFilteredTasks() ?? []}
+                        onToggleTask={toggleTask}
+                        isLoading={isLoading}
+                        error={error}
+                    />
+                    <Pressable
+                        onPress={() => {
+                            router.push('/(modals)/(plans)/new-task')
+                        }}
+                        className='flex-1'
+                    />
+                </Animated.View>
+            </GestureDetector>
+
+            <View className='absolute bottom-4 left-0'>
+                <ProjectChoice
+                    selectedProjectId={selectedProjectId}
+                    onChangeSelectedProject={onChangeSelectedProject}
+                />
+            </View>
+
+        </View>
     )
 }
 
-export default TasksPeriodNavigation
+export default TaskManager

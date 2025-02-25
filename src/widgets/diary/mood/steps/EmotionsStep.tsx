@@ -1,38 +1,36 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
-import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
+import { TransitionScreenProps, useTransition } from '@widgets/transitions/TransitionContext'
 import * as Haptics from 'expo-haptics'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, ScrollView, View } from 'react-native'
-import Animated, { FadeIn, SlideInRight, SlideOutLeft, useAnimatedStyle, withSpring } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated'
 import { moods } from './MoodLevelStep'
 
-interface EmotionsStepProps {
+interface EmotionsStepProps extends TransitionScreenProps {
     emotions: Emotion[]
     selectedEmotions: number[]
     onSelect: (id: number) => void
-    onNext: () => void
-    onBack: () => void
     moodLevel: number
 }
 
-export const EmotionsStep: React.FC<EmotionsStepProps> = ({
+export function EmotionsStep({
     emotions,
     selectedEmotions,
     onSelect,
-    onNext,
-    onBack,
-    moodLevel
-}) => {
+    moodLevel,
+    setEnabledNextButton
+}: EmotionsStepProps) {
+    console.log('selectedEmotions', selectedEmotions)
+    console.log('moodLevel', moodLevel)
     const [selectedMood, setSelectedMood] = useState<number>(moodLevel)
     const [filteredEmotions, setFilteredEmotions] = useState<Emotion[]>([])
-    const [showNextButton, setShowNextButton] = useState(false)
     const { t } = useTranslation()
     const { isDark } = useTheme()
-
+    const { updateTransitionData } = useTransition()
     const animatedIconStyle = useAnimatedStyle(() => ({
         transform: [{ scale: withSpring(1.1) }],
     }))
@@ -48,20 +46,21 @@ export const EmotionsStep: React.FC<EmotionsStepProps> = ({
     const handleMoodPress = (level: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         setSelectedMood(level)
+        updateTransitionData({
+            moodLevel: level
+        })
     }
 
     // Следим за выбранными эмоциями
     useEffect(() => {
-        setShowNextButton(selectedEmotions.length > 0)
+        if (selectedEmotions.length > 0) {
+            setEnabledNextButton?.(true)
+        }
     }, [selectedEmotions])
 
     return (
-        <Animated.View
-            className="flex-1 p-4 bg-background dark:bg-background-dark"
-            entering={SlideInRight}
-            exiting={SlideOutLeft}
-        >
-            <Title weight='medium' className="mb-6 text-center">
+        <View className="flex-1 px-4">
+            <Title className="mb-6 text-center">
                 {t('diary.moodcheckin.step2.title')}
             </Title>
 
@@ -106,34 +105,6 @@ export const EmotionsStep: React.FC<EmotionsStepProps> = ({
                     ))}
                 </View>
             </ScrollView>
-
-            <View className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-4 bg-background dark:bg-background-dark">
-                <Animated.View
-                    entering={FadeIn}
-                    className="flex-row justify-between align-center"
-                >
-                    <Button
-                        onPress={onBack}
-                        variant="outline"
-                        className="px-4"
-                    >
-                        <Icon
-                            name="ChevronLeft"
-                            size={20}
-                        />
-                    </Button>
-
-                    {showNextButton && (
-                        <Button
-                            onPress={onNext}
-                            variant="outline"
-                            disabled={!showNextButton}
-                        >
-                            {t('common.next')} ({selectedEmotions.length})
-                        </Button>
-                    )}
-                </Animated.View>
-            </View>
-        </Animated.View>
+        </View>
     )
 }

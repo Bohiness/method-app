@@ -1,7 +1,7 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { SupportedLanguage, useLanguage } from '@shared/context/language-provider'
+import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { RadioGroup } from '@shared/ui/radio'
-import { ScreenType } from '@widgets/profile/SettingModal'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'

@@ -4,14 +4,14 @@ import { useUser } from '@shared/context/user-provider'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { useLogger } from '@shared/hooks/systems/useLogger'
 import { storage } from '@shared/lib/storage/storage.service'
-import { HapticTab } from '@shared/lib/utils/HapticTab'
+import { getGender } from '@shared/lib/utils/user/getGender'
 import { Button } from '@shared/ui/button'
+import { Icon } from '@shared/ui/icon'
 import { InfoGroup, InfoItem } from '@shared/ui/info-item'
 import { Text } from '@shared/ui/text'
 import { router } from 'expo-router'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, Image, View } from 'react-native'
+import { Alert, Image, TouchableOpacity, View } from 'react-native'
 
 export const FullProfileScreen = ({
     onBack,
@@ -20,20 +20,17 @@ export const FullProfileScreen = ({
     onBack: () => void,
     onNavigate: (screen: ScreenType) => void
 }) => {
-    const { user, signOut } = useUser()
+    const { user, signOut, isAnonymous } = useUser()
+    console.log('user isAnonymous', isAnonymous)
     const { t } = useTranslation()
-    const { hideBottomSheet } = useModal()
+    const { hideModal } = useModal()
     const logger = useLogger('FullProfileScreen')
-
-    useEffect(() => {
-        logger.log('render', 'FullProfileScreen')
-    }, [user])
 
     if (!user) {
         return (
             <Button
                 onPress={() => {
-                    hideBottomSheet()
+                    hideModal()
                     router.push('/(auth)/signin')
                 }}
             >
@@ -73,54 +70,83 @@ export const FullProfileScreen = ({
 
             <View className="flex-1 gap-y-6">
                 <View className="items-center">
-                    <Image
-                        source={{ uri: user.profile_photo }}
-                        className="w-24 h-24 rounded-full"
-                    />
+                    <TouchableOpacity
+                        onPress={() => onNavigate('profile_photo')}
+                    >
+                        {user.profile_photo ? (
+                            <Image
+                                source={{ uri: user.profile_photo }}
+                                className="w-24 h-24 rounded-full"
+                            />
+                        ) : (
+                            <Icon
+                                name="User"
+                                size={96}
+                                className="text-primary"
+                            />
+                        )}
+                    </TouchableOpacity>
                     <Text size="xl" weight="bold" className="mt-2">
-                        {`${user.first_name} ${user.last_name}`}
+                        {!isAnonymous ? `${user.first_name} ${user.last_name}` : t('profile.unregistered')}
                     </Text>
                 </View>
 
-                {!user?.emailVerification && (
+                {isAnonymous && (
                     <Button
                         onPress={() => {
-                            hideBottomSheet()
                             router.push('/(auth)/signin')
                         }}                    >
                         {t('profile.login.button')}
                     </Button>
                 )}
 
+                {!isAnonymous && (
+                    <View className="flex-1 gap-y-6">
+                        <InfoGroup>
+                            <InfoItem
+                                label={t('profile.names')}
+                                value={`${user.first_name} ${user.last_name}`}
+                                empty={!user.first_name || !user.last_name}
+                                onPress={() => onNavigate('names')}
+                            />
+                            <InfoItem
+                                label={t('profile.gender')}
+                                value={getGender(user.gender)}
+                                empty={!user.gender}
+                                onPress={() => onNavigate('gender')}
+                            />
+                        </InfoGroup>
 
-                <View className="">
-                    <InfoGroup>
-                        <InfoItem
-                            label={t('profile.email')}
-                            value={user.email}
-                            verified={user.emailVerification}
-                            onPress={() => onNavigate('email')}
-                        />
-                        <InfoItem
-                            label={t('profile.phone')}
-                            value={user.phone}
-                            verified={user.phoneVerification}
-                            onPress={() => onNavigate('phone')}
-                        />
-                    </InfoGroup>
-                </View>
-
-                <View className="">
-                    <HapticTab
-                        onPress={handleDeleteAccount}
-                        hapticStyle="warning"
-                        className="bg-error/10 rounded-lg p-4"
-                    >
-                        <Text variant="error" className="text-center">
+                        <InfoGroup>
+                            <InfoItem
+                                label={t('profile.email')}
+                                value={user.email}
+                                verified={user.emailVerification}
+                                onPress={() => onNavigate('email')}
+                            />
+                            <InfoItem
+                                label={t('profile.phone')}
+                                value={user.phone}
+                                verified={user.phoneVerification}
+                                onPress={() => onNavigate('phone')}
+                            />
+                        </InfoGroup>
+                        <Button
+                            onPress={signOut}
+                            variant="default"
+                        >
+                            {t('profile.logout.button')}
+                        </Button>
+                        <Button
+                            onPress={handleDeleteAccount}
+                            variant="destructive"
+                        >
                             {t('profile.deleteAccount.button')}
-                        </Text>
-                    </HapticTab>
-                </View>
+                        </Button>
+                    </View>
+                )}
+
+
             </View>
         </View>
     )

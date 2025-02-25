@@ -5,58 +5,183 @@ import {
 } from '@tanstack/react-query'
 import { SplashScreen } from '@widgets/splash-screen'
 import { Stack } from 'expo-router'
-import { StatusBar } from 'expo-status-bar'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import 'react-native-reanimated'
 
 import { UserProvider } from '@context/user-provider'
+import { StepIndicator } from '@entities/modals/StepIndicator'
+import { SubscriptionScreenProps } from '@features/screens/SubscriptionScreen'
 import i18n from '@shared/config/i18n'
 import { queryClient } from '@shared/config/query-client'
+import { initializeServices } from '@shared/config/services-init'
 import { LanguageProvider } from '@shared/context/language-provider'
 import { ModalProvider } from '@shared/context/modal-provider'
 import { NotificationProvider } from '@shared/context/notification-provider'
 import { ThemeProvider } from '@shared/context/theme-provider'
+import { FullScreenModalHeader } from '@shared/ui/modals/FullScreenModalHeader'
+import { ModalHeader } from '@shared/ui/modals/ModalHeader'
 import { SyncManager } from '@shared/ui/system/sync/SyncManager'
-import { I18nextProvider } from 'react-i18next'
-import { View } from 'react-native'
+import { ToggleSwitch } from '@shared/ui/toggle-switch'
+import { ContainerScreen } from '@shared/ui/view'
+import { MoodRouteParams } from '@widgets/diary/mood/MoodCheckin'
+import { I18nextProvider, useTranslation } from 'react-i18next'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import './global.css'
 
-
 export default function RootLayout() {
+  const { t } = useTranslation()
   const [showSplash, setShowSplash] = useState(true)
+
+  useEffect(() => {
+    // Инициализация сервисов при запуске приложения
+    initializeServices()
+  }, [])
+
   return (
     <I18nextProvider i18n={i18n}>
       <LanguageProvider>
         <GestureHandlerRootView style={{ flex: 1, padding: 0, margin: 0 }}>
           <QueryClientProvider client={queryClient}>
-            <SyncManager />
             <ThemeProvider>
-              <View className="flex-1 bg-background dark:bg-background-dark">
-                <UserProvider>
-                  <BottomSheetModalProvider>
-                    <ModalProvider>
-                      <SafeAreaProvider>
-                        <NotificationProvider>
+              <BottomSheetModalProvider>
+                <SafeAreaProvider>
+                  {/* <AIProvider> */}
+                  <SyncManager />
+                  <ContainerScreen>
+                    <UserProvider>
+                      <NotificationProvider>
+                        <ModalProvider>
                           {showSplash ? (
                             <SplashScreen onComplete={() => setShowSplash(false)} />
                           ) : (
-                            <Stack screenOptions={{ headerShown: false }}>
-                              <Stack.Screen name="index" />
-                              <Stack.Screen name="(tabs)" />
-                              <Stack.Screen name="onboarding" />
+                            <Stack>
+                              <Stack.Screen name="index" options={{ headerShown: false }} />
+                              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                              <Stack.Screen name="onboarding" options={{ headerShown: false }} />
                               <Stack.Screen name="(coach)" options={{ headerShown: false }} />
-                              <Stack.Screen name="+not-found" />
+                              <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+                              <Stack.Screen name="(modals)/(diary)/mood"
+                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                  presentation: 'fullScreenModal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (
+                                    <FullScreenModalHeader
+                                      centerContent={
+                                        <StepIndicator
+                                          currentStep={route.params?.currentStep ?? 1}
+                                          onStepPress={route.params?.onStepPress}
+                                          totalSteps={route.params?.totalSteps ?? 3}
+                                        />
+                                      }
+                                    />
+                                  ),
+                                })}
+                              />
+                              <Stack.Screen name="(modals)/(diary)/start-your-day"
+                                options={({ route }: { route: { params?: { currentStep?: number, onStepPress?: (step: number) => void, totalSteps?: number } } }) => ({
+                                  presentation: 'fullScreenModal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (
+                                    <FullScreenModalHeader
+                                      centerContent={
+                                        <StepIndicator
+                                          currentStep={route.params?.currentStep ?? 1}
+                                          totalSteps={route.params?.totalSteps ?? 3}
+                                          onStepPress={route.params?.onStepPress}
+                                        />
+                                      }
+                                    />
+                                  ),
+                                })}
+                              />
+                              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                              <Stack.Screen name="(modals)/(diary)/evening-reflection"
+                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                  presentation: 'fullScreenModal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (
+                                    <FullScreenModalHeader
+                                      centerContent={
+                                        <StepIndicator
+                                          currentStep={route.params?.currentStep ?? 1}
+                                          onStepPress={route.params?.onStepPress}
+                                          totalSteps={route.params?.totalSteps ?? 3}
+                                        />
+                                      }
+                                    />
+                                  ),
+                                })}
+                              />
+                              <Stack.Screen name="(modals)/(plans)/new-task"
+                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                  presentation: 'modal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (
+                                    <ModalHeader />
+                                  ),
+                                })}
+                              />
+                              <Stack.Screen name="(modals)/(plans)/new-project"
+                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                  presentation: 'modal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (
+                                    <ModalHeader />
+                                  ),
+                                })}
+                              />
+                              <Stack.Screen name="(modals)/(profile)/settings"
+                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                  presentation: 'modal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (
+                                    <ModalHeader />
+                                  ),
+                                })}
+                              />
+                              <Stack.Screen name="(modals)/(plans)/new-habit"
+                                options={{
+                                  presentation: 'modal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (<ModalHeader />),
+                                }}
+                              />
+                              <Stack.Screen name="(modals)/(payment)/subscription"
+                                options={({ route }: { route: { params?: SubscriptionScreenProps } }) => {
+                                  // Извлечение параметров из route.params
+                                  const { selectedPlan = 'premium', setSelectedPlan = () => { } } = route.params || {}
+
+                                  return {
+                                    initialParams: route.params,
+                                    presentation: 'fullScreenModal',
+                                    animation: 'slide_from_bottom',
+                                    header: () => (
+                                      <FullScreenModalHeader
+                                        centerContent={
+                                          <ToggleSwitch
+                                            value={selectedPlan === 'premiumPlus'}
+                                            onChange={(isChecked) => setSelectedPlan(isChecked ? 'premiumPlus' : 'premium')}
+                                            leftLabel={t('screens.subscription.toggle.premium')}
+                                            rightLabel={t('screens.subscription.toggle.premiumPlus')}
+                                            size="md"
+                                            disabled={false}
+                                          />
+                                        }
+                                      />
+                                    ),
+                                  }
+                                }}
+                              />
                             </Stack>
                           )}
-                        </NotificationProvider>
-                        <StatusBar style="auto" />
-                      </SafeAreaProvider >
-                    </ModalProvider>
-                  </BottomSheetModalProvider>
-                </UserProvider>
-              </View>
+                        </ModalProvider>
+                      </NotificationProvider>
+                    </UserProvider>
+                  </ContainerScreen>
+                  {/* </AIProvider> */}
+                </SafeAreaProvider >
+              </BottomSheetModalProvider>
             </ThemeProvider >
           </QueryClientProvider>
         </GestureHandlerRootView >

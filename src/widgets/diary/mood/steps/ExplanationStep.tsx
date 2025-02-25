@@ -1,17 +1,15 @@
-import { useKeyboardStatus } from '@shared/hooks/systems/keyboard/useKeyboardStatus'
+import { useKeyboard } from '@shared/hooks/systems/keyboard/useKeyboard'
 import { HighlightedText } from '@shared/lib/utils/HighlightedText'
 import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
-import { Button } from '@shared/ui/button'
-import { Icon } from '@shared/ui/icon'
 import { Title } from '@shared/ui/text'
 import { MultilineTextInput } from '@shared/ui/text-input'
-import { VoiceInputButton } from '@shared/ui/voice/VoiceInputButton'
+import { TransitionScreen } from '@widgets/transitions/TransitionContext'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { KeyboardAvoidingView, Platform, View } from 'react-native'
-import Animated, { FadeIn, SlideInRight, SlideOutLeft } from 'react-native-reanimated'
+import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native'
+import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated'
 
-interface ExplanationStepProps {
+interface ExplanationStepProps extends TransitionScreen {
     selectedFactors: number[]
     selectedEmotions: number[]
     factors: Factor[]
@@ -19,13 +17,10 @@ interface ExplanationStepProps {
     onExplanationChange: (text: string) => void
     onRemoveEmotion: (id: number) => void
     onRemoveFactor: (id: number) => void
-    onNext: () => void
-    onBack: () => void
     explanation: string
-    isLoading?: boolean
 }
 
-export const ExplanationStep: React.FC<ExplanationStepProps> = ({
+export function ExplanationStep({
     selectedFactors,
     selectedEmotions,
     factors,
@@ -33,14 +28,13 @@ export const ExplanationStep: React.FC<ExplanationStepProps> = ({
     onExplanationChange,
     onRemoveEmotion,
     onRemoveFactor,
-    onNext,
-    onBack,
-    explanation,
-    isLoading = false,
-}) => {
+    explanation
+}: ExplanationStepProps) {
     const [showNextButton, setShowNextButton] = useState(false)
     const { t } = useTranslation()
-    const isKeyboardVisible = useKeyboardStatus()
+    const { isKeyboardVisible, dismissKeyboard } = useKeyboard()
+
+    console.log('ExplanationStep', selectedFactors)
 
 
     const TitleWithHighlights = () => {
@@ -48,7 +42,7 @@ export const ExplanationStep: React.FC<ExplanationStepProps> = ({
         const selectedFactorsCount = selectedFactors.length
 
         return (
-            <View className="flex-row flex-wrap justify-center items-center mb-6 text-center">
+            <View className="flex-row flex-wrap justify-center items-center text-center">
                 {selectedFactors && selectedFactors.length > 0 ? (
                     <View className="flex-row flex-wrap justify-center items-center mb-6 text-center">
                         <Title className='inline-flex flex-row'>{t('diary.moodcheckin.step4.title1')}</Title>
@@ -114,67 +108,36 @@ export const ExplanationStep: React.FC<ExplanationStepProps> = ({
     }, [explanation])
 
     return (
-
-        <Animated.View
-            className="flex-1 p-4"
-            entering={SlideInRight}
-            exiting={SlideOutLeft}
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            className="flex-1 px-4"
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
         >
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                className="flex-1 bg-background dark:bg-background-dark"
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+            <Pressable
+                className="flex-1"
+                onPress={dismissKeyboard}
             >
-                <TitleWithHighlights />
+                <Animated.View
+                    className="flex-1"
+                    entering={SlideInRight}
+                    exiting={SlideOutLeft}
+                >
+                    <TitleWithHighlights />
 
-                <View className="flex-1">
-                    <MultilineTextInput
-                        placeholder={t('diary.moodcheckin.step4.placeholder')}
-                        showCount
-                        maxLength={1000}
-                        value={explanation}
-                        onChangeText={onExplanationChange}
-                        flex
-                    />
-                </View>
+                    <View className="flex-1">
+                        <MultilineTextInput
+                            placeholder={t('diary.moodcheckin.step4.placeholder')}
+                            showCount
+                            maxLength={1000}
+                            value={explanation}
+                            onChangeText={onExplanationChange}
+                            flex
+                            voiceInput
+                        />
+                    </View>
 
-
-                <View className={`pt-4 bg-background dark:bg-background-dark ${isKeyboardVisible ? 'pb-0 px-0' : 'pb-6 px-4'
-                    }`}>
-                    <Animated.View
-                        entering={FadeIn}
-                        className="flex-row justify-between align-center"
-                    >
-                        <View className="flex-row gap-x-2">
-                            <Button
-                                onPress={onBack}
-                                variant="outline"
-                                className="px-4"
-                            >
-                                <Icon
-                                    name="ChevronLeft"
-                                    size={20}
-                                />
-                            </Button>
-
-                            <VoiceInputButton
-                                onTranscribe={onExplanationChange}
-                                asButton
-                            />
-                        </View>
-
-                        <Button
-                            onPress={onNext}
-                            variant="outline"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? t('common.loading') : t('common.next')}
-                        </Button>
-
-                    </Animated.View>
-                </View>
-            </KeyboardAvoidingView>
-        </Animated.View>
-
+                </Animated.View>
+            </Pressable>
+        </KeyboardAvoidingView >
     )
 }

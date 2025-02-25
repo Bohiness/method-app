@@ -1,68 +1,110 @@
 // src/shared/hooks/subscription/useSubscription.ts
-import { subscriptionService } from '@shared/lib/subscription/subscription.service'
-import { SubscriptionStateType } from '@shared/types/subscription/SubscriptionType'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-export function useSubscription() {
+import { useUser } from '@shared/context/user-provider';
+import { storage } from '@shared/lib/storage/storage.service';
+import { subscriptionService } from '@shared/lib/subscription/subscription.service';
+import { SubscriptionStatus, SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
+import { PurchasesPackage } from 'react-native-purchases';
+
+export const useSubscription = () => {
     const queryClient = useQueryClient();
+    const { user } = useUser();
+
+    // Инициализация RevenueCat
+    useEffect(() => {
+        subscriptionService.initialize().catch(console.error);
+    }, []);
+
+    // Привязка пользователя к RevenueCat
+    useEffect(() => {
+        if (user?.id) {
+            subscriptionService.setUserId(user.id.toString()).catch(console.error);
+        }
+    }, [user?.id]);
+
+    // Получение доступных подписок
+    const {
+        data: packages,
+        isLoading: isPackagesLoading,
+        error: packagesError,
+    } = useQuery({
+        queryKey: ['subscription', 'packages'],
+        queryFn: () => subscriptionService.getOfferings(),
+    });
 
     // Получение статуса подписки
-    const { data: status, isLoading: isStatusLoading } = useQuery<SubscriptionStateType['currentPlan'] | null>({
-        queryKey: ['subscription-status'],
-        queryFn: () => subscriptionService.getSubscriptionStatus(),
-        staleTime: 1000 * 60 * 5, // 5 минут
-    });
-
-    // Получение доступных планов
-    const { data: plans, isLoading: isPlansLoading } = useQuery<SubscriptionStateType['plans']>({
-        queryKey: ['subscription-plans'],
-        queryFn: () => subscriptionService.getAvailablePlans(),
-        staleTime: 1000 * 60 * 60, // 1 час
-    });
-
-    // Мутация для подписки
-    const { mutate: subscribe, isLoading: isSubscribing } = useMutation({
-        mutationFn: (planId: string) => subscriptionService.subscribe(planId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['subscription-status'] });
+    const {
+        data: subscription,
+        isLoading: isSubscriptionLoading,
+        error: subscriptionError,
+    } = useQuery({
+        queryKey: ['subscription', 'status'],
+        queryFn: async () => {
+            const savedStatus = await storage.get<SubscriptionStatus>('subscription-status', true);
+            return savedStatus || { isActive: false, tier: 'free' as const };
         },
     });
 
-    // Мутация для отмены подписки
-    const { mutate: cancelSubscription, isLoading: isCancelling } = useMutation({
-        mutationFn: () => subscriptionService.cancelSubscription(),
+    // Мутация для покупки подписки
+    const purchaseMutation = useMutation({
+        mutationFn: (pkg: PurchasesPackage) => subscriptionService.purchasePackage(pkg),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['subscription-status'] });
+            queryClient.invalidateQueries({ queryKey: ['subscription'] });
         },
     });
 
-    // Мутация для восстановления подписки
-    const { mutate: restoreSubscription, isLoading: isRestoring } = useMutation({
-        mutationFn: () => subscriptionService.restoreSubscription(),
+    // Мутация для восстановления покупок
+    const restoreMutation = useMutation({
+        mutationFn: () => subscriptionService.restorePurchases(),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['subscription-status'] });
+            queryClient.invalidateQueries({ queryKey: ['subscription'] });
         },
     });
 
-    // Проверка активной подписки
-    const hasActiveSubscription = status?.isActive && !status?.cancelAtPeriodEnd;
+    // Проверка доступа к функциям
+    const checkFeatureAccess = useCallback(
+        (requiredTier: SubscriptionTier): boolean => {
+            if (!subscription) return false;
 
-    // Проверка конкретного уровня подписки
-    const hasPremium = status?.tier === 'premium' && hasActiveSubscription;
-    const hasPro = status?.tier === 'pro' && hasActiveSubscription;
+            const tiers = {
+                free: 0,
+                premium: 1,
+                premium_ai: 2,
+            };
+
+            const userTier = tiers[subscription.tier];
+            const required = tiers[requiredTier];
+
+            return userTier >= required;
+        },
+        [subscription]
+    );
 
     return {
-        status,
-        plans,
-        subscribe,
-        cancelSubscription,
-        restoreSubscription,
-        isLoading: isStatusLoading || isPlansLoading,
-        isSubscribing,
-        isCancelling,
-        isRestoring,
-        hasActiveSubscription,
-        hasPremium,
-        hasPro,
+        // Данные
+        packages,
+        subscription,
+
+        // Состояния загрузки
+        isLoading: isPackagesLoading || isSubscriptionLoading,
+        isPurchasing: purchaseMutation.isPending,
+        isRestoring: restoreMutation.isPending,
+
+        // Ошибки
+        error: packagesError || subscriptionError,
+
+        // Методы
+        purchase: purchaseMutation.mutate,
+        restore: restoreMutation.mutate,
+        checkFeatureAccess,
+
+        // Хелперы
+        isPremium: subscription?.tier === 'premium',
+        isPremiumAI: subscription?.tier === 'premium_ai',
+        isSubscribed: subscription?.isActive || false,
+        hasAIAccess: subscription?.tier === 'premium_ai',
+        hasPremiumAccess: ['premium', 'premium_ai'].includes(subscription?.tier || 'free'),
     };
-}
+};

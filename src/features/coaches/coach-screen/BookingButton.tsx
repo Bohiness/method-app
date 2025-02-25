@@ -29,14 +29,14 @@ export const BookingButton = ({
 
     return (
         <View className="flex flex-row justify-between p-4" style={{ paddingBottom: insets.bottom }}>
-            <Button
+            {/* <Button
                 disabled={disabled}
                 loading={loading}
                 leftIcon='Mail'
                 variant="outline"
                 aria-label={t('coaches.coach.booking.contact')}
-            />
-            <Button
+            /> */}
+            {/* <Button
                 onPress={onPress}
                 disabled={disabled || isPackagesPending || noPackages}
                 loading={loading || isPackagesPending}
@@ -48,6 +48,14 @@ export const BookingButton = ({
                     ? t("coaches.coach.booking.noPackages")
                     : t("coaches.coach.booking.button")
                 }
+            </Button> */}
+            <Button
+                onPress={onPress}
+                variant="outline"
+                aria-label={t("coaches.coach.booking.openOnSite")}
+                className="flex-1"
+            >
+                {t("coaches.coach.booking.openOnSite")}
             </Button>
         </View>
     )

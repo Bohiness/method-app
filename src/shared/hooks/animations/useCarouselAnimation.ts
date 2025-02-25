@@ -1,7 +1,5 @@
-// useCarouselAnimation.ts
-
-import { Dimensions } from 'react-native'
-import { GestureEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler'
+import { Dimensions } from 'react-native';
+import { GestureEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import {
     Extrapolate,
     interpolate,
@@ -10,8 +8,8 @@ import {
     useAnimatedReaction,
     useAnimatedStyle,
     useSharedValue,
-    withTiming
-} from 'react-native-reanimated'
+    withTiming,
+} from 'react-native-reanimated';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,6 +31,7 @@ interface UseCarouselAnimationProps {
         active: number;
         inactive: number;
     };
+    onSwipeStart?: () => void;
 }
 
 export const useCarouselAnimation = ({
@@ -53,128 +52,142 @@ export const useCarouselAnimation = ({
         active: 1,
         inactive: 0.5,
     },
+    onSwipeStart,
 }: UseCarouselAnimationProps = {}) => {
     const translateX = useSharedValue(0);
     const lastTimestamp = useSharedValue(selectedTimestamp);
     const isGestureActive = useSharedValue(false);
     const isSwipeAnimation = useSharedValue(false);
 
-    // ФЛАГ, КОТОРЫЙ «ПРОПУСКАЕТ» СЛЕДУЮЩИЙ UPDATE, 
-    // когда дата поменялась из свайпа:
+    // Флаг, блокирующий реакцию на изменение timestamp после свайпа
     const skipNextTimestampReaction = useSharedValue(false);
+    // Добавим переменную для отслеживания последней анимации
+    const lastAnimationTime = useSharedValue(0);
 
     const animate = (toValue: number, callback?: () => void) => {
         'worklet';
-        translateX.value = withTiming(
-            toValue,
-            { duration: animationConfig.duration },
-            () => {
-                if (callback) {
-                    callback();
-                }
-                isSwipeAnimation.value = false;
+        console.log(`Starting animation to ${toValue}`);
+        // Запоминаем время начала анимации
+        lastAnimationTime.value = Date.now();
+
+        translateX.value = withTiming(toValue, { duration: animationConfig.duration }, () => {
+            console.log('Animation completed');
+            if (callback) {
+                callback();
             }
-        );
+            isSwipeAnimation.value = false;
+        });
     };
 
     // --- useAnimatedReaction, который слушает изменение selectedTimestamp ---
     useAnimatedReaction(
         () => selectedTimestamp,
         (current, previous) => {
-            // 1. Если флаг skipNextTimestampReaction = true,
-            //    значит сейчас изменение пришло из свайпа. Пропускаем.
-            if (skipNextTimestampReaction.value) {
-                skipNextTimestampReaction.value = false; // сбрасываем
+            // Убедимся, что previous и current определены
+            if (previous === null || current === null || previous === undefined || current === undefined) {
                 return;
             }
 
-            // 2. Обычная логика: если timestamp реально изменился,
-            //    и не активен жест, и не идёт свайповая анимация
-            if (
-                previous &&
-                current !== undefined &&
-                current !== previous &&
-                !isGestureActive.value &&
-                !isSwipeAnimation.value
-            ) {
+            console.log('useAnimatedReaction:', { current, previous, skip: skipNextTimestampReaction.value });
+
+            // Проверка флага блокировки
+            if (skipNextTimestampReaction.value) {
+                console.log('Skipping reaction due to skipNextTimestampReaction flag');
+                skipNextTimestampReaction.value = false;
+                return;
+            }
+
+            // Добавляем проверку времени с последней анимации с большим запасом
+            const timeSinceLastAnimation = Date.now() - lastAnimationTime.value;
+            if (timeSinceLastAnimation < (animationConfig.duration || 300) * 2) {
+                console.log('Ignoring reaction due to recent animation:', timeSinceLastAnimation);
+                return;
+            }
+
+            // Проверка активного жеста
+            if (isGestureActive.value || isSwipeAnimation.value) {
+                console.log('Ignoring reaction due to active gesture or animation');
+                return;
+            }
+
+            // Теперь можно безопасно проверить, нужно ли анимировать изменение даты
+            if (current !== previous && current !== lastTimestamp.value) {
+                console.log('Animating date change:', { from: previous, to: current });
                 const direction = current < previous ? -SCREEN_WIDTH : SCREEN_WIDTH;
-                
-                // Перед анимацией сдвинем translateX
                 translateX.value = direction;
-                
-                // Анимируем к 0
                 animate(0, () => {
                     lastTimestamp.value = current;
                 });
             }
-        },
-        [selectedTimestamp]
+        }
     );
 
     // --- useAnimatedGestureHandler ---
+    // Обработчик жестов для анимированного свайпа карточек
     const gestureHandler = useAnimatedGestureHandler<
         GestureEvent<PanGestureHandlerEventPayload>,
         { startX: number; isAnimating: boolean }
     >({
+        // Вызывается при начале жеста
         onStart: (_, context) => {
-            isGestureActive.value = true;
-            context.startX = translateX.value;
-            context.isAnimating = false;
+            isGestureActive.value = true; // Помечаем что жест активен
+            context.startX = translateX.value; // Сохраняем текущую позицию
+            context.isAnimating = false; // Сбрасываем флаг анимации
+
+            if (onSwipeStart) {
+                runOnJS(onSwipeStart)();
+            }
         },
+
+        // Вызывается при движении пальца
         onActive: (event, context) => {
-            if (context.isAnimating) return;
+            if (context.isAnimating) return; // Если идет анимация - игнорируем
 
             const newTranslateX = context.startX + event.translationX;
 
+            // Если свайп запрещен в данном направлении -
+            // делаем движение "резиновым" (умножаем на 0.2)
             if ((!canSwipeRight && newTranslateX > 0) || (!canSwipeLeft && newTranslateX < 0)) {
                 translateX.value = newTranslateX * 0.2;
             } else {
                 translateX.value = newTranslateX;
             }
         },
-        onEnd: (event) => {
+
+        // Вызывается при завершении жеста
+        onEnd: event => {
             const isSwipeRight = translateX.value > 0;
             const isSwipeLeft = translateX.value < 0;
 
-            if (
-                Math.abs(event.velocityX) > velocityThreshold ||
-                Math.abs(translateX.value) > snapThreshold
-            ) {
-                // Проверяем, что действительно можем свайпнуть.
-                // Например, не даём уйти вправо, если canSwipeRight = false, и т. д.
-                if (
-                    (isSwipeRight && !canSwipeRight) ||
-                    (isSwipeLeft && !canSwipeLeft)
-                ) {
-                    // Просто отменяем: возвращаем всё на место
+            if (Math.abs(event.velocityX) > velocityThreshold || Math.abs(translateX.value) > snapThreshold) {
+                if ((isSwipeRight && !canSwipeRight) || (isSwipeLeft && !canSwipeLeft)) {
                     animate(0);
                     isGestureActive.value = false;
                     return;
                 }
 
-                // На этом этапе ясно, что пользователь Свайпнул:
                 const direction = isSwipeRight ? 'right' : 'left';
                 isSwipeAnimation.value = true;
 
-                // -- ВАЖНО: скажем реактору "пропустить" следующее изменение TS, 
-                //    потому что оно произойдёт именно из свайпа:
+                // Устанавливаем флаг ДО начала анимации
                 skipNextTimestampReaction.value = true;
 
-                // Запускаем анимацию "ухода" карточки
-                animate(
-                    direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH,
-                    () => {
-                        // Завершив анимацию, вызовем onChangePage
-                        if (onChangePage) {
-                            runOnJS(onChangePage)(direction);
-                        }
-                        // Возвращаем translateX на 0
-                        translateX.value = 0;
-                        isGestureActive.value = false;
+                // Анимируем уход текущей карточки
+                animate(direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH, () => {
+                    // Сразу сбрасываем позицию на ноль без анимации
+                    translateX.value = 0;
+
+                    // Безопасно вызываем колбэк в потоке JavaScript
+                    if (onChangePage) {
+                        runOnJS(onChangePage)(direction);
                     }
-                );
+
+                    // Обновляем время последней анимации и сбрасываем флаги
+                    lastAnimationTime.value = Date.now();
+                    isGestureActive.value = false;
+                    isSwipeAnimation.value = false;
+                });
             } else {
-                // Если "снэп" не достигнут — возвращаем карточку на место
                 animate(0);
                 isGestureActive.value = false;
             }

@@ -1,6 +1,7 @@
 import { useModal } from '@shared/context/modal-provider'
 import { useTheme } from '@shared/context/theme-provider'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
+import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { cn } from '@shared/lib/utils/cn'
 import { TaskType } from '@shared/types/plans/TasksTypes'
 import { Checkbox } from '@shared/ui/checkbox'
@@ -30,16 +31,25 @@ const SCREEN_WIDTH = Dimensions.get('window').width
 const DELETE_THRESHOLD = -80
 const FULL_DELETE_THRESHOLD = -120
 
-export const TaskItem = React.memo(({ task, onToggle }: TaskItemProps) => {
-    const { showBottomSheet } = useModal()
+export const TaskItem = React.memo(({ task }: TaskItemProps) => {
+    const { showModal } = useModal()
     const { colors } = useTheme()
     const [isPressed, setIsPressed] = useState(false)
-    const { deleteTask } = useOfflineTasks()
+    const { deleteTask, toggleTask } = useOfflineTasks()
     const translateX = useSharedValue(0)
+    const { formatDateTime } = useDateTime()
 
     const animatedStyle = useAnimatedStyle(() => ({
         backgroundColor: withSpring(
-            isPressed ? colors.surface.stone : colors.transparent,
+            isPressed
+                ? colors.surface.stone
+                : task.priority === 'low'
+                    ? colors.success + '20'
+                    : task.priority === 'medium'
+                        ? colors.warning + '20'
+                        : task.priority === 'high'
+                            ? colors.error + '20'
+                            : colors.transparent,
             {
                 mass: 0.5,
                 damping: 12,
@@ -103,16 +113,19 @@ export const TaskItem = React.memo(({ task, onToggle }: TaskItemProps) => {
         })
 
     const handleLongPress = () => {
-        showBottomSheet(
+        showModal(
             <NewTask
                 mode="edit"
                 task={task}
-            />
+            />, {
+            type: 'bottomSheet',
+            showCloseButton: false
+        }
         )
     }
 
     return (
-        <View className="relative">
+        <View className="relative w-full">
             {/* Иконка удаления */}
             <Animated.View
                 className="absolute right-4 h-full justify-center items-center"
@@ -130,33 +143,43 @@ export const TaskItem = React.memo(({ task, onToggle }: TaskItemProps) => {
                     onPressIn={() => setIsPressed(true)}
                     onPressOut={() => setIsPressed(false)}
                     onLongPress={handleLongPress}
-                    onPress={onToggle}
+                    onPress={() => toggleTask(task.id.toString())}
                     delayLongPress={500}
-                    style={animatedStyle}
+                    style={[animatedStyle]}
                     className={cn(
-                        "flex-row items-center rounded-lg py-3 mb-1 w-full",
-                        "active:bg-surface-paper dark:active:bg-surface-paper-dark"
+                        "flex-col rounded-lg py-3 px-2",
+                        "active:bg-surface-paper",
                     )}
                 >
-                    <Checkbox
-                        checked={task.status === 'completed'}
-                        onChange={onToggle}
-                        className="mr-3"
-                    />
+                    <View className="flex-row items-center">
+                        <Checkbox
+                            checked={task.status === 'completed'}
+                            onChange={() => toggleTask(task.id.toString())}
+                            className="mr-3"
+                        />
 
-                    <Text
-                        className={cn(
-                            "flex-1",
-                            task.status === 'completed'
-                                ? "line-through text-secondary-light dark:text-secondary-light-dark"
-                                : "text-text dark:text-text-dark"
-                        )}
-                        size="base"
-                    >
-                        {task.text}
-                    </Text>
+                        <Text
+                            className={cn(
+                                "flex-1",
+                                task.status === 'completed'
+                                    ? "line-through text-secondary-light dark:text-secondary-light-dark"
+                                    : "text-text dark:text-text-dark"
+                            )}
+                            size="base"
+                        >
+                            {task.text}
+                        </Text>
+                    </View>
+                    <View className="flex-row items-center">
+                        <Text
+                            size="sm"
+                            className={cn("pl-9", task.status === 'completed' ? "line-through" : "")}
+                        >
+                            {formatDateTime(task.start_datetime, 'HH:mm, EEEE')}
+                        </Text>
+                    </View>
                 </AnimatedPressable>
             </GestureDetector>
-        </View>
+        </View >
     )
 })

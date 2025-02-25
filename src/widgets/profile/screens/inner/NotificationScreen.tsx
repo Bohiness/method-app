@@ -1,82 +1,195 @@
+// src/widgets/profile/screens/NotificationSettingsScreen.tsx
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
-import { Checkbox, CheckboxGroup } from '@shared/ui/checkbox-radio'
-import { ScreenType } from '@widgets/profile/SettingModal'
-import { useState } from 'react'
+import { useNotification } from '@shared/context/notification-provider'
+import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
+import { OpenTimePicker } from '@shared/ui/open-time-picker'
+import { Switch, SwitchGroup } from '@shared/ui/switch'
+import { Text } from '@shared/ui/text'
+import { View } from '@shared/ui/view'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
 
-export const NotificationScreen = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (screen: ScreenType) => void }) => {
+export const NotificationSettingsScreen = ({
+    onBack,
+    onNavigate
+}: {
+    onBack: () => void,
+    onNavigate: (screen: ScreenType) => void
+}) => {
     const { t } = useTranslation()
-    const [pushNotifications, setPushNotifications] = useState<string[]>(['daily-reminder', 'streaks'])
-    const [emailNotifications, setEmailNotifications] = useState<string[]>(['weekly-summary'])
-    const [inAppNotifications, setInAppNotifications] = useState<string[]>(['achievements'])
+    const {
+        settings,
+        updateSettings,
+        categories,
+        updateCategoryPreference
+    } = useNotification()
+
+    const [loading, setLoading] = useState(false)
+    const [reminderTime, setReminderTime] = useState<Date>(
+        settings?.quiet_hours_start ?
+            new Date(`2000-01-01T${settings.quiet_hours_start}`) :
+            new Date(new Date().setHours(9, 0))
+    )
+
+    // Состояния для разных типов уведомлений
+    const [systemPreferences, setSystemPreferences] = useState({
+        push_enabled: settings?.push_enabled ?? true,
+        email_enabled: settings?.email_enabled ?? true,
+        sound_enabled: settings?.sound_enabled ?? true,
+        vibration_enabled: settings?.vibration_enabled ?? true,
+        quiet_hours_enabled: settings?.quiet_hours_enabled ?? false
+    })
+
+    // Обработчик изменения системных настроек
+    const handleSystemPreferenceChange = async (key: string, value: boolean) => {
+        setLoading(true)
+        try {
+            const updatedPreferences = {
+                ...systemPreferences,
+                [key]: value
+            }
+            setSystemPreferences(updatedPreferences)
+            await updateSettings(updatedPreferences)
+        } catch (error) {
+            console.error('Ошибка обновления настроек:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Обработчик изменения категорий уведомлений
+    const handleCategoryChange = async (categoryId: string, enabled: boolean) => {
+        setLoading(true)
+        try {
+            await updateCategoryPreference(categoryId, enabled)
+        } catch (error) {
+            console.error('Ошибка обновления категории:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Обработчик изменения времени напоминаний
+    const handleTimeChange = async (newTime: Date) => {
+        setReminderTime(newTime)
+        setLoading(true)
+        try {
+            await updateSettings({
+                quiet_hours_start: newTime.toTimeString().slice(0, 5)
+            })
+        } catch (error) {
+            console.error('Ошибка обновления времени:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
-        <View>
-            <HeaderMenuItem onBack={onBack} title={'settings.notifications.title'} />
+        <View className="flex-1">
+            <HeaderMenuItem
+                onBack={onBack}
+                title={t('settings.notifications.title')}
+            />
 
-            <CheckboxGroup
-                label={t('settings.notifications.push')}
-                values={pushNotifications}
-                onChange={setPushNotifications}
-                className="mb-8"
-            >
-                <Checkbox
-                    label={t('settings.notifications.dailyReminder')}
-                    value="daily-reminder"
-                />
-                <Checkbox
-                    label={t('settings.notifications.streaksProgress')}
-                    value="streaks"
-                />
-                <Checkbox
-                    label={t('settings.notifications.newFeatures')}
-                    value="features"
-                />
-                <Checkbox
-                    label={t('settings.notifications.appUpdates')}
-                    value="updates"
-                />
-            </CheckboxGroup>
+            <View className="px-4">
+                {/* Системные настройки */}
+                <SwitchGroup
+                    label={t('settings.notifications.system')}
+                    className="mb-8"
+                    values={Object.entries(systemPreferences)
+                        .filter(([_, value]) => value)
+                        .map(([key]) => key)}
+                    onChange={(values) => {
+                        const newPreferences = { ...systemPreferences };
+                        (Object.keys(systemPreferences) as Array<keyof typeof systemPreferences>).forEach(key => {
+                            newPreferences[key] = values.includes(key)
+                        })
+                        Object.entries(newPreferences).forEach(([key, value]) => {
+                            handleSystemPreferenceChange(key, value)
+                        })
+                    }}
+                >
+                    <Switch
+                        value="push_enabled"
+                        label={t('settings.notifications.push_enabled')}
+                        checked={systemPreferences.push_enabled}
+                        onChange={(value) => handleSystemPreferenceChange('push_enabled', value)}
+                    />
+                    <Switch
+                        value="email_enabled"
+                        label={t('settings.notifications.email_enabled')}
+                        checked={systemPreferences.email_enabled}
+                        onChange={(value) => handleSystemPreferenceChange('email_enabled', value)}
+                    />
+                    <Switch
+                        value="sound_enabled"
+                        label={t('settings.notifications.sound_enabled')}
+                        checked={systemPreferences.sound_enabled}
+                        onChange={(value) => handleSystemPreferenceChange('sound_enabled', value)}
+                    />
+                    <Switch
+                        value="vibration_enabled"
+                        label={t('settings.notifications.vibration_enabled')}
+                        checked={systemPreferences.vibration_enabled}
+                        onChange={(value) => handleSystemPreferenceChange('vibration_enabled', value)}
+                    />
+                </SwitchGroup>
 
-            <CheckboxGroup
-                label={t('settings.notifications.email')}
-                values={emailNotifications}
-                onChange={setEmailNotifications}
-                className="mb-8"
-            >
-                <Checkbox
-                    label={t('settings.notifications.weeklySummary')}
-                    value="weekly-summary"
-                />
-                <Checkbox
-                    label={t('settings.notifications.monthlyReport')}
-                    value="monthly-report"
-                />
-                <Checkbox
-                    label={t('settings.notifications.tipsRecommendations')}
-                    value="tips"
-                />
-            </CheckboxGroup>
+                {/* Тихие часы */}
+                <View className="mb-8">
+                    <View className="flex-row items-center justify-between mb-4">
+                        <Text weight="medium">{t('settings.notifications.quiet_hours')}</Text>
+                        <Switch
+                            value="quiet_hours_enabled"
+                            checked={systemPreferences.quiet_hours_enabled}
+                            onChange={(value) => handleSystemPreferenceChange('quiet_hours_enabled', value)}
+                        />
+                    </View>
+                    {systemPreferences.quiet_hours_enabled && (
+                        <OpenTimePicker
+                            initialDate={reminderTime}
+                            onChange={handleTimeChange}
+                        />
+                    )}
+                </View>
 
-            <CheckboxGroup
-                label={t('settings.notifications.inApp')}
-                values={inAppNotifications}
-                onChange={setInAppNotifications}
-            >
-                <Checkbox
-                    label={t('settings.notifications.achievementUnlocked')}
-                    value="achievements"
-                />
-                <Checkbox
-                    label={t('settings.notifications.communityInteractions')}
-                    value="community"
-                />
-                <Checkbox
-                    label={t('settings.notifications.importantAnnouncements')}
-                    value="announcements"
-                />
-            </CheckboxGroup>
+                {/* Категории уведомлений */}
+                {categories.length > 0 && (
+                    <SwitchGroup
+                        label={t('settings.notifications.categories')}
+                        className="mb-8"
+                        values={categories.filter(c => c.enabled).map(c => c.id)}
+                        onChange={(values) => {
+                            categories.forEach(category => {
+                                if (values.includes(category.id) !== category.enabled) {
+                                    handleCategoryChange(category.id, values.includes(category.id))
+                                }
+                            })
+                        }}
+                    >
+                        {categories.map(category => (
+                            <Switch
+                                value={category.id}
+                                key={category.id}
+                                label={t(`settings.notifications.categories.${category.name}`)}
+                                checked={category.enabled}
+                                onChange={(value) => handleCategoryChange(category.id, value)}
+                            />
+                        ))}
+                    </SwitchGroup>
+                )}
+
+                {/* Важность уведомлений */}
+                <View className="mb-8">
+                    <Text
+                        size="sm"
+                        variant="secondary"
+                        className="text-center"
+                    >
+                        {t('settings.notifications.importance_notice')}
+                    </Text>
+                </View>
+            </View>
         </View>
     )
 }
