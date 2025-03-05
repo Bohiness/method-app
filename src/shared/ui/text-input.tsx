@@ -3,7 +3,7 @@ import { useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { Caption, Text } from '@shared/ui/text'
 import { SearchIcon } from 'lucide-react-native'
-import React, { forwardRef, memo, useCallback } from 'react'
+import React, { forwardRef, memo, useCallback, useRef } from 'react'
 import { Platform, Pressable, TextInput as RNTextInput, TextInputProps, View } from 'react-native'
 import { VoiceInputButton } from './voice/VoiceInputButton'
 
@@ -59,6 +59,8 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
     ref
 ) => {
     const { colors } = useTheme()
+    // Используем useRef для хранения последнего значения текста
+    const lastValueRef = useRef(value)
 
     // Мемоизируем стили для разных размеров
     const getSizeStyles = useCallback(() => {
@@ -120,10 +122,22 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
     // Мемоизируем обработчик голосового ввода
     const handleVoiceTranscribe = useCallback((text: string) => {
         if (onChangeText) {
-            const newText = value ? `${value} ${text}` : text
+            // Используем функциональное обновление, чтобы гарантировать актуальное значение
+            const currentValue = lastValueRef.current || ''
+            const newText = currentValue ? `${currentValue} ${text}` : text
+            lastValueRef.current = newText
             onChangeText(newText)
         }
-    }, [onChangeText, value])
+    }, [onChangeText])
+
+    // Обработчик изменения текста
+    const handleChangeText = useCallback((text: string) => {
+        if (onChangeText) {
+            // Обновляем ref с последним значением
+            lastValueRef.current = text
+            onChangeText(text)
+        }
+    }, [onChangeText])
 
     const voiceInputContainerStyles = cn(
         'absolute right-3 z-10',
@@ -161,7 +175,7 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
                     ref={ref}
                     {...props}
                     value={value}
-                    onChangeText={onChangeText}
+                    onChangeText={handleChangeText}
                     maxLength={maxLength}
                     placeholder={placeholder}
                     editable={editable}

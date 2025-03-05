@@ -1,5 +1,6 @@
 // src/shared/lib/logger/transports/logstash.transport.ts
 
+import { networkService } from '@shared/lib/network/network.service';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { LogData, LogLevel } from '../logger.types';
@@ -21,6 +22,7 @@ export class LogstashTransport extends BaseTransport {
     private queue: LogData[] = [];
     private timer?: NodeJS.Timeout;
     private retryCount = 0;
+    private networkListener: (() => void) | null = null;
 
     constructor(config: Partial<LogstashConfig> = {}) {
         super();
@@ -36,7 +38,19 @@ export class LogstashTransport extends BaseTransport {
             ...config,
         };
 
+        // Добавляем слушателя сети для автоматической отправки логов при восстановлении соединения
+        this.networkListener = networkService.addListener(isConnected => {
+            if (isConnected && this.queue.length > 0) {
+                this.flush().catch(err => console.error('Failed to flush logs on network reconnect:', err));
+            }
+        });
+
         this.startTimer();
+    }
+
+    // Переопределяем shouldHandle для проверки соединения
+    shouldHandle(level: LogLevel): boolean {
+        return super.shouldHandle(level) && networkService.getConnectionStatus();
     }
 
     private startTimer() {
@@ -57,6 +71,12 @@ export class LogstashTransport extends BaseTransport {
     }
 
     private async send(logs: LogData[]): Promise<void> {
+        // Проверяем соединение перед отправкой
+        if (!networkService.getConnectionStatus()) {
+            console.log('Network is offline, queuing logs for later');
+            return;
+        }
+
         try {
             const formattedLogs = logs.map(log => ({
                 ...log,
@@ -96,6 +116,12 @@ export class LogstashTransport extends BaseTransport {
     private async flush(): Promise<void> {
         if (this.queue.length === 0) return;
 
+        // Если нет соединения, сохраняем логи в очереди
+        if (!networkService.getConnectionStatus()) {
+            console.log('Network is offline, skipping log flush');
+            return;
+        }
+
         const batch = this.queue.splice(0, this.config.batchSize);
         await this.send(batch);
     }
@@ -103,7 +129,7 @@ export class LogstashTransport extends BaseTransport {
     async write(data: LogData): Promise<void> {
         this.queue.push(data);
 
-        if (this.queue.length >= this.config.batchSize) {
+        if (this.queue.length >= this.config.batchSize && networkService.getConnectionStatus()) {
             await this.flush();
         }
     }
@@ -111,6 +137,12 @@ export class LogstashTransport extends BaseTransport {
     destroy() {
         if (this.timer) {
             clearInterval(this.timer);
+        }
+
+        // Удаляем слушателя сети при уничтожении транспорта
+        if (this.networkListener) {
+            networkService.removeListener(this.networkListener);
+            this.networkListener = null;
         }
     }
 }

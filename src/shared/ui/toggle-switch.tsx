@@ -1,6 +1,6 @@
 import { cn } from '@shared/lib/utils/cn'
 import { Text } from '@shared/ui/text'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
 import {
     Gesture,
@@ -117,6 +117,16 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
         width: width + padding * 2,
         height: currentSize.height,
     }
+
+
+    // Отслеживаем изменения пропса value и обновляем положение ползунка
+    useEffect(() => {
+        translateX.value = withSpring(value ? 1 : 0, {
+            mass: 0.5,
+            damping: 8,
+            stiffness: 150,
+        })
+    }, [value, translateX])
 
     return (
         <GestureHandlerRootView className={cn('flex flex-row items-center justify-center', className)}>

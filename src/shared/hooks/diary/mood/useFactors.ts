@@ -7,7 +7,11 @@ const STALE_TIME = 5 * 60 * 1000; // 5 минут
 
 // Хук для получения факторов
 export const useFactors = () => {
-    return useQuery<Factor[], Error>({
+    const {
+        data: factors,
+        isLoading,
+        error,
+    } = useQuery<Factor[], Error>({
         queryKey: ['factors'],
         queryFn: async () => {
             try {
@@ -19,5 +23,9 @@ export const useFactors = () => {
             }
         },
         initialData: initialFactorsEN.sort((a, b) => a.name.localeCompare(b.name)),
+        staleTime: 0, // Устанавливаем staleTime в 0, чтобы данные всегда считались устаревшими
+        gcTime: 0, // Отключаем сборку мусора кэша
     });
+
+    return { factors, isLoading, error };
 };

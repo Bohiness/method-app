@@ -14,6 +14,7 @@ import { useState } from 'react';
  */
 interface UseAIOptions {
     mode?: 'chat' | 'single';
+    url?: string;
 }
 
 /**
@@ -27,7 +28,7 @@ interface UseAIOptions {
  * @property {boolean} isSending - Флаг отправки текстового сообщения
  * @property {boolean} isVoiceLoading - Флаг обработки голосового сообщения
  */
-export const useAI = ({ mode = 'single' }: UseAIOptions = {}) => {
+export const useAI = ({ mode = 'single', url }: UseAIOptions = {}) => {
     const [messages, setMessages] = useState<AiMessageType[]>([]);
     const [currentResponse, setCurrentResponse] = useState<string>('');
 
@@ -89,7 +90,7 @@ export const useAI = ({ mode = 'single' }: UseAIOptions = {}) => {
      */
     const { mutateAsync: sendVoice, isPending: isVoiceLoading } = useMutation({
         mutationFn: async (audioFile: File) => {
-            const response = await chatApiService.sendVoice(audioFile);
+            const response = await chatApiService.sendVoice(audioFile, url);
             return response;
         },
     });
@@ -99,7 +100,7 @@ export const useAI = ({ mode = 'single' }: UseAIOptions = {}) => {
         currentResponse,
         sendMessage,
         sendVoice,
-        isSending,
+        isSending: isSending || isVoiceLoading,
         isVoiceLoading,
     };
 };

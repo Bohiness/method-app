@@ -149,9 +149,59 @@ class TasksSyncService {
         }
     }
 
-    // Публичный метод для запуска синхронизации
-    syncChanges(): void {
-        this.enqueueSyncTask();
+    // Новый метод для получения задач с сервера и обновления локального хранилища
+    async fetchAndSyncTasks() {
+        try {
+            // Сначала синхронизируем все локальные изменения
+            await this.syncChanges();
+
+            // Затем получаем актуальные данные с сервера
+            const serverTasks = await tasksApiService.getTasks();
+
+            // Обновляем локальное хранилище
+            await tasksStorageService.updateLocalTasks(serverTasks.results);
+
+            return serverTasks;
+        } catch (error) {
+            console.error('Failed to fetch and sync tasks:', error);
+            throw error;
+        }
+    }
+
+    // Изменяем метод syncChanges, чтобы он возвращал Promise
+    async syncChanges(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const syncTask = async () => {
+                try {
+                    if (!networkService.getConnectionStatus()) {
+                        console.debug('No internet connection, skipping sync');
+                        resolve();
+                        return;
+                    }
+
+                    const pendingChanges = await tasksStorageService.getPendingChanges();
+                    if (pendingChanges.length === 0) {
+                        console.debug('No pending changes to sync');
+                        resolve();
+                        return;
+                    }
+
+                    console.debug(`Starting sync of ${pendingChanges.length} changes`);
+                    const sortedChanges = pendingChanges.sort((a, b) => a.timestamp - b.timestamp);
+
+                    for (const change of sortedChanges) {
+                        await this.processChange(change);
+                    }
+
+                    resolve();
+                } catch (error) {
+                    console.error('Failed to sync changes:', error);
+                    reject(error);
+                }
+            };
+
+            this.syncQueue.push(syncTask);
+        });
     }
 
     startPeriodicSync(intervalMs: number = 60000): () => void {

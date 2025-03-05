@@ -1,7 +1,6 @@
 import { CalendarButton } from '@entities/plans/CalendarButton'
 import { PriorityButton } from '@entities/plans/PriorityButton'
 import { ProjectChoice } from '@entities/plans/projects/ProjectChoise'
-import { useModal } from '@shared/context/modal-provider'
 import { useTheme } from '@shared/context/theme-provider'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useKeyboard } from '@shared/hooks/systems/keyboard/useKeyboard'
@@ -12,10 +11,10 @@ import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { TextInput } from '@shared/ui/text-input'
 import { View } from '@shared/ui/view'
+import { router } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, Pressable, TextInput as RNTextInput, ScrollView } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 
 interface NewTaskProps {
@@ -26,12 +25,8 @@ interface NewTaskProps {
 
 const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
     const { t } = useTranslation()
-    const { hideModal } = useModal()
-    const insets = useSafeAreaInsets()
     const { createTask, updateTask, isOnline, deleteTask } = useOfflineTasks()
     const { colors } = useTheme()
-
-    console.log('task', task)
 
     // Инициализируем состояния в зависимости от режима
     const inputRef = useRef<RNTextInput>(null)
@@ -60,11 +55,12 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
     }, [mode])
 
     useEffect(() => {
-        if (mode === 'edit' && task?.subtasks) {
-            setSubtasks(task.subtasks)
-        }
-        if (mode === 'edit' && task?.project) {
-            setSelectedProjectId(task.project)
+        if (mode === 'edit' && task) {
+            setTitle(task.text || '')
+            setSubtasks(task.subtasks || [])
+            setPriority(task.priority || 'none')
+            setSelectedDate(task.start_datetime ? new Date(task.start_datetime) : new Date(new Date().setHours(9, 0, 0, 0)))
+            setSelectedProjectId(task.project || null)
         }
     }, [task, mode])
 
@@ -98,7 +94,6 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
         if (mode === 'edit' && task) {
             try {
                 await deleteTask.mutateAsync(task.id)
-                hideModal()
             } catch (error) {
                 console.error('Error deleting task:', error)
             }
@@ -127,9 +122,10 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
             } else {
                 await createTask.mutateAsync(taskData)
             }
-            hideModal()
         } catch (error) {
             console.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} task:`, error)
+        } finally {
+            router.dismissTo('/(tabs)/plans')
         }
     }
 
@@ -269,6 +265,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                 onSave={handleDateSelect}
                 initialDate={selectedDate}
                 backdrop
+                showTimePicker
             />
         </>
     )

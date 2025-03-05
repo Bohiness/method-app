@@ -26,6 +26,8 @@
         "offline": "Offline",
         "offlineMode": "Offline mode",
         "close": "Close",
+        "yes": "Yes",
+        "no": "No",
         "date": {
             "today": "today",
             "tomorrow": "tomorrow",
@@ -224,6 +226,22 @@
                     "start": "Bad",
                     "end": "Good"
                 }
+            },
+            "priority": {
+                "title": "Priority for day",
+                "description": "Select the most important factors for your day"
+            },
+            "plansForDay": {
+                "title": "Plans for day",
+                "description": "Plan your day ahead and stay organized. After your can use it for creating tasks.",
+                "placeholder": "Write your thoughts here..."
+            },
+            "success": {
+                "title": "Success",
+                "description": "Your day is planned and organized. You can use it for creating tasks.",
+                "createTasks": "Would you like to create tasks based on your plan?",
+                "no": "No",
+                "yes": "Yes"
             }
         },
         "eveningreflection": {
@@ -255,6 +273,10 @@
             "question5": {
                 "title": "Would you like to share something? Perhaps there were interesting moments or fresh ideas you'd like to preserve?",
                 "placeholder": "Write your thoughts here..."
+            },
+            "success": {
+                "title": "Evening reflection completed!",
+                "description": "You've successfully completed your evening reflection. Keep up the good work to maintain your streak!"
             }
         }
     },
@@ -552,7 +574,7 @@
             "error": "An error occurred while subscribing",
             "toggle": {
                 "premium": "Premium",
-                "premiumPlus": "Premium + AI"
+                "premium_ai": "Premium + AI"
             },
             "plans": {
                 "premium": {
@@ -589,7 +611,7 @@
                         }
                     }
                 },
-                "premiumPlus": {
+                "premium_ai": {
                     "title": "Premium + AI",
                     "description": "All Premium features + advanced AI assistant",
                     "features": {
@@ -638,7 +660,9 @@
         "maxLength": "Must be less than {{max}} characters",
         "invalidFormat": "Invalid format"
     },
+    "feature_locked": "You need to subscribe to use this feature",
     "subscription": {
+        "subscribe_now": "Subscribe Now",
         "unlock_premium": "Unlock Premium Features",
         "choose_plan": "Choose Your Plan",
         "current_plan": "Current Plan",

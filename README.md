@@ -39,3 +39,13 @@ open yourproject.xcworkspace
 # Запускаем dev client
 
 npx expo start --dev-client
+
+# Сборка и отправка в App Store Connect
+
+eas build --platform ios\
+
+eas submit --platform ios
+
+# Сборка локально
+
+eas build --local

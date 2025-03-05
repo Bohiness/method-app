@@ -4,6 +4,11 @@
 export type TaskPriority = 'none' | 'low' | 'medium' | 'high'
 export type TaskStatus = 'completed' | 'pending'
 
+export interface TaskResponseType {
+    tasks: TaskType[]
+    message: string
+}
+
 export interface TaskType {
     id: number
     text: string

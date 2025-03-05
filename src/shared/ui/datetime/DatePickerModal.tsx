@@ -2,17 +2,20 @@
 import { eachDayOfInterval, endOfMonth, getDay, startOfMonth } from 'date-fns'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Modal, TouchableWithoutFeedback, View } from 'react-native'
+import { Modal, TouchableOpacity } from 'react-native'
 
 import { Button } from '../button'
 import { Calendar } from '../calendar'
+import { View } from '../view'
 
 interface DatePickerModalProps {
     isVisible: boolean
     onClose: () => void
     onSave: (date: Date) => void
     initialDate?: Date
+    showTimePicker?: boolean
     backdrop?: boolean
+    backdropVariant?: 'default' | 'paper' | 'canvas' | 'stone' | 'inverse' | 'transparent'
 }
 
 export const DatePickerModal: React.FC<DatePickerModalProps> = ({
@@ -20,7 +23,9 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
     onClose,
     onSave,
     initialDate = new Date(),
-    backdrop = false
+    backdrop = false,
+    backdropVariant = 'default',
+    showTimePicker = false
 }) => {
     const { t } = useTranslation()
     const [selectedDate, setSelectedDate] = useState<Date>(() => initialDate)
@@ -43,14 +48,13 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
 
     // Создаем содержимое модального окна
     const Content = (
-        // Внутреннему контейнеру явно задаём pointerEvents="auto"
-        <View pointerEvents="auto" className="bg-background dark:bg-background-dark rounded-2xl w-[85%] p-4 gap-y-4">
+        <View pointerEvents="auto" className="rounded-2xl w-[85%] p-4 gap-y-4" variant="default">
             {selectedDate && (
                 <Calendar
                     value={selectedDate}
                     onChange={setSelectedDate}
                     showMonthNavigation
-                    showTimePicker
+                    showTimePicker={showTimePicker}
                 />
             )}
 
@@ -80,13 +84,19 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
             onRequestClose={onClose}
         >
             {backdrop ? (
-                // Внешний TouchableWithoutFeedback оборачивает фон.
-                // Устанавливаем pointerEvents="box-none" на View, чтобы дочерние компоненты получали события.
-                <TouchableWithoutFeedback onPress={onClose}>
-                    <View pointerEvents="box-none" className="flex-1 justify-center items-center bg-background dark:bg-background-dark">
+                <View className="flex-1" variant={backdropVariant}>
+                    {/* Фоновая область, которая закрывает модальное окно при нажатии */}
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={onClose}
+                        className="absolute inset-0"
+                    />
+
+                    {/* Контент модального окна, который не закрывается при нажатии */}
+                    <View pointerEvents="box-none" className="flex-1 justify-center items-center">
                         {Content}
                     </View>
-                </TouchableWithoutFeedback>
+                </View>
             ) : (
                 <View pointerEvents="box-none" className="flex-1 justify-center items-center">
                     {Content}

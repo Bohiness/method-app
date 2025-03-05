@@ -36,11 +36,11 @@ class ChatApiService {
      * @returns {Promise<AiChatResponseType>} Объект с транскрибированным текстом
      * @throws {Error} Ошибка при неудачной загрузке или обработке аудио
      */
-    async sendVoice(audioFile: File): Promise<AiChatResponseType> {
+    async sendVoice(audioFile: File, url?: string): Promise<AiChatResponseType> {
         const formData = new FormData();
         formData.append('audio', audioFile);
 
-        return await apiClient.post(API_ROUTES.AI.VOICE, formData, {
+        return await apiClient.post(url ?? API_ROUTES.AI.VOICE, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
     }

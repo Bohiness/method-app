@@ -29,18 +29,46 @@ export const useCreateMoodCheckin = () => {
 
     return useMutation({
         mutationFn: async (data: Omit<MoodCheckin, 'id' | 'created_at'>) => {
-            // Сохраняем в локальное хранилище
-            const newCheckin = await moodStorageService.createMoodCheckin(data);
+            console.log('useCreateMoodCheckin: Получены данные для сохранения:', data);
 
-            // Если онлайн, запускаем дебаунсированную синхронизацию
-            if (isOnline) {
-                debouncedSync();
+            // Проверка данных перед сохранением
+            if (data.mood_level < 1 || data.mood_level > 5) {
+                throw new Error(`Некорректный уровень настроения: ${data.mood_level}`);
             }
 
-            return newCheckin;
+            if (!Array.isArray(data.emotions)) {
+                throw new Error('Поле emotions должно быть массивом');
+            }
+
+            if (!Array.isArray(data.factors)) {
+                throw new Error('Поле factors должно быть массивом');
+            }
+
+            try {
+                // Сохраняем в локальное хранилище
+                const newCheckin = await moodStorageService.createMoodCheckin(data);
+                console.log('useCreateMoodCheckin: Данные успешно сохранены:', newCheckin);
+
+                // Если онлайн, запускаем дебаунсированную синхронизацию
+                if (isOnline) {
+                    console.log('useCreateMoodCheckin: Устройство онлайн, запускаем синхронизацию');
+                    debouncedSync();
+                } else {
+                    console.log('useCreateMoodCheckin: Устройство оффлайн, синхронизация отложена');
+                }
+
+                return newCheckin;
+            } catch (error) {
+                console.error('useCreateMoodCheckin: Ошибка при сохранении данных:', error);
+                throw error;
+            }
         },
-        onSuccess: () => {
+        onSuccess: data => {
+            console.log('useCreateMoodCheckin: Мутация успешно выполнена, инвалидируем запросы');
             queryClient.invalidateQueries({ queryKey: ['mood-checkins'] });
+        },
+        onError: error => {
+            console.error('useCreateMoodCheckin: Ошибка при выполнении мутации:', error);
         },
     });
 };
@@ -74,4 +102,43 @@ export const moodHelpers = {
     getEmotionName: (emotions: Emotion[] | undefined, id: number) => emotions?.find(emotion => emotion.id === id)?.name,
 
     getFactorName: (factors: Factor[] | undefined, id: number) => factors?.find(factor => factor.id === id)?.name,
+};
+
+export const useMoodCheckinStats = (days: number) => {
+    const {
+        data: currentPeriodData,
+        isLoading,
+        error,
+    } = useQuery<MoodCheckin[], Error>({
+        queryKey: ['mood-checkins', 'current', days],
+        queryFn: () => moodStorageService.getMoodCheckinsByDays(days),
+    });
+
+    const { data: previousPeriodData } = useQuery<MoodCheckin[], Error>({
+        queryKey: ['mood-checkins', 'previous', days],
+        queryFn: () => moodStorageService.getMoodCheckinsByDaysRange(days, days * 2),
+    });
+
+    // Вычисление среднего значения mood_level для текущего периода
+    const currentAvg = useMemo(() => {
+        if (!currentPeriodData || currentPeriodData.length === 0) return 0;
+        const sum = currentPeriodData.reduce((acc, checkin) => acc + checkin.mood_level, 0);
+        return sum / currentPeriodData.length;
+    }, [currentPeriodData]);
+
+    // Вычисление среднего значения mood_level для предыдущего периода
+    const previousAvg = useMemo(() => {
+        if (!previousPeriodData || previousPeriodData.length === 0) return 0;
+        const sum = previousPeriodData.reduce((acc, checkin) => acc + checkin.mood_level, 0);
+        return sum / previousPeriodData.length;
+    }, [previousPeriodData]);
+
+    return {
+        currentPeriodData,
+        previousPeriodData,
+        currentAvg,
+        previousAvg,
+        isLoading,
+        error,
+    };
 };

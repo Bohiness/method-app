@@ -73,7 +73,7 @@ export const Surface = ({ className, ...props }: ViewProps) => (
 export const Container = ({ className, ...props }: ViewProps) => (
     <View
         variant="default"
-        className={cn('px-4 py-2 flex-1', className)}
+        className={cn('px-4 py-2 flex-1 relative', className)}
         {...props}
     />
 )

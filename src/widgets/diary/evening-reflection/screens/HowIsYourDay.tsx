@@ -2,7 +2,6 @@
 import { Slider } from '@shared/ui/slider'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import { TransitionScreenProps } from '@widgets/transitions/TransitionContext'
 import * as Haptics from 'expo-haptics'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,14 +20,13 @@ const sleepRanges: SleepRange[] = [
     { range: [81, 100], value: 5 },
 ]
 
-interface HowIsYourDayProps extends TransitionScreenProps {
+interface HowIsYourDayProps {
     initialValue?: number
     onChange?: (value: number) => void
 }
 
 export function HowIsYourDay({
     initialValue = 50,
-    setEnabledNextButton,
     onChange,
 }: HowIsYourDayProps) {
 
@@ -55,7 +53,6 @@ export function HowIsYourDay({
         if (newRange && newRange.value !== currentRange.value) {
             setCurrentRange(newRange)
             triggerHaptic()
-            setEnabledNextButton?.(true)
         }
     }, [currentRange.value, triggerHaptic])
 
@@ -65,7 +62,6 @@ export function HowIsYourDay({
             setSliderValue(value)
             updateCurrentRange(value)
             onChange?.(value)
-            setEnabledNextButton?.(true)
         }
     }, [updateCurrentRange, onChange])
 
@@ -77,7 +73,7 @@ export function HowIsYourDay({
     }, [initialValue])
 
     return (
-        <View className="flex-1 justify-center items-center p-4">
+        <View className="flex-1 justify-center items-center p-4" variant='default'>
 
             <View className="justify-center -mt-10 px-4">
                 <Title weight='medium' className="mb-2 text-center">

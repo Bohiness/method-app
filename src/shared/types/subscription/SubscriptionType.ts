@@ -1,6 +1,7 @@
 // src/shared/types/subscription/SubscriptionType.ts
 
 export type SubscriptionTier = 'free' | 'premium' | 'premium_ai';
+export type SubscriptionPlan = 'premium' | 'premium_ai';
 
 export interface SubscriptionStatus {
     isActive: boolean;

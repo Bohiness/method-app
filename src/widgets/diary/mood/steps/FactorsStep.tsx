@@ -1,33 +1,36 @@
 import { HighlightedText } from '@shared/lib/utils/HighlightedText'
-import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
-import { Button } from '@shared/ui/button'
+import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Text, Title } from '@shared/ui/text'
 import { MultilineTextInput } from '@shared/ui/text-input'
 import { View } from '@shared/ui/view'
-import * as Haptics from 'expo-haptics'
+import { FactorsScrollView } from '@widgets/diary/factors/FactorsScrollView'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Keyboard, ScrollView, TouchableWithoutFeedback } from 'react-native'
+import { Keyboard, TouchableWithoutFeedback } from 'react-native'
 
 // FactorsStep
 interface FactorsStepProps {
-    factors: Factor[]
     selectedFactors: number[]
     selectedEmotions: number[]
     onSelect: (id: number) => void
     onNotesChange: (text: string) => void
     emotions: Emotion[]
     onRemoveEmotion: (id: number) => void
+    notes?: string
+    onNextStep?: () => void
+    onBackStep?: () => void
 }
 
 export function FactorsStep({
-    factors,
     selectedFactors,
     selectedEmotions,
     onSelect,
     onNotesChange,
     emotions,
-    onRemoveEmotion
+    onRemoveEmotion,
+    notes = '',
+    onNextStep,
+    onBackStep
 }: FactorsStepProps) {
     const { t } = useTranslation()
     const TitleWithHighlights = () => {
@@ -68,30 +71,15 @@ export function FactorsStep({
                         onChangeText={onNotesChange}
                         containerClassName='mb-6'
                         voiceInput
+                        value={notes}
                     />
 
-                    <ScrollView
-                        className="flex-1 mb-6"
-                        showsVerticalScrollIndicator={false}
-                    >
-                        <View className="flex-row flex-wrap gap-2 gap-y-4">
-                            {factors
-                                .sort((a, b) => a.name.localeCompare(b.name))
-                                .map((factor) => (
-                                    <Button
-                                        key={factor.id}
-                                        onPress={() => {
-                                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                            onSelect(factor.id)
-                                        }}
-                                        variant={selectedFactors.includes(factor.id) ? "default" : "secondary"}
-                                    >
-                                        {factor.name}
-                                    </Button>
-                                ))
-                            }
-                        </View>
-                    </ScrollView>
+                    <FactorsScrollView
+                        selectedFactors={selectedFactors}
+                        onSelect={onSelect}
+                        iconView
+                    />
+
                 </>
             </TouchableWithoutFeedback>
         </View >

@@ -1,18 +1,20 @@
+import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { useVoiceInput } from '@shared/hooks/voice/useVoiceInput'
 import { cn } from '@shared/lib/utils/cn'
 import * as Haptics from 'expo-haptics'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../button'
 import { Icon } from '../icon'
 
 interface VoiceInputButtonProps {
-    onTranscribe: (text: string) => void
+    onTranscribe: (text: any) => void
     size?: 'sm' | 'md' | 'lg'
     className?: string
     asButton?: boolean
     initialText?: string
+    url?: string
 }
 
 export const VoiceInputButton = ({
@@ -21,9 +23,10 @@ export const VoiceInputButton = ({
     className,
     asButton = false,
     initialText = '',
+    url,
 }: VoiceInputButtonProps) => {
-    const [accumulatedText, setAccumulatedText] = useState(initialText)
     const [isInitialized, setIsInitialized] = useState(false)
+    const { checkAIAccess } = useSubscriptionModal()
 
     const {
         isRecording,
@@ -32,16 +35,17 @@ export const VoiceInputButton = ({
         startRecording,
         stopRecording,
     } = useVoiceInput({
-        enabled: true
+        enabled: true,
+        url
     })
 
-    // Добавляем эффект для синхронизации с внешним текстом
-    useEffect(() => {
-        setAccumulatedText(initialText)
-    }, [initialText])
-
-
     const handlePress = async () => {
+        const hasAccess = await checkAIAccess({
+            text: 'You need to subscribe to use this feature',
+        })
+        if (!hasAccess) {
+            return
+        }
         if (!isInitialized) {
             setIsInitialized(true)
             await startRecording()
@@ -52,8 +56,10 @@ export const VoiceInputButton = ({
         if (isRecording) {
             try {
                 const result = await stopRecording()
-                if (result?.message) {
-                    onTranscribe(result.message)
+
+                console.log('result', result)
+                if (result) {
+                    onTranscribe(result)
                 }
                 await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
             } catch (error) {
@@ -94,6 +100,13 @@ export const VoiceInputButton = ({
                 />
             </View>
         </View>
+    )
+
+    const LoadingIndicator = () => (
+        <ActivityIndicator
+            size={iconSizes[size]}
+            className="text-primary dark:text-primary-dark"
+        />
     )
 
     const DebugInfo = () => (
@@ -149,13 +162,7 @@ export const VoiceInputButton = ({
                         buttonSizes[size]
                     )}
                 >
-                    {isProcessing ? (
-                        <ActivityIndicator
-                            className="h-5 w-5"
-                        />
-                    ) : (
-                        <IconWithPulse />
-                    )}
+                    {isProcessing ? <LoadingIndicator /> : <IconWithPulse />}
                 </View>
             </Pressable>
             {/* <DebugInfo /> */}

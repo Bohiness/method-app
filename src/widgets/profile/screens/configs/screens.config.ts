@@ -12,11 +12,11 @@ import { LoggingScreen } from '../inner/LoggingScreen';
 import { NotificationSettingsScreen } from '../inner/NotificationScreen';
 import MyProjectsScreen from '../inner/Projects/MyProjectsScreen';
 import { StorageScreen } from '../inner/StorageScreen';
+import { StorageValueModal } from '../inner/StorageValueModal';
 import { ThemeScreen } from '../inner/ThemeScreen';
 import { PlansSettingScreen } from '../PlansSettingScreen';
 import { SettingsScreen } from '../SettingsScreen';
 import { SubscriptionSettingScreen } from '../SubscriptionSettingScreen';
-
 export type ScreenType =
     | 'main'
     | 'settings'
@@ -35,7 +35,8 @@ export type ScreenType =
     | 'names'
     | 'gender'
     | 'profile_photo'
-    | 'diary';
+    | 'diary'
+    | 'storageValue';
 
 type ScreenConfig = {
     [K in ScreenType]: {
@@ -148,7 +149,11 @@ export const SCREEN_CONFIG: ScreenConfig = {
         level: 2,
         component: DiaryScreen,
         props: {
-            title: t('profile.diary'),
+            title: t('diary.history.lastWeekEntries'),
         },
+    },
+    storageValue: {
+        level: 2,
+        component: StorageValueModal,
     },
 };

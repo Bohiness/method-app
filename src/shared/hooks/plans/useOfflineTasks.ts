@@ -48,7 +48,7 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
             // Если онлайн, пытаемся синхронизировать
             if (isOnline) {
                 try {
-                    await tasksSyncService.syncChanges();
+                    tasksSyncService.syncChanges();
                 } catch (error) {
                     console.error('Failed to sync after create:', error);
                 }
@@ -61,6 +61,29 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
         },
     });
 
+    // Получение задачи по ID
+    const getTaskById = (taskId: number) => {
+        return useQuery({
+            queryKey: ['task', taskId],
+            queryFn: async () => {
+                // Сначала пробуем получить по локальному ID
+                let task = await tasksStorageService.getTaskByLocalId(taskId);
+
+                // Если не нашли, пробуем по серверному ID
+                if (!task && isOnline) {
+                    task = await tasksStorageService.getTaskByServerId(taskId);
+                }
+
+                if (!task) {
+                    throw new Error(`Task with ID ${taskId} not found`);
+                }
+
+                return task;
+            },
+            enabled: !!taskId,
+        });
+    };
+
     // Обновление задачи
     const updateTask = useMutation({
         mutationFn: async ({ id, data }: { id: number; data: UpdateTaskDtoType }) => {
@@ -70,7 +93,7 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
             // Если онлайн, пытаемся синхронизировать
             if (isOnline) {
                 try {
-                    await tasksSyncService.syncChanges();
+                    tasksSyncService.syncChanges();
                 } catch (error) {
                     console.error('Failed to sync after update:', error);
                 }
@@ -87,20 +110,13 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
     const deleteTask = useMutation({
         mutationFn: async (id: number) => {
             try {
-                console.debug('Deleting task:', id);
-
-                // Удаляем из локального хранилища
                 await tasksStorageService.deleteTask(id);
-                console.debug('Task deleted from local storage');
 
                 // Если онлайн, пытаемся синхронизировать
                 if (isOnline) {
                     try {
-                        console.debug('Starting sync after delete');
-                        await tasksSyncService.syncChanges();
-                        console.debug('Sync completed after delete');
+                        tasksSyncService.syncChanges();
                     } catch (error) {
-                        console.error('Failed to sync after delete:', error);
                         // Добавляем повторную попытку синхронизации
                         setTimeout(() => tasksSyncService.syncChanges(), 5000);
                     }
@@ -185,8 +201,22 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
         if (!isOnline) {
             throw new Error('No internet connection');
         }
-        await tasksSyncService.syncChanges();
+
+        // Получаем задачи с сервера
+        const serverTasks = await tasksSyncService.fetchAndSyncTasks();
+
+        // Обновляем кэш запроса с новыми данными
+        queryClient.setQueryData(queryKey, {
+            count: serverTasks.count,
+            next: serverTasks.next,
+            previous: serverTasks.previous,
+            results: serverTasks.results,
+        });
+
+        // Также инвалидируем запрос для обновления UI
         queryClient.invalidateQueries({ queryKey });
+
+        return serverTasks;
     };
 
     return {
@@ -197,6 +227,7 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
         createTask,
         updateTask,
         deleteTask,
+        getTaskById,
         toggleTask: (taskId: string | number) => toggleTaskCompletion.mutate(taskId),
         isToggling: toggleTaskCompletion.isPending,
         syncTasks,

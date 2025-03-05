@@ -2,17 +2,17 @@ import { Button } from '@shared/ui/button'
 import { router } from 'expo-router'
 
 export const PlansSettingsHeaderButton = () => {
+
+    const handlePress = () => {
+        router.push({
+            pathname: '/(modals)/(plans)/settings',
+        })
+    }
+
     return (
         <Button
             variant="ghost"
-            onPress={() =>
-                router.push({
-                    pathname: '/(modals)/(profile)/settings',
-                    params: {
-                        startScreen: 'plans'
-                    }
-                })
-            }
+            onPress={handlePress}
             leftIcon="Settings"
         >
         </Button>

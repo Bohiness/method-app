@@ -75,7 +75,6 @@ class NetworkService {
                 type: state.type,
                 details: state.details,
                 isInternetReachable: state.isInternetReachable,
-                strength: state.strength,
             };
         } catch (error) {
             console.error('Failed to get connection info:', error);

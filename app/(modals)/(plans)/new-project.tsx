@@ -3,7 +3,7 @@ import { useProject } from '@shared/hooks/plans/useProjects'
 import { ProjectType } from '@shared/types/plans/ProjectTypes'
 import { router, useLocalSearchParams } from 'expo-router'
 
-export default function NewHabitModal() {
+export default function NewProjectModal() {
     const { projectID } = useLocalSearchParams<{ projectID: string }>()
     const { project } = useProject(Number(projectID))
 

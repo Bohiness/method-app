@@ -28,7 +28,6 @@ interface SleepQualityStepProps extends TransitionScreenProps {
 
 export const SleepQualityStep: React.FC<SleepQualityStepProps> = ({
     initialValue = 50,
-    setEnabledNextButton,
     onChange,
 }) => {
 
@@ -55,7 +54,6 @@ export const SleepQualityStep: React.FC<SleepQualityStepProps> = ({
         if (newRange && newRange.value !== currentRange.value) {
             setCurrentRange(newRange)
             triggerHaptic()
-            setEnabledNextButton?.(true)
         }
     }, [currentRange.value, triggerHaptic])
 
@@ -65,7 +63,6 @@ export const SleepQualityStep: React.FC<SleepQualityStepProps> = ({
             setSliderValue(value)
             updateCurrentRange(value)
             onChange?.(value)
-            setEnabledNextButton?.(true)
         }
     }, [updateCurrentRange, onChange])
 
@@ -77,7 +74,7 @@ export const SleepQualityStep: React.FC<SleepQualityStepProps> = ({
     }, [initialValue])
 
     return (
-        <View className="flex-1 justify-center items-center p-4">
+        <View className="flex-1 justify-center items-center p-4" variant='default'>
 
             <View className="justify-center -mt-10 px-4">
                 <Title weight='medium' className="mb-2 text-center">

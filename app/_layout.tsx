@@ -4,7 +4,7 @@ import {
   QueryClientProvider
 } from '@tanstack/react-query'
 import { SplashScreen } from '@widgets/splash-screen'
-import { Stack } from 'expo-router'
+import { router, Stack } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import 'react-native-reanimated'
 
@@ -23,11 +23,16 @@ import { ModalHeader } from '@shared/ui/modals/ModalHeader'
 import { SyncManager } from '@shared/ui/system/sync/SyncManager'
 import { ToggleSwitch } from '@shared/ui/toggle-switch'
 import { ContainerScreen } from '@shared/ui/view'
-import { MoodRouteParams } from '@widgets/diary/mood/MoodCheckin'
 import { I18nextProvider, useTranslation } from 'react-i18next'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import './global.css'
+
+type StepIndicatorParams = {
+  currentStep?: number
+  onStepPress?: (step: number) => void
+  totalSteps?: number
+}
 
 export default function RootLayout() {
   const { t } = useTranslation()
@@ -62,16 +67,19 @@ export default function RootLayout() {
                               <Stack.Screen name="(coach)" options={{ headerShown: false }} />
                               <Stack.Screen name="+not-found" options={{ headerShown: false }} />
                               <Stack.Screen name="(modals)/(diary)/mood"
-                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                options={({ route }: { route: { params?: StepIndicatorParams } }) => ({
                                   presentation: 'fullScreenModal',
                                   animation: 'slide_from_bottom',
                                   header: () => (
                                     <FullScreenModalHeader
+                                      onClose={() => {
+                                        router.dismissTo('/(tabs)')
+                                      }}
                                       centerContent={
                                         <StepIndicator
                                           currentStep={route.params?.currentStep ?? 1}
                                           onStepPress={route.params?.onStepPress}
-                                          totalSteps={route.params?.totalSteps ?? 3}
+                                          totalSteps={route.params?.totalSteps ?? 4}
                                         />
                                       }
                                     />
@@ -79,15 +87,18 @@ export default function RootLayout() {
                                 })}
                               />
                               <Stack.Screen name="(modals)/(diary)/start-your-day"
-                                options={({ route }: { route: { params?: { currentStep?: number, onStepPress?: (step: number) => void, totalSteps?: number } } }) => ({
+                                options={({ route }: { route: { params?: StepIndicatorParams } }) => ({
                                   presentation: 'fullScreenModal',
                                   animation: 'slide_from_bottom',
                                   header: () => (
                                     <FullScreenModalHeader
+                                      onClose={() => {
+                                        router.dismissTo('/(tabs)')
+                                      }}
                                       centerContent={
                                         <StepIndicator
                                           currentStep={route.params?.currentStep ?? 1}
-                                          totalSteps={route.params?.totalSteps ?? 3}
+                                          totalSteps={route.params?.totalSteps ?? 4}
                                           onStepPress={route.params?.onStepPress}
                                         />
                                       }
@@ -97,16 +108,19 @@ export default function RootLayout() {
                               />
                               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
                               <Stack.Screen name="(modals)/(diary)/evening-reflection"
-                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                options={({ route }: { route: { params?: StepIndicatorParams } }) => ({
                                   presentation: 'fullScreenModal',
                                   animation: 'slide_from_bottom',
                                   header: () => (
                                     <FullScreenModalHeader
+                                      onClose={() => {
+                                        router.dismissTo('/(tabs)')
+                                      }}
                                       centerContent={
                                         <StepIndicator
                                           currentStep={route.params?.currentStep ?? 1}
                                           onStepPress={route.params?.onStepPress}
-                                          totalSteps={route.params?.totalSteps ?? 3}
+                                          totalSteps={route.params?.totalSteps ?? 4}
                                         />
                                       }
                                     />
@@ -114,33 +128,40 @@ export default function RootLayout() {
                                 })}
                               />
                               <Stack.Screen name="(modals)/(plans)/new-task"
-                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                options={{
                                   presentation: 'modal',
                                   animation: 'slide_from_bottom',
                                   header: () => (
                                     <ModalHeader />
                                   ),
-                                })}
+                                }}
                               />
                               <Stack.Screen name="(modals)/(plans)/new-project"
-                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                options={{
                                   presentation: 'modal',
                                   animation: 'slide_from_bottom',
                                   header: () => (
                                     <ModalHeader />
                                   ),
-                                })}
+                                }}
                               />
                               <Stack.Screen name="(modals)/(profile)/settings"
-                                options={({ route }: { route: { params?: MoodRouteParams } }) => ({
+                                options={{
                                   presentation: 'modal',
                                   animation: 'slide_from_bottom',
                                   header: () => (
                                     <ModalHeader />
                                   ),
-                                })}
+                                }}
                               />
                               <Stack.Screen name="(modals)/(plans)/new-habit"
+                                options={{
+                                  presentation: 'modal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (<ModalHeader />),
+                                }}
+                              />
+                              <Stack.Screen name="(modals)/(plans)/settings"
                                 options={{
                                   presentation: 'modal',
                                   animation: 'slide_from_bottom',
@@ -150,7 +171,7 @@ export default function RootLayout() {
                               <Stack.Screen name="(modals)/(payment)/subscription"
                                 options={({ route }: { route: { params?: SubscriptionScreenProps } }) => {
                                   // Извлечение параметров из route.params
-                                  const { selectedPlan = 'premium', setSelectedPlan = () => { } } = route.params || {}
+                                  const { selectedPlan, setSelectedPlan } = route.params || {}
 
                                   return {
                                     initialParams: route.params,
@@ -158,19 +179,30 @@ export default function RootLayout() {
                                     animation: 'slide_from_bottom',
                                     header: () => (
                                       <FullScreenModalHeader
+                                        variant='transparent'
                                         centerContent={
                                           <ToggleSwitch
-                                            value={selectedPlan === 'premiumPlus'}
-                                            onChange={(isChecked) => setSelectedPlan(isChecked ? 'premiumPlus' : 'premium')}
+                                            value={selectedPlan === 'premium_ai'}
+                                            onChange={(isChecked) => setSelectedPlan?.(isChecked ? 'premium_ai' : 'premium')}
                                             leftLabel={t('screens.subscription.toggle.premium')}
-                                            rightLabel={t('screens.subscription.toggle.premiumPlus')}
+                                            rightLabel={t('screens.subscription.toggle.premium_ai')}
                                             size="md"
                                             disabled={false}
                                           />
                                         }
+                                        onClose={() => {
+                                          router.dismiss()
+                                        }}
                                       />
                                     ),
                                   }
+                                }}
+                              />
+                              <Stack.Screen name="(modals)/(profile)/inner/storage-item"
+                                options={{
+                                  presentation: 'fullScreenModal',
+                                  animation: 'slide_from_bottom',
+                                  header: () => (<FullScreenModalHeader />),
                                 }}
                               />
                             </Stack>

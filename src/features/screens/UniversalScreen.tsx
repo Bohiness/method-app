@@ -38,13 +38,10 @@ export function UniversalScreen({
                 <View className="mt-2">
                     <MultilineTextInput
                         placeholder={placeholder}
-                        showCount
-                        maxLength={1000}
-                        value={inputValue}
+                        multiline
                         onChangeText={onInputChange}
-                        flex
+                        value={inputValue}
                         voiceInput
-                        voiceInputVerticalAlign='center'
                     />
                 </View>
             </Pressable>

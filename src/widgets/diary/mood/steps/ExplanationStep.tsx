@@ -3,13 +3,12 @@ import { HighlightedText } from '@shared/lib/utils/HighlightedText'
 import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
 import { Title } from '@shared/ui/text'
 import { MultilineTextInput } from '@shared/ui/text-input'
-import { TransitionScreen } from '@widgets/transitions/TransitionContext'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { KeyboardAvoidingView, Platform, Pressable, View } from 'react-native'
 import Animated, { SlideInRight, SlideOutLeft } from 'react-native-reanimated'
 
-interface ExplanationStepProps extends TransitionScreen {
+interface ExplanationStepProps {
     selectedFactors: number[]
     selectedEmotions: number[]
     factors: Factor[]
@@ -18,6 +17,8 @@ interface ExplanationStepProps extends TransitionScreen {
     onRemoveEmotion: (id: number) => void
     onRemoveFactor: (id: number) => void
     explanation: string
+    onComplete?: () => void
+    onBackStep?: () => void
 }
 
 export function ExplanationStep({
@@ -28,7 +29,9 @@ export function ExplanationStep({
     onExplanationChange,
     onRemoveEmotion,
     onRemoveFactor,
-    explanation
+    explanation,
+    onComplete,
+    onBackStep
 }: ExplanationStepProps) {
     const [showNextButton, setShowNextButton] = useState(false)
     const { t } = useTranslation()

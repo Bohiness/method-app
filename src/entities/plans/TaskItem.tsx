@@ -1,4 +1,3 @@
-import { useModal } from '@shared/context/modal-provider'
 import { useTheme } from '@shared/context/theme-provider'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
@@ -7,7 +6,7 @@ import { TaskType } from '@shared/types/plans/TasksTypes'
 import { Checkbox } from '@shared/ui/checkbox'
 import { Icon } from '@shared/ui/icon'
 import { Text } from '@shared/ui/text'
-import NewTask from '@widgets/plans/NewTask'
+import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { Dimensions, Pressable, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -32,7 +31,6 @@ const DELETE_THRESHOLD = -80
 const FULL_DELETE_THRESHOLD = -120
 
 export const TaskItem = React.memo(({ task }: TaskItemProps) => {
-    const { showModal } = useModal()
     const { colors } = useTheme()
     const [isPressed, setIsPressed] = useState(false)
     const { deleteTask, toggleTask } = useOfflineTasks()
@@ -113,15 +111,12 @@ export const TaskItem = React.memo(({ task }: TaskItemProps) => {
         })
 
     const handleLongPress = () => {
-        showModal(
-            <NewTask
-                mode="edit"
-                task={task}
-            />, {
-            type: 'bottomSheet',
-            showCloseButton: false
-        }
-        )
+        router.push({
+            pathname: '/(modals)/(plans)/new-task',
+            params: {
+                taskId: task.id
+            }
+        })
     }
 
     return (
@@ -173,6 +168,7 @@ export const TaskItem = React.memo(({ task }: TaskItemProps) => {
                     <View className="flex-row items-center">
                         <Text
                             size="sm"
+                            variant='secondary'
                             className={cn("pl-9", task.status === 'completed' ? "line-through" : "")}
                         >
                             {formatDateTime(task.start_datetime, 'HH:mm, EEEE')}

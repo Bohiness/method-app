@@ -1,10 +1,13 @@
 import { ProjectChoice } from '@entities/plans/projects/ProjectChoise'
 import { TabButton } from '@entities/plans/TabButton'
 import { TasksList } from '@entities/plans/TasksList'
+import { API_ROUTES } from '@shared/constants/api-routes'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useProjects } from '@shared/hooks/plans/useProjects'
 import { NotOnline } from '@shared/ui/system/NotOnline'
 import { View } from '@shared/ui/view'
+import { VoiceInputButton } from '@shared/ui/voice/VoiceInputButton'
+import { useQueryClient } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -24,8 +27,9 @@ export const TaskManager = () => {
     const { tasks, isLoading, error, isOnline, toggleTask } = useOfflineTasks()
     const { selectedProjectId, onChangeSelectedProject } = useProjects()
     const { t } = useTranslation()
-
+    const { syncTasks } = useOfflineTasks()
     const translateX = useSharedValue(0)
+    const queryClient = useQueryClient()
 
     const switchPeriod = (direction: 'next' | 'prev') => {
         const currentIndex = periods.findIndex(p => p.id === activePeriod)
@@ -142,7 +146,12 @@ export const TaskManager = () => {
                     />
                     <Pressable
                         onPress={() => {
-                            router.push('/(modals)/(plans)/new-task')
+                            router.push({
+                                pathname: '/(modals)/(plans)/new-task',
+                                params: {
+                                    projectId: null
+                                }
+                            })
                         }}
                         className='flex-1'
                     />
@@ -153,6 +162,20 @@ export const TaskManager = () => {
                 <ProjectChoice
                     selectedProjectId={selectedProjectId}
                     onChangeSelectedProject={onChangeSelectedProject}
+                />
+            </View>
+
+            <View className='absolute bottom-4 right-4'>
+                <VoiceInputButton
+                    url={API_ROUTES.PLANS.CREATE_VOICE_TASKS}
+                    onTranscribe={(response) => {
+                        console.log('response', response)
+                        const tasksData = Array.isArray(response) ? response : (response?.tasks || [])
+
+                        if (tasksData.length > 0) {
+                            syncTasks()
+                        }
+                    }}
                 />
             </View>
 

@@ -1,5 +1,6 @@
 import { getSubscriptionPlans } from '@shared/constants/plans'
 import { useSubscription } from '@shared/hooks/subscription/useSubscription'
+import { SubscriptionPlan } from '@shared/types/subscription/SubscriptionType'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Button } from '@shared/ui/button'
 import { Icon, IconName } from '@shared/ui/icon'
@@ -8,7 +9,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface SubscriptionItemProps {
   icon: IconName
@@ -36,13 +36,13 @@ const SubscriptionItem: React.FC<SubscriptionItemProps & { isLast?: boolean }> =
 )
 
 export interface SubscriptionScreenProps {
-  selectedPlan?: 'premium' | 'premiumPlus',
-  setSelectedPlan?: (plan: 'premium' | 'premiumPlus') => void
+  text?: string
+  selectedPlan?: SubscriptionPlan,
+  setSelectedPlan?: (plan: SubscriptionPlan) => void
 }
 
-export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan }: SubscriptionScreenProps) => {
+export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: SubscriptionScreenProps) => {
   const { t } = useTranslation()
-  const insets = useSafeAreaInsets()
 
   const subscriptionPlans = getSubscriptionPlans(t)
   const currentPlan = subscriptionPlans[selectedPlan || 'premium']
@@ -74,7 +74,7 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan }: Subscripti
     if (!packages) return
 
     const packageToPurchase = packages.find(pkg =>
-      pkg.identifier.includes(selectedPlan === 'premiumPlus' ? 'premium_ai' : 'premium')
+      pkg.identifier.includes(selectedPlan === 'premium_ai' ? 'premium_ai' : 'premium')
     )
 
     if (packageToPurchase) {
@@ -106,12 +106,15 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan }: Subscripti
             className="px-6 pt-6"
             entering={FadeInDown.delay(100).duration(700)}
           >
+
             <Title className="mb-2">
-              {t('screens.subscription.title')}
+              {text ?? t('screens.subscription.title')}
             </Title>
+
             <Text className="mb-8" variant="secondary">
               {t('screens.subscription.subtitle')}
             </Text>
+
           </Animated.View>
 
           <Animated.View
@@ -119,7 +122,7 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan }: Subscripti
             entering={FadeInDown.delay(200).duration(700)}
           >
             <View className='bg-background dark:bg-background-dark rounded-2xl'>
-              {currentPlan.items.map((item, index) => (
+              {currentPlan.items.map((item: any, index: number) => (
                 <SubscriptionItem
                   key={index}
                   icon={item.icon as IconName}

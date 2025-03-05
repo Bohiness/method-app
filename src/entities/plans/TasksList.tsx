@@ -17,14 +17,20 @@ export const TasksList = ({
 }) => {
     const { t } = useTranslation()
 
+    // Сортируем задачи: незавершенные вверху, завершенные внизу
+    const sortedTasks = [...tasks].sort((a, b) => {
+        if (a.is_completed === b.is_completed) return 0
+        return a.is_completed ? 1 : -1
+    })
+
     return (
         <Animated.View
             entering={FadeIn}
             exiting={FadeOut}
             className="flex-wrap mt-4"
         >
-            {tasks?.length > 0 ? (
-                tasks.map((task) => (
+            {sortedTasks?.length > 0 ? (
+                sortedTasks.map((task) => (
                     <TaskItem
                         key={task.id}
                         task={task}

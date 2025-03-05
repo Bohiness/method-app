@@ -39,10 +39,12 @@ export const API_ROUTES = {
         update: (id: number) => `${API_ROUTES.USER.BASE}${id}/`,
     },
     PLANS: {
-        TASKS: '/api/plans/tasks/',
+        TASKS: '/api/v1/plans/tasks/',
         tasksById: (id: number) => `${API_ROUTES.PLANS.TASKS}${id}/`,
-        PROJECTS: '/api/plans/projects/',
+        PROJECTS: '/api/v1/plans/projects/',
         projectsById: (id: number) => `${API_ROUTES.PLANS.PROJECTS}${id}/`,
+        CREATE_VOICE_TASKS: '/api/v1/plans/voice-tasks/',
+        CREATE_TASKS_BY_AI_WITH_TEXT: '/api/v1/plans/create-tasks-by-ai-with-text/',
     },
     AI: {
         CHAT: '/api/v1/ai/chat/',
@@ -55,5 +57,9 @@ export const API_ROUTES = {
         BASE: '/api/habits/',
         byId: (id: number) => `${API_ROUTES.HABITS.BASE}${id}/`,
         complete: (id: number) => `${API_ROUTES.HABITS.BASE}${id}/complete/`,
+    },
+    DIARY: {
+        EVENING_REFLECTION: '/api/diary/evening-reflections/',
+        START_DAY: '/api/diary/start-day/',
     },
 } as const;

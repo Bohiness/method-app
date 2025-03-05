@@ -19,5 +19,7 @@ export const useEmotions = () => {
             }
         },
         initialData: initialEmotionsEN.sort((a, b) => a.name.localeCompare(b.name)),
+        staleTime: 0, // Устанавливаем staleTime в 0, чтобы данные всегда считались устаревшими
+        gcTime: 0, // Отключаем сборку мусора кэша (раньше назывался cacheTime)
     });
 };

@@ -1,5 +1,7 @@
 // src/features/onboarding/context/OnboardingContext.tsx
+import { useUser } from '@shared/context/user-provider'
 import { storage } from '@shared/lib/storage/storage.service'
+import { Gender } from '@shared/types/user/UserType'
 import { router } from 'expo-router'
 import React, { createContext, useContext, useState } from 'react'
 import { OnboardingData } from '../types/OnboardingTypes'
@@ -40,6 +42,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     const currentScreen = screenKeys[currentIndex]
     const isLastScreen = currentIndex === screenKeys.length - 1
 
+    const { updateUser } = useUser()
+
     const setNextScreen = () => {
         if (currentIndex < screenKeys.length - 1) {
             setCurrentIndex(prev => prev + 1)
@@ -70,6 +74,11 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
             await storage.set('onboarding-data', onboardingData)
             // Помечаем онбординг как завершенный
             await storage.set('onboarding-completed', true)
+            // Обновляем профиль пользователя
+            await updateUser({
+                first_name: onboardingData.first_name,
+                gender: onboardingData.gender as Gender,
+            })
             // Перенаправляем на основной экран
             router.replace('/(tabs)')
         } catch (error) {

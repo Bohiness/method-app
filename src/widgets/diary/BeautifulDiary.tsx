@@ -1,11 +1,11 @@
-import { format } from 'date-fns'
-import { ru } from 'date-fns/locale'
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useEmotions } from '@shared/hooks/diary/mood/useEmotions'
 import { useFactors } from '@shared/hooks/diary/mood/useFactors'
 import { moodHelpers, useMoodHistory } from '@shared/hooks/diary/mood/useMoodCheckin'
+import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
+import { useLocale } from '@shared/hooks/systems/locale/useLocale'
 import { MoodCheckin } from '@shared/types/diary/mood/MoodType'
 import { Badge } from '@shared/ui/badge'
 import { Text } from '@shared/ui/text'
@@ -20,6 +20,8 @@ interface DiaryEntryCardProps {
 }
 
 const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, emotions, factors, t }) => {
+    const { formatDateTime } = useDateTime()
+
     return (
         <View key={entry.id} className="p-4 my-2 rounded-lg bg-surface-paper dark:bg-surface-paper-dark">
             <Text weight='semibold' className="mb-1">
@@ -91,7 +93,7 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, emotions, factor
             )}
 
             <Text variant='secondary' size='sm' className="mt-2">
-                {format(new Date(entry.created_at), 'HH:mm')}
+                {formatDateTime(entry.created_at, 'HH:mm')}
             </Text>
         </View>
     )
@@ -102,7 +104,9 @@ export function BeautifulDiary() {
     const { t } = useTranslation()
     const { data: moodCheckins, isPending, error } = useMoodHistory()
     const { data: emotions } = useEmotions()
-    const { data: factors } = useFactors()
+    const { factors } = useFactors()
+    const { locale } = useLocale()
+    const { formatDateTime } = useDateTime()
 
     const lastWeekEntries = useMemo(() => {
         if (!moodCheckins || !Array.isArray(moodCheckins)) return {}
@@ -116,7 +120,7 @@ export function BeautifulDiary() {
         )
 
         return filtered.reduce((acc, entry) => {
-            const day = format(new Date(entry.created_at), 'dd MMMM', { locale: ru })
+            const day = formatDateTime(entry.created_at, 'dd MMMM')
             if (!acc[day]) acc[day] = []
             acc[day].push(entry)
             return acc
@@ -141,9 +145,6 @@ export function BeautifulDiary() {
 
     return (
         <View className="p-4 bg-gray-200 min-h-[800px] overflow-y-scroll">
-            <Text className="text-2xl font-bold mb-4 text-center">
-                {t('diary.history.lastWeekEntries')}
-            </Text>
 
             {Object.entries(lastWeekEntries).map(([date, entries]) => (
                 <View key={date} className="mb-6">

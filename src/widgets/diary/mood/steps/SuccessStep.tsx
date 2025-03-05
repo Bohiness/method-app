@@ -1,10 +1,8 @@
 // src/widgets/diary/mood/steps/SuccessStep.tsx
 import { streakService } from '@shared/lib/gamification/streak.service'
-import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { StreakWidget } from '@widgets/gamification/streak/StreakWidget'
-import { router } from 'expo-router'
 import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
@@ -77,14 +75,7 @@ export function SuccessStep() {
                 </Animated.View>
             </View>
 
-            <Button
-                variant="default"
-                fullWidth
-                onPress={() => router.back()}
-                style={{ marginBottom: insets.bottom }}
-            >
-                {t('common.done')}
-            </Button>
+
         </View>
     )
 }

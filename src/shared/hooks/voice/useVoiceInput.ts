@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseVoiceInputProps {
     enabled?: boolean;
+    url?: string;
 }
-export const useVoiceInput = ({ enabled = true }: UseVoiceInputProps = {}) => {
+export const useVoiceInput = ({ enabled = true, url }: UseVoiceInputProps = {}) => {
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -14,7 +15,7 @@ export const useVoiceInput = ({ enabled = true }: UseVoiceInputProps = {}) => {
     const levelCheckInterval = useRef<NodeJS.Timeout | null>(null);
     const recordingRef = useRef<Audio.Recording | null>(null);
 
-    const { sendVoice, isSending, currentResponse } = useAI();
+    const { sendVoice, isSending, currentResponse } = useAI({ url });
 
     const setupAudio = async () => {
         try {
@@ -94,6 +95,7 @@ export const useVoiceInput = ({ enabled = true }: UseVoiceInputProps = {}) => {
             } as any;
 
             const response = await sendVoice(audioFile);
+            console.log('response from useVoiceInput', response);
             return response;
         } catch (err) {
             setError('Ошибка при остановке записи');

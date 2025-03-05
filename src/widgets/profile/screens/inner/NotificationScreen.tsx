@@ -2,7 +2,6 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { useNotification } from '@shared/context/notification-provider'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
-import { OpenTimePicker } from '@shared/ui/open-time-picker'
 import { Switch, SwitchGroup } from '@shared/ui/switch'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
@@ -25,11 +24,6 @@ export const NotificationSettingsScreen = ({
     } = useNotification()
 
     const [loading, setLoading] = useState(false)
-    const [reminderTime, setReminderTime] = useState<Date>(
-        settings?.quiet_hours_start ?
-            new Date(`2000-01-01T${settings.quiet_hours_start}`) :
-            new Date(new Date().setHours(9, 0))
-    )
 
     // Состояния для разных типов уведомлений
     const [systemPreferences, setSystemPreferences] = useState({
@@ -37,7 +31,6 @@ export const NotificationSettingsScreen = ({
         email_enabled: settings?.email_enabled ?? true,
         sound_enabled: settings?.sound_enabled ?? true,
         vibration_enabled: settings?.vibration_enabled ?? true,
-        quiet_hours_enabled: settings?.quiet_hours_enabled ?? false
     })
 
     // Обработчик изменения системных настроек
@@ -69,20 +62,6 @@ export const NotificationSettingsScreen = ({
         }
     }
 
-    // Обработчик изменения времени напоминаний
-    const handleTimeChange = async (newTime: Date) => {
-        setReminderTime(newTime)
-        setLoading(true)
-        try {
-            await updateSettings({
-                quiet_hours_start: newTime.toTimeString().slice(0, 5)
-            })
-        } catch (error) {
-            console.error('Ошибка обновления времени:', error)
-        } finally {
-            setLoading(false)
-        }
-    }
 
     return (
         <View className="flex-1">
@@ -134,24 +113,6 @@ export const NotificationSettingsScreen = ({
                         onChange={(value) => handleSystemPreferenceChange('vibration_enabled', value)}
                     />
                 </SwitchGroup>
-
-                {/* Тихие часы */}
-                <View className="mb-8">
-                    <View className="flex-row items-center justify-between mb-4">
-                        <Text weight="medium">{t('settings.notifications.quiet_hours')}</Text>
-                        <Switch
-                            value="quiet_hours_enabled"
-                            checked={systemPreferences.quiet_hours_enabled}
-                            onChange={(value) => handleSystemPreferenceChange('quiet_hours_enabled', value)}
-                        />
-                    </View>
-                    {systemPreferences.quiet_hours_enabled && (
-                        <OpenTimePicker
-                            initialDate={reminderTime}
-                            onChange={handleTimeChange}
-                        />
-                    )}
-                </View>
 
                 {/* Категории уведомлений */}
                 {categories.length > 0 && (

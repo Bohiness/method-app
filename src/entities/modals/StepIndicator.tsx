@@ -10,7 +10,7 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated'
 
-interface StepIndicatorProps {
+export interface StepIndicatorProps {
     currentStep: number
     totalSteps?: number
     onStepPress?: (step: number) => void
@@ -31,13 +31,13 @@ export function StepIndicator({
     onStepPress,
 }: StepIndicatorProps) {
     // Состояние для хранения предыдущего шага до окончания анимации
-    const [prevStep, setPrevStep] = useState(currentStep)
+    const [prevStep, setPrevStep] = useState(currentStep || 1)
     const [animating, setAnimating] = useState(false)
 
     // splitProgress изначально 1 (капля на месте)
     const splitProgress = useSharedValue(1)
-    const startX = useSharedValue((currentStep - 1) * CELL_WIDTH_ANIM + DROPLET_OFFSET)
-    const targetX = useSharedValue((currentStep - 1) * CELL_WIDTH_ANIM + DROPLET_OFFSET)
+    const startX = useSharedValue(((currentStep || 1) - 1) * CELL_WIDTH_ANIM + DROPLET_OFFSET)
+    const targetX = useSharedValue(((currentStep || 1) - 1) * CELL_WIDTH_ANIM + DROPLET_OFFSET)
 
     // Функция завершения анимации, вызываемая через runOnJS
     const finishAnimation = (newStep: number) => {
@@ -46,8 +46,8 @@ export function StepIndicator({
     }
 
     useEffect(() => {
-        // Если шаг не изменился — ничего не делаем
-        if (currentStep === prevStep) return
+        // Если шаг не изменился или не определен — ничего не делаем
+        if (currentStep === prevStep || currentStep === undefined) return
 
         const newStep = currentStep
 

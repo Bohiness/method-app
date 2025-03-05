@@ -2,7 +2,6 @@ import { useTheme } from '@shared/context/theme-provider'
 import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Text, Title } from '@shared/ui/text'
-import { TransitionScreenProps, useTransition } from '@widgets/transitions/TransitionContext'
 import * as Haptics from 'expo-haptics'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,11 +9,13 @@ import { Pressable, ScrollView, View } from 'react-native'
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated'
 import { moods } from './MoodLevelStep'
 
-interface EmotionsStepProps extends TransitionScreenProps {
+interface EmotionsStepProps {
     emotions: Emotion[]
     selectedEmotions: number[]
     onSelect: (id: number) => void
     moodLevel: number
+    onNextStep?: () => void
+    onBackStep?: () => void
 }
 
 export function EmotionsStep({
@@ -22,7 +23,8 @@ export function EmotionsStep({
     selectedEmotions,
     onSelect,
     moodLevel,
-    setEnabledNextButton
+    onNextStep,
+    onBackStep
 }: EmotionsStepProps) {
     console.log('selectedEmotions', selectedEmotions)
     console.log('moodLevel', moodLevel)
@@ -30,7 +32,6 @@ export function EmotionsStep({
     const [filteredEmotions, setFilteredEmotions] = useState<Emotion[]>([])
     const { t } = useTranslation()
     const { isDark } = useTheme()
-    const { updateTransitionData } = useTransition()
     const animatedIconStyle = useAnimatedStyle(() => ({
         transform: [{ scale: withSpring(1.1) }],
     }))
@@ -46,17 +47,7 @@ export function EmotionsStep({
     const handleMoodPress = (level: number) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         setSelectedMood(level)
-        updateTransitionData({
-            moodLevel: level
-        })
     }
-
-    // Следим за выбранными эмоциями
-    useEffect(() => {
-        if (selectedEmotions.length > 0) {
-            setEnabledNextButton?.(true)
-        }
-    }, [selectedEmotions])
 
     return (
         <View className="flex-1 px-4">

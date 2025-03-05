@@ -2,23 +2,24 @@ import { useTheme } from '@shared/context/theme-provider'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { Slider } from '@shared/ui/slider'
 import { Text, Title } from '@shared/ui/text'
-import { TransitionScreenProps } from '@widgets/transitions/TransitionContext'
+import { View } from '@shared/ui/view'
 import * as Haptics from 'expo-haptics'
 import { Angry, Frown, Laugh, Meh, Smile } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { Pressable } from 'react-native'
 import Animated, {
   FadeIn,
   useAnimatedStyle,
   withSpring
 } from 'react-native-reanimated'
 
-interface MoodLevelStepProps extends TransitionScreenProps {
+interface MoodLevelStepProps {
   value: number
   onChange: (value: number) => void
   dateNow: Date
-  setEnabledNextButton: (enabled: boolean) => void
+  setEnabledNextButton?: (enabled: boolean) => void
+  onNextStep?: () => void
 }
 
 export const moods = [
@@ -54,13 +55,12 @@ export const moods = [
   },
 ]
 
-
-
 export function MoodLevelStep({
   value,
   onChange,
   dateNow,
-  setEnabledNextButton
+  setEnabledNextButton,
+  onNextStep
 }: MoodLevelStepProps) {
   const { t } = useTranslation()
   const { isDark } = useTheme()

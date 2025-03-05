@@ -1,5 +1,4 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
-import { useModal } from '@shared/context/modal-provider'
 import { useUser } from '@shared/context/user-provider'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { useLogger } from '@shared/hooks/systems/useLogger'
@@ -23,14 +22,12 @@ export const FullProfileScreen = ({
     const { user, signOut, isAnonymous } = useUser()
     console.log('user isAnonymous', isAnonymous)
     const { t } = useTranslation()
-    const { hideModal } = useModal()
     const logger = useLogger('FullProfileScreen')
 
     if (!user) {
         return (
             <Button
                 onPress={() => {
-                    hideModal()
                     router.push('/(auth)/signin')
                 }}
             >

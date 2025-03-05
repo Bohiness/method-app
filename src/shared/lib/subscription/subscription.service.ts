@@ -3,7 +3,7 @@
 import { storage } from '@shared/lib/storage/storage.service';
 import { SubscriptionStatus, SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
 import { Platform } from 'react-native';
-// import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesPackage } from 'react-native-purchases';
+import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesPackage } from 'react-native-purchases';
 
 class SubscriptionService {
     private readonly REVENUECAT_KEY = Platform.select({

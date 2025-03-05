@@ -1,6 +1,5 @@
 // src/shared/ui/modals/ModalHeader.tsx
 import { View } from '@shared/ui/view'
-import { router } from 'expo-router'
 import { ReactNode } from 'react'
 import Animated, { Layout } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -13,7 +12,7 @@ interface ModalHeaderProps {
     variant?: 'default' | 'transparent'
 }
 
-export function FullScreenModalHeader({ variant, centerContent, onClose, closeButton = true }: ModalHeaderProps) {
+export function FullScreenModalHeader({ variant = 'default', centerContent, onClose, closeButton = true }: ModalHeaderProps) {
     const insets = useSafeAreaInsets()
 
     return (
@@ -37,7 +36,7 @@ export function FullScreenModalHeader({ variant, centerContent, onClose, closeBu
             <View className="w-10 items-end">
                 {closeButton && (
                     <Button
-                        onPress={() => onClose?.() || router.back()}
+                        onPress={onClose}
                         leftIcon="X"
                         size="sm"
                         variant="ghost"

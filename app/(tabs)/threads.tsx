@@ -1,8 +1,8 @@
 import { MonthlyActivity } from '@features/charts/MonthlyActivity'
 import { WeeklyChart } from '@features/charts/WeeklyChart'
 import { CheckConnect } from '@features/system/CheckConnect'
-import { useChartData } from '@shared/hooks/charts/useChartData'
-import { useMoodStats } from '@shared/hooks/diary/mood/useMoodStats'
+import { useMoodCheckinStats } from '@shared/hooks/diary/mood/useMoodCheckin'
+import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { Text } from '@shared/ui/text'
 import { Container } from '@shared/ui/view'
 import { useTranslation } from 'react-i18next'
@@ -10,8 +10,20 @@ import { ScrollView, View } from 'react-native'
 
 export default function ThreadsScreen() {
     const { t } = useTranslation()
-    const { weeklyData, isPending, monthlyData } = useMoodStats()
-    const chartData = useChartData(weeklyData.current, weeklyData.previous)
+    const { wrapWithSubscriptionOverlay } = useSubscriptionModal()
+
+    const {
+        currentPeriodData: weeklyData,
+        previousPeriodData: prevWeeklyData,
+        currentAvg: weeklyAvg,
+        previousAvg: prevWeeklyAvg,
+        isLoading: isWeeklyLoading
+    } = useMoodCheckinStats(7)
+
+    const {
+        currentPeriodData: monthlyData,
+        isLoading: isMonthlyLoading
+    } = useMoodCheckinStats(30)
 
     return (
         <Container>
@@ -26,14 +38,21 @@ export default function ThreadsScreen() {
                         </View>
 
                         <View className="flex-1 gap-y-6">
-                            <WeeklyChart
-                                currentWeekData={chartData.current.data}
-                                previousWeekData={chartData.previous.data}
-                                currentAvg={weeklyData.currentAvg}
-                                previousAvg={weeklyData.previousAvg}
-                                isLoading={isPending}
-                            />
-                            <MonthlyActivity currentMonthData={monthlyData} />
+                            {wrapWithSubscriptionOverlay({
+                                plan: 'premium',
+                                children: <WeeklyChart
+                                    currentWeekData={weeklyData?.map(item => item.mood_level) || []}
+                                    previousWeekData={prevWeeklyData?.map(item => item.mood_level) || []}
+                                    currentAvg={weeklyAvg || 0}
+                                    previousAvg={prevWeeklyAvg || 0}
+                                    isLoading={isWeeklyLoading}
+                                />
+                            })}
+
+                            {wrapWithSubscriptionOverlay({
+                                plan: 'premium',
+                                children: <MonthlyActivity currentMonthData={monthlyData} />
+                            })}
                         </View>
                     </View>
                 </ScrollView>

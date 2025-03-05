@@ -1,20 +1,21 @@
+import { useEveningReflection } from '@shared/hooks/diary/eveningreflection/useEveningReflection'
 import { Title } from '@shared/ui/text'
-import { TransitionScreen } from '@widgets/transitions/TransitionContext'
-import { TransitionLayout } from '@widgets/transitions/TransitionLayout'
+import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UniversalScreen } from 'src/features/screens/UniversalScreen'
 import { HowIsYourDay } from './screens/HowIsYourDay'
-
+import { SuccessStepEveningReflection } from './screens/SuccessStep'
 export const EveningReflection = () => {
     const { t } = useTranslation()
-    const [screen1Response, setScreen1Response] = useState('')
-    const [screen2Response, setScreen2Response] = useState('')
-    const [screen3Response, setScreen3Response] = useState('')
-    const [screen4Response, setScreen4Response] = useState('')
-    const [screen5Response, setScreen5Response] = useState('')
+    const [screen1Response, setScreen1Response] = useState<number>()
+    const [screen2Response, setScreen2Response] = useState<string>()
+    const [screen3Response, setScreen3Response] = useState<string>()
+    const [screen4Response, setScreen4Response] = useState<string>()
+    const [screen5Response, setScreen5Response] = useState<string>()
+    const { create: createEveningReflection } = useEveningReflection()
 
-    const screens: TransitionScreen<any>[] = [
+    const screens = [
         {
             key: 'screen-1',
             component: HowIsYourDay,
@@ -23,7 +24,9 @@ export const EveningReflection = () => {
             props: {
                 initialValue: 50,
                 setEnabledNextButton: (enabled: boolean) => { },
-                onChange: (value: number) => { /* логика */ },
+                onChange: (value: number) => {
+                    setScreen1Response(value)
+                },
             },
         },
         {
@@ -82,10 +85,13 @@ export const EveningReflection = () => {
                 placeholder: t('diary.eveningreflection.question5.placeholder'),
             },
         },
+        {
+            key: 'screen-6',
+            component: SuccessStepEveningReflection,
+        },
     ]
 
     const handleComplete = async () => {
-        // Здесь можно обработать отправку данных или их сохранение
         console.log({
             screen1Response,
             screen2Response,
@@ -93,7 +99,14 @@ export const EveningReflection = () => {
             screen4Response,
             screen5Response,
         })
+        await createEveningReflection.mutateAsync({
+            mood_score: screen1Response ?? null,
+            positive_aspects: screen2Response ?? null,
+            improvement_areas: screen3Response ?? null,
+            lesson_learned: screen4Response ?? null,
+            additional_thoughts: screen5Response ?? null,
+        })
+        router.back()
     }
-
     return <TransitionLayout screens={screens} onComplete={handleComplete} />
 }

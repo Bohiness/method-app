@@ -204,6 +204,7 @@ export const Calendar = ({
         <View
             variant="paper"
             className={cn(mergedStyles.container, className)}
+            pointerEvents="auto"
         >
             {title && (
                 <RNView className={mergedStyles.header}>

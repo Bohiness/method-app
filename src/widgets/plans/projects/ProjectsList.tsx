@@ -1,39 +1,25 @@
-import { ProjectCreateOrUpdateModal } from '@entities/plans/projects/ProjectCreateOrUpdateModal'
-import { useModal } from '@shared/context/modal-provider'
 import { useProjects } from '@shared/hooks/plans/useProjects'
 import { ProjectType } from '@shared/types/plans/ProjectTypes'
 import { Button } from '@shared/ui/button'
-import { Icon } from '@shared/ui/icon'
 import { Text } from '@shared/ui/text'
 import { Card, View } from '@shared/ui/view'
+import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Alert } from 'react-native'
-
 const ProjectsList = () => {
     const { t } = useTranslation()
     const { projects, deleteProject, isLoading } = useProjects()
-    const [isModalVisible, setIsModalVisible] = useState(false)
     const [selectedProject, setSelectedProject] = useState<ProjectType | undefined>()
-    const { showModal, hideModal } = useModal()
 
     const handleOpenModal = (project?: ProjectType) => {
         setSelectedProject(project)
-        showModal(
-            <ProjectCreateOrUpdateModal
-                project={selectedProject}
-                isVisible={isModalVisible}
-                onClose={hideModal}
-                onSuccess={handleSuccess}
-            />, {
-            type: 'fullScreen',
-            showCloseButton: true
-        }
-        )
-    }
-
-    const handleSuccess = (project: ProjectType) => {
-        hideModal()
+        router.push({
+            pathname: '/(modals)/(plans)/new-project',
+            params: {
+                projectID: project?.id,
+            },
+        })
     }
 
     // Обработчик удаления проекта
@@ -67,15 +53,24 @@ const ProjectsList = () => {
     }
 
     return (
-        <View className="flex-1">
-            <View className="space-y-4">
-                {projects?.map((project) => (
+        <View className="flex-1 gap-y-6">
+
+            <View className="flex-1 gap-y-4">
+                {projects?.length === 0 && (
+                    <View className="flex-1 justify-center items-center py-8">
+                        <Text variant="secondary">
+                            {t('plans.projects.list.noProjects')}
+                        </Text>
+                    </View>
+                )}
+
+                {projects && projects?.map((project) => (
                     <Card
                         key={project.id}
-                        className="p-4 space-y-2"
-                        style={{ borderLeftWidth: 4, borderLeftColor: project.color }}
                     >
                         <View className="flex-row justify-between items-center">
+                            <View className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: project.color }} />
+
                             <View className="flex-1">
                                 <Text weight="bold" size="lg">{project.name}</Text>
                                 {project.description && (
@@ -90,32 +85,25 @@ const ProjectsList = () => {
                                 )}
                             </View>
 
-                            <View className="flex-row space-x-2">
+                            <View className="flex-row">
                                 <Button
                                     variant="ghost"
+                                    leftIcon='Pencil'
+                                    size='sm'
                                     onPress={() => handleOpenModal(project)}
-                                >
-                                    <Icon name="Pencil" size={20} />
-                                </Button>
+                                />
 
                                 <Button
                                     variant="ghost"
+                                    leftIcon='Trash2'
+                                    iconProps={{ color: 'red' }}
+                                    size='sm'
                                     onPress={() => handleDeleteProject(project)}
-                                >
-                                    <Icon name="Trash2" size={20} variant="error" />
-                                </Button>
+                                />
                             </View>
                         </View>
                     </Card>
                 ))}
-
-                {projects?.length === 0 && (
-                    <View className="flex-1 justify-center items-center py-8">
-                        <Text variant="secondary">
-                            {t('plans.projects.list.noProjects')}
-                        </Text>
-                    </View>
-                )}
             </View>
 
             <Button

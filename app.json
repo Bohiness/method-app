@@ -18,10 +18,6 @@
         },
         "ios": {
             "usesAppleSignIn": true,
-            "nsAppTransportSecurity": {
-                "allowsArbitraryLoads": true,
-                "allowsLocalNetworking": true
-            },
             "bundleIdentifier": "com.anonymous.methodapp",
             "buildNumber": "1",
             "icon": "./assets/images/icons/icon-light.png"

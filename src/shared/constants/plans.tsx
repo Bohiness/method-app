@@ -42,41 +42,41 @@ export const getSubscriptionPlans = (t: (key: string) => string) => ({
             }
         ]
     },
-    premiumPlus: {
-        title: t('screens.subscription.plans.premiumPlus.title'),
-        description: t('screens.subscription.plans.premiumPlus.description'),
+    premium_ai: {
+        title: t('screens.subscription.plans.premium_ai.title'),
+        description: t('screens.subscription.plans.premium_ai.description'),
         price_annually: '$86.13',
         trial_period_days: 7,
         items: [
             {
                 icon: 'Plus',
-                title: t('screens.subscription.plans.premiumPlus.features.premium.title'),
-                description: t('screens.subscription.plans.premiumPlus.features.premium.description')
+                title: t('screens.subscription.plans.premium_ai.features.premium.title'),
+                description: t('screens.subscription.plans.premium_ai.features.premium.description')
             },
             {
                 icon: 'Mic',
-                title: t('screens.subscription.plans.premiumPlus.features.voice.title'),
-                description: t('screens.subscription.plans.premiumPlus.features.voice.description')
+                title: t('screens.subscription.plans.premium_ai.features.voice.title'),
+                description: t('screens.subscription.plans.premium_ai.features.voice.description')
             },
             {
                 icon: 'CalendarClock',
-                title: t('screens.subscription.plans.premiumPlus.features.voiceTasks.title'),
-                description: t('screens.subscription.plans.premiumPlus.features.voiceTasks.description')
+                title: t('screens.subscription.plans.premium_ai.features.voiceTasks.title'),
+                description: t('screens.subscription.plans.premium_ai.features.voiceTasks.description')
             },
             {
                 icon: 'Sparkles',
-                title: t('screens.subscription.plans.premiumPlus.features.smartInput.title'),
-                description: t('screens.subscription.plans.premiumPlus.features.smartInput.description')
+                title: t('screens.subscription.plans.premium_ai.features.smartInput.title'),
+                description: t('screens.subscription.plans.premium_ai.features.smartInput.description')
             },
             {
                 icon: 'Bot',
-                title: t('screens.subscription.plans.premiumPlus.features.aiAnalytics.title'),
-                description: t('screens.subscription.plans.premiumPlus.features.aiAnalytics.description')
+                title: t('screens.subscription.plans.premium_ai.features.aiAnalytics.title'),
+                description: t('screens.subscription.plans.premium_ai.features.aiAnalytics.description')
             },
             {
                 icon: 'BrainCircuit',
-                title: t('screens.subscription.plans.premiumPlus.features.smartReminders.title'),
-                description: t('screens.subscription.plans.premiumPlus.features.smartReminders.description')
+                title: t('screens.subscription.plans.premium_ai.features.smartReminders.title'),
+                description: t('screens.subscription.plans.premium_ai.features.smartReminders.description')
             }
         ]
     }

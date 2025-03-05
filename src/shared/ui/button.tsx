@@ -156,7 +156,7 @@ export const Button: React.FC<ButtonProps> = ({
                 onPress={handlePress}
                 style={animatedStyle}
                 className={cn(
-                    'rounded-full active:opacity-90 flex-row items-center justify-center',
+                    'relative rounded-full active:opacity-90 flex-row items-center justify-center',
                     getVariantClasses(),
                     sizeClassesButtonIcon,
                     disabledClasses,
