@@ -1,0 +1,6 @@
+module Pods_Methoddo {
+  umbrella header "Pods-Methoddo-umbrella.h"
+
+  export *
+  module * { export * }
+}

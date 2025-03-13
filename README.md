@@ -1,50 +1,61 @@
-# Welcome to your Expo app 👋
+## Запуск приложения в режиме разработки
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+npx expo start --clear
 
-## Get started
+## Сборка приложения в режиме превью (для iOS) через EAS
 
-1. Install dependencies
+eas build --platform ios --profile preview
 
-   ```bash
-   npm install
-   ```
+## Сборка приложения в режиме разработки (для iOS) через EAS
 
-2. Start the app
+eas build --profile development --platform ios expo start --dev-client
 
-   ```bash
-    npx expo start
-   ```
+# Создаем нативные файлы
 
-In the output, you'll find options to open the app in a
+## Для локальной сборки
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+# Создаем нативные файлы
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+npx expo prebuild
 
-## Get a fresh project
+# Или если нужно пересоздать
 
-When you're ready, run:
+npx expo prebuild --clean
 
-```bash
-npm run reset-project
-```
+# Переходим в ios директорию
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+cd ios
 
-## Learn more
+# Устанавливаем зависимости через CocoaPods
 
-To learn more about developing your project with Expo, look at the following resources:
+pod install
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# Открываем проект в Xcode
 
-## Join the community
+# Внутри Xcode выбираем проект и выполняем сборку
 
-Join our community of developers creating universal apps.
+open yourproject.xcworkspace
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Запускаем dev client
+
+npx expo start --dev-client
+
+# Сборка и отправка в App Store Connect
+
+eas build --platform ios\
+
+eas submit --platform ios
+
+# Сборка локально
+
+eas build --local
+
+# Удаляем Pods и Podfile.lock
+
+cd ios
+
+rm -rf Pods Podfile.lock
+
+pod install --verbose
+
+cd ..

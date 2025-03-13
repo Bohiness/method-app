@@ -1,0 +1,29 @@
+{
+    "printWidth": 120,
+    "tabWidth": 4,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "bracketSpacing": true,
+    "arrowParens": "avoid",
+    "proseWrap": "preserve",
+    "endOfLine": "lf",
+    "htmlWhitespaceSensitivity": "css",
+    "embeddedLanguageFormatting": "auto",
+    "overrides": [
+        {
+            "files": ["*.md", "*.mdx"],
+            "options": {
+                "parser": "markdown",
+                "printWidth": 120,
+                "tabWidth": 4,
+                "singleQuote": false,
+                "proseWrap": "never",
+                "endOfLine": "lf",
+                "insertPragma": false,
+                "requirePragma": false
+            }
+        }
+    ]
+}

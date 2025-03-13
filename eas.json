@@ -1,0 +1,36 @@
+{
+    "cli": {
+        "version": ">= 14.2.0",
+        "appVersionSource": "remote"
+    },
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal"
+        },
+        "preview": {
+            "distribution": "internal"
+        },
+        "production": {
+            "autoIncrement": true,
+            "ios": {
+                "distribution": "store"
+            }
+        },
+        "adhoc": {
+            "autoIncrement": true,
+            "ios": {
+                "distribution": "internal"
+            }
+        }
+    },
+    "submit": {
+        "production": {
+            "ios": {
+                "appleId": "bohiness.id@gmail.com",
+                "ascAppId": "6740182406",
+                "appleTeamId": "R6M53KYFCB"
+            }
+        }
+    }
+}

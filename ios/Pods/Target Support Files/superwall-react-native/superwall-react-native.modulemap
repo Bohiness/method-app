@@ -1,0 +1,6 @@
+module superwall_react_native {
+  umbrella header "superwall-react-native-umbrella.h"
+
+  export *
+  module * { export * }
+}
