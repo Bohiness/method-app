@@ -24,7 +24,7 @@ interface StepNavigatorProps {
     onStepChange?: (step: number) => void
 }
 
-export function StepNavigatorMood({ date = new Date(), onStepChange }: StepNavigatorProps) {
+export default function StepNavigatorMood({ date = new Date(), onStepChange }: StepNavigatorProps) {
     // Обновление параметров маршрута для отображения индикатора шагов
     const updateRouteParams = (step: number) => {
         // Вызываем функцию onStepChange для синхронизации с родительским компонентом

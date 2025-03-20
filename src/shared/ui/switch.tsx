@@ -81,7 +81,7 @@ export const Switch = ({
                     : 'bg-inactive/30 dark:bg-inactive/50'}
             `}>
                 <Animated.View
-                    style={[toggleAnimatedStyle]}
+                    style={toggleAnimatedStyle}
                     className={`
                         w-6 h-6 rounded-full my-0.5
                         bg-surface-paper dark:bg-surface-paper-dark

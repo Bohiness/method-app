@@ -8,7 +8,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import debounce from 'lodash/debounce';
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 
 const startDayStorageService = new StartDayStorageService();
 const startDaySyncService = new StartDaySyncService(startDayStorageService);
@@ -24,7 +23,6 @@ export const useStartDay = () => {
     const queryClient = useQueryClient();
     const { isOnline } = useNetwork();
     const { checkPremiumAccess } = useSubscriptionModal();
-    const { t } = useTranslation();
 
     const openStartDayModal = async () => {
         // Получаем текущие записи для проверки их количества
@@ -52,7 +50,7 @@ export const useStartDay = () => {
             debounce(async () => {
                 try {
                     await startDaySyncService.syncChanges();
-                    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.START_DAY });
+                    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.START_DAY] });
                 } catch (error) {
                     console.error('Failed to sync changes:', error);
                 }
@@ -89,7 +87,7 @@ export const useStartDay = () => {
             return newStartDay;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.START_DAY });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.START_DAY] });
         },
     });
 
@@ -107,7 +105,7 @@ export const useStartDay = () => {
             return updatedStartDay;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.START_DAY });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.START_DAY] });
         },
     });
 
@@ -125,7 +123,7 @@ export const useStartDay = () => {
             return id;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.START_DAY });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.START_DAY] });
         },
     });
 

@@ -37,5 +37,10 @@ export const useFactors = () => {
         initialData: initialData,
     });
 
-    return { factors, isLoading, error };
+    // Функция для получения фактора по его ID
+    const getFactorById = (id: number): Factor | undefined => {
+        return factors.find(factor => factor.id === id);
+    };
+
+    return { factors, isLoading, error, getFactorById };
 };

@@ -8,28 +8,7 @@ import { useSubscription } from './useSubscription'
  * Позволяет проверить, нужно ли показывать оверлей для определенного типа подписки
  */
 export const useSubscriptionOverlay = () => {
-    const { isSubscribed, isPremium, isPremiumAI } = useSubscription()
-
-    /**
-     * Проверяет, нужно ли показывать оверлей для обычной подписки
-     */
-    const shouldShowBasicOverlay = useCallback(() => {
-        return !isSubscribed
-    }, [isSubscribed])
-
-    /**
-     * Проверяет, нужно ли показывать оверлей для премиум функций
-     */
-    const shouldShowPremiumOverlay = useCallback(() => {
-        return !isPremium
-    }, [isPremium])
-
-    /**
-     * Проверяет, нужно ли показывать оверлей для AI функций
-     */
-    const shouldShowAIOverlay = useCallback(() => {
-        return !isPremiumAI
-    }, [isPremiumAI])
+    const { isPremium, isPremiumAI, forceRefreshSubscription } = useSubscription()
 
     /**
      * Проверяет, нужно ли показывать оверлей для определенного типа подписки
@@ -37,42 +16,83 @@ export const useSubscriptionOverlay = () => {
     const shouldShowOverlay = useCallback((plan: SubscriptionPlan) => {
         switch (plan) {
             case 'premium':
-                return shouldShowPremiumOverlay()
+                return !isPremium
             case 'premium_ai':
-                return shouldShowAIOverlay()
+                return !isPremiumAI
             default:
                 return false
         }
-    }, [shouldShowPremiumOverlay, shouldShowAIOverlay])
+    }, [isPremium, isPremiumAI])
 
     /**
      * Оборачивает компонент в оверлей подписки в зависимости от требуемого плана
      */
     const wrapWithSubscriptionOverlay = useCallback(
-        (children: ReactNode, plan: SubscriptionPlan, text?: string) => {
-            const shouldShow = shouldShowOverlay(plan)
+        ({
+            children,
+            plan = 'premium',
+            text,
+            opacity = 0.9,
+            className
+        }: {
+            children: ReactNode,
+            plan?: SubscriptionPlan,
+            text?: string,
+            opacity?: number,
+            className?: string
+        }) => {
+            const isVisible = shouldShowOverlay(plan)
 
-            if (shouldShow) {
-                return (
-                    <SubscriptionOverlay
-                        plan={plan}
-                        text={text}
-                    >
-                        {children}
-                    </SubscriptionOverlay>
-                )
-            }
-
-            return children
+            return (
+                <SubscriptionOverlay
+                    isVisible={isVisible}
+                    plan={plan}
+                    text={text}
+                    opacity={opacity}
+                    className={className}
+                >
+                    {children}
+                </SubscriptionOverlay>
+            )
         },
         [shouldShowOverlay]
     )
 
+    /**
+     * Проверяет, доступны ли премиум-функции, используя кэшированные данные
+     * @returns true если премиум-доступ активен
+     */
+    const checkPremiumAccess = useCallback(() => {
+        return isPremium
+    }, [isPremium])
+
+    /**
+     * Проверяет, доступны ли функции Premium AI, используя кэшированные данные
+     * @returns true если Premium AI доступ активен
+     */
+    const checkPremiumAIAccess = useCallback(() => {
+        return isPremiumAI
+    }, [isPremiumAI])
+
+    /**
+     * Обновляет статус подписки с сервера и возвращает новое состояние
+     * Используйте этот метод только когда нужно убедиться в актуальности данных
+     */
+    const refreshSubscriptionStatus = useCallback(async () => {
+        await forceRefreshSubscription()
+        return {
+            isPremium,
+            isPremiumAI
+        }
+    }, [forceRefreshSubscription, isPremium, isPremiumAI])
+
     return {
-        shouldShowBasicOverlay,
-        shouldShowPremiumOverlay,
-        shouldShowAIOverlay,
         shouldShowOverlay,
-        wrapWithSubscriptionOverlay
+        wrapWithSubscriptionOverlay,
+        isPremium,
+        isPremiumAI,
+        checkPremiumAccess,
+        checkPremiumAIAccess,
+        refreshSubscriptionStatus
     }
 } 

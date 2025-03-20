@@ -2,6 +2,7 @@
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { tasksStorageService } from '@shared/lib/plans/tasks-storage.service';
 import { tasksSyncService } from '@shared/lib/plans/tasks-sync.service';
+import { PaginatedResponse } from '@shared/types/PaginatedResponse';
 import { CreateTaskDtoType, TasksFiltersType, TaskType, UpdateTaskDtoType } from '@shared/types/plans/TasksTypes';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import debounce from 'lodash/debounce';
@@ -65,7 +66,7 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
         isLoading,
         error,
         refetch,
-    } = useQuery({
+    } = useQuery<Promise<PaginatedResponse<TaskType[]>>>({
         queryKey,
         queryFn: async () => {
             // Сначала получаем данные из локального хранилища

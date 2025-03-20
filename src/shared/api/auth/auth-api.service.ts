@@ -1,6 +1,8 @@
 // src/shared/api/auth/auth.service.ts
 import { apiClient } from '@shared/config/api-client';
 import { API_ROUTES } from '@shared/constants/api-routes';
+import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { tokenService } from '@shared/lib/user/token/token.service';
 import { AuthTokensType } from '@shared/types/user/AuthTokensType';
@@ -43,92 +45,111 @@ class AuthApiService {
             const response = await apiClient.post<CheckEmailResponse>(API_ROUTES.AUTH.CHECK_EMAIL, { email });
             return response;
         } catch (error) {
+            logger.error(error, 'auth-api – checkEmail', 'AuthService: Error checking email:');
             throw error;
         }
     }
 
     async login(credentials: LoginRequest): Promise<AuthResponse> {
         try {
-            console.debug('AuthService: Attempting login...');
+            logger.debug('AuthService: Attempting login...');
             const response = await apiClient.post<AuthResponse>(API_ROUTES.AUTH.LOGIN, credentials);
 
-            console.debug('AuthService: Login successful, saving session...');
+            logger.debug('AuthService: Login successful, saving session...');
             await this.saveSession(response);
 
             return response;
         } catch (error) {
-            console.error('AuthService: Login failed:', error);
+            logger.error(error, 'auth-api – login', 'AuthService: Login failed:');
             throw error;
         }
     }
 
     async register(data: RegisterRequest): Promise<AuthResponse> {
         try {
-            console.debug('AuthService: Attempting registration...');
+            logger.debug('AuthService: Attempting registration...');
             const response = await apiClient.post<AuthResponse>(API_ROUTES.AUTH.REGISTER, data);
 
-            console.debug('AuthService: Registration successful, saving session...');
+            logger.debug('AuthService: Registration successful, saving session...');
             await this.saveSession(response);
 
             return response;
         } catch (error) {
-            console.error('AuthService: Registration failed:', error);
+            logger.error(error, 'auth-api – register', 'AuthService: Registration failed:');
             throw error;
         }
     }
 
     async checkAuth(): Promise<CheckAuthResponse> {
         try {
-            console.debug('AuthService: Checking auth status...');
+            logger.debug('AuthService: Checking auth status...');
             // Получаем сессию и проверяем токены
             const session = await tokenService.getSession();
             if (!session) {
-                console.debug('AuthService: No session found during auth check');
+                logger.debug('AuthService: No session found during auth check');
                 throw new Error('No active session');
             }
 
             // Запрашиваем данные пользователя
-            const response = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CHECK_AUTH);
-            console.debug('AuthService: Auth check successful');
-            return response;
+            try {
+                const response = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CHECK_AUTH);
+                logger.debug('AuthService: Auth check successful');
+                return response;
+            } catch (error: any) {
+                // Проверяем, связана ли ошибка с отсутствием CSRF-токена
+                if (error?.response?.data?.detail === 'CSRF Failed: CSRF token missing.') {
+                    logger.debug('AuthService: CSRF token missing, requesting new token...');
+                    // Запрашиваем новый CSRF-токен
+                    await this.getCsrfToken();
+                    // Повторяем запрос
+                    const response = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CHECK_AUTH);
+                    logger.debug('AuthService: Auth check successful after CSRF token refresh');
+                    return response;
+                }
+                throw error; // Пробрасываем другие ошибки
+            }
         } catch (error) {
-            console.error('AuthService: Auth check failed:', error);
+            logger.error(error, 'auth-api – checkAuth', 'AuthService: Auth check failed:');
             throw error;
         }
     }
 
     async logout(): Promise<void> {
         try {
-            console.debug('AuthService: Logging out...');
+            logger.debug('AuthService: Logging out...');
             await apiClient.post(API_ROUTES.AUTH.LOGOUT);
         } catch (error) {
-            console.error('AuthService: Logout request failed:', error);
+            logger.error(error, 'auth-api – logout', 'AuthService: Logout request failed:');
             // Продолжаем очистку даже при ошибке запроса
         } finally {
-            console.debug('AuthService: Clearing session...');
+            logger.debug('AuthService: Clearing session...');
             await this.clearSession();
         }
     }
 
     private async saveSession(response: AuthResponse): Promise<void> {
         try {
-            console.debug('AuthService: Saving tokens and user data...');
+            logger.debug('AuthService: Saving tokens and user data...');
 
             // Проверяем наличие токенов
             if (!response.tokens?.access || !response.tokens?.refresh) {
-                console.error('AuthService: Invalid tokens in response');
+                logger.error(
+                    'AuthService: Invalid tokens in response',
+                    'auth-api – saveSession',
+                    'AuthService: Invalid tokens in response'
+                );
                 throw new Error('Invalid authentication response');
             }
 
             // Сначала сохраняем токены
             await tokenService.setSession(response.tokens);
-            console.debug('AuthService: Tokens saved successfully');
+            logger.debug('AuthService: Tokens saved successfully');
 
             // Затем сохраняем данные пользователя
             await storage.set('user-data', response.user);
-            console.debug('AuthService: User data saved successfully');
+            logger.debug('AuthService: User data saved successfully');
         } catch (error) {
-            console.error('AuthService: Failed to save session:', error);
+            logger.error(error, 'auth-api – saveSession', 'AuthService: Failed to save session:');
             // При ошибке сохранения очищаем всё
             await this.clearSession();
             throw error;
@@ -137,24 +158,24 @@ class AuthApiService {
 
     private async clearSession(): Promise<void> {
         try {
-            console.debug('AuthService: Clearing all session data...');
+            logger.debug('AuthService: Clearing all session data...');
             await Promise.all([tokenService.clearSession(), storage.remove('user-data')]);
-            console.debug('AuthService: Session cleared successfully');
+            logger.debug('AuthService: Session cleared successfully');
         } catch (error) {
-            console.error('AuthService: Error clearing session:', error);
+            logger.error(error, 'auth-api – clearSession', 'AuthService: Error clearing session:');
             throw error;
         }
     }
 
     async refreshToken(refreshToken: string): Promise<AuthResponse> {
         try {
-            console.debug('AuthService: Refreshing token...');
+            logger.debug('AuthService: Refreshing token...');
             const response = await apiClient.post<AuthResponse>(API_ROUTES.AUTH.REFRESH_TOKEN, {
                 refresh: refreshToken,
             });
             return response;
         } catch (error) {
-            console.error('AuthService: Error refreshing token:', error);
+            logger.error(error, 'auth-api – refreshToken', 'AuthService: Error refreshing token:');
             throw error;
         }
     }
@@ -165,11 +186,11 @@ class AuthApiService {
      */
     async refreshTokens(): Promise<AuthTokensType> {
         try {
-            console.debug('AuthService: Starting token refresh...');
+            logger.debug('AuthService: Starting token refresh...');
             const refreshToken = await tokenService.getRefreshToken();
 
             if (!refreshToken) {
-                console.error('AuthService: No refresh token available for refresh');
+                logger.error('AuthService: No refresh token available for refresh');
                 throw new Error('No refresh token available');
             }
 
@@ -188,9 +209,29 @@ class AuthApiService {
 
             return tokens;
         } catch (error) {
-            console.error('AuthService: Error refreshing tokens:', error);
+            logger.error(error, 'auth-api – refreshTokens', 'AuthService: Error refreshing tokens:');
             await tokenService.clearSession();
             throw error;
+        }
+    }
+
+    async getCsrfToken(): Promise<string | null> {
+        try {
+            logger.start('Getting CSRF token...', 'auth-api service – getCsrfToken');
+
+            const csrfTokenResponse = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CSRF_TOKEN);
+
+            if (!csrfTokenResponse?.csrfToken) {
+                logger.error('No CSRF token in response', 'auth-api service – getCsrfToken');
+                return null;
+            }
+
+            await storage.set(STORAGE_KEYS.CSRF_TOKEN, csrfTokenResponse.csrfToken);
+            logger.finish('CSRF token saved successfully', 'auth-api service – getCsrfToken');
+            return csrfTokenResponse.csrfToken;
+        } catch (error) {
+            logger.error(error, 'auth-api service – getCsrfToken', 'Error getting CSRF token:');
+            return null;
         }
     }
 }

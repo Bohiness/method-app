@@ -1,5 +1,6 @@
 // src/shared/hooks/useLocale.ts
 import { getStoredLanguage } from '@shared/config/i18n';
+import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
 import { useUser } from '@shared/context/user-provider';
 import { useStorage } from '@shared/lib/storage/storage.service';
 import { SupportedLocale } from '@shared/types/locale/types';
@@ -71,7 +72,7 @@ export const useLocale = ({ initialLocale = 'ru' }: LocaleStorageProps = {}) => 
             setLocale(newLocale);
 
             // Сохраняем в хранилище
-            await storage.set('app-locale' as any, newLocale);
+            await storage.set(STORAGE_KEYS.APP_LOCALE as any, newLocale);
 
             // Обновляем язык пользователя, если он авторизован и не анонимный
             if (user && !user.is_anonymous_user) {

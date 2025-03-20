@@ -2,16 +2,16 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { router } from 'expo-router'
 import React from 'react'
-import { PlansForDay } from './steps/PlansForDay'
-import { PriorityForDayScreen } from './steps/PriorityForDayScreen'
-import { SleepQualityStepScreen } from './steps/SleepQualityStepScreen'
-import { SuccessStepStartYourDay } from './steps/SuccessStepStartYourDay'
+import PlansForDay from './steps/PlansForDay'
+import PriorityForDayScreen from './steps/PriorityForDayScreen'
+import SleepQualityStepScreen from './steps/SleepQualityStepScreen'
+import SuccessStepStartYourDay from './steps/SuccessStepStartYourDay'
 // Определяем типы для параметров навигации
 export type StartYourDayStackParamList = {
     SleepQualityStep: { date: Date }
     PriorityForDay: { date: Date, sleepQuality: number }
     PlansForDay: { date: Date, sleepQuality: number, factors: number[] }
-    SuccessStepStartYourDay: { date: Date, sleepQuality: number, factors: number[], planForDay: string }
+    SuccessStepStartYourDay: { date: Date, sleepQuality: number, factors: number[], planForDay: string, startDayId: string }
 }
 
 const Stack = createNativeStackNavigator<StartYourDayStackParamList>()
@@ -21,7 +21,7 @@ interface StepNavigatorProps {
     onStepChange?: (step: number) => void
 }
 
-export function StepNavigatorStartYourDay({ date = new Date(), onStepChange }: StepNavigatorProps) {
+export default function StepNavigatorStartYourDay({ date = new Date(), onStepChange }: StepNavigatorProps) {
     // Обновление параметров маршрута для отображения индикатора шагов
     const updateRouteParams = (step: number) => {
         if (onStepChange) {

@@ -2,9 +2,9 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Text } from '@shared/ui/text'
-import { X } from 'lucide-react-native'
 import React from 'react'
 import { TouchableOpacity, View, ViewStyle } from 'react-native'
+import { Icon } from './icon'
 
 export type BadgeVariant =
     | 'default'
@@ -144,7 +144,8 @@ export const Badge: React.FC<BadgeProps> = ({
                     className="ml-1"
                     disabled={disabled}
                 >
-                    <X
+                    <Icon
+                        name="X"
                         size={sizeStyles.icon}
                         className={variantStyles.text}
                     />

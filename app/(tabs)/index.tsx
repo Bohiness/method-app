@@ -16,8 +16,8 @@ export default function HomeScreen() {
       <View className="gap-y-4 mt-6">
         <View className="flex-row justify-between gap-4">
           <FeatureButtonModal
-            title="diary.moodCheckin.title"
-            description="diary.moodCheckin.description"
+            title="diary.moodcheckin.title"
+            description="diary.moodcheckin.description"
             icon="Rabbit"
             onPress={openMoodCheckinModal}
           />
@@ -31,8 +31,8 @@ export default function HomeScreen() {
             onPress={openStartDayModal}
           />
           <FeatureButtonModal
-            title="diary.mood.eveningReflection"
-            description="diary.mood.sumUpYourDay"
+            title="diary.eveningreflection.title"
+            description="diary.eveningreflection.description"
             icon="Moon"
             onPress={openEveningReflectionModal}
           />

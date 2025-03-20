@@ -1,5 +1,4 @@
 import { useTheme } from '@shared/context/theme-provider'
-import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { cn } from '@shared/lib/utils/cn'
 import { SubscriptionPlan } from '@shared/types/subscription/SubscriptionType'
 import { View } from '@shared/ui/view'
@@ -16,6 +15,7 @@ interface SubscriptionOverlayProps {
     isVisible?: boolean
     opacity?: number
     className?: string
+    onSubscribe?: (params: { text: string, plan: SubscriptionPlan }) => void
 }
 
 /**
@@ -28,17 +28,19 @@ export const SubscriptionOverlay = ({
     text = 'subscription.feature_locked',
     isVisible = true,
     opacity = 0.9,
-    className
+    className,
+    onSubscribe
 }: SubscriptionOverlayProps) => {
-    const { showSubscriptionModal } = useSubscriptionModal()
     const { isDark } = useTheme()
     const { t } = useTranslation()
 
     const handleSubscribe = () => {
-        showSubscriptionModal({
-            text: t(text),
-            plan
-        })
+        if (onSubscribe) {
+            onSubscribe({
+                text: t(text),
+                plan
+            })
+        }
     }
 
     return (

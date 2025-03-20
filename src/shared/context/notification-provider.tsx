@@ -20,6 +20,9 @@ interface NotificationContextProps {
     updateSettings: (settings: Partial<NotificationSettings>) => Promise<void>
     registerForPushNotifications: () => Promise<void>
 
+    // Новый метод для проверки актуальных разрешений
+    checkActualPermissions: () => Promise<boolean>
+
     // Категории уведомлений
     categories: NotificationCategory[]
     updateCategoryPreference: (categoryId: string, enabled: boolean) => Promise<void>
@@ -58,13 +61,35 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return () => cleanup()
     }, [])
 
+    // Новый метод для проверки актуальных системных разрешений
+    const checkActualPermissions = async (): Promise<boolean> => {
+        try {
+            const { status } = await Notifications.getPermissionsAsync()
+            const isEnabled = status === 'granted'
+
+            // Если есть несоответствие между системными разрешениями и внутренним состоянием
+            if (settings && settings.push_enabled !== isEnabled) {
+                // Обновляем внутреннее состояние согласно системным разрешениям
+                await updateSettings({ push_enabled: isEnabled })
+            }
+
+            return isEnabled
+        } catch (error) {
+            console.error('Ошибка при проверке разрешений на уведомления:', error)
+            return false
+        }
+    }
+
     const initializeNotifications = async () => {
         try {
             setIsLoading(true)
 
-            // Загружаем только базовые настройки, без регистрации push-уведомлений
+            // Загружаем базовые настройки
             const userSettings = await notificationsApiService.getNotificationSettings()
             setSettings(userSettings)
+
+            // Проверяем актуальные системные разрешения и синхронизируем с нашими настройками
+            await checkActualPermissions()
 
             // Загружаем категории
             const notificationCategories = await notificationsApiService.getNotificationCategories()
@@ -91,6 +116,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             // После успешной регистрации обновляем настройки
             const userSettings = await notificationsApiService.getNotificationSettings()
             setSettings(userSettings)
+
+            // Проверяем актуальные разрешения для синхронизации
+            await checkActualPermissions()
         } catch (error) {
             console.error('Ошибка регистрации push-уведомлений:', error)
             throw error
@@ -188,11 +216,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const loadHistory = async (page: number) => {
         try {
             const response = await notificationsApiService.getNotificationHistory(page)
-            if (page === 1) {
-                setNotificationHistory(response.results)
+
+            if (response && response.results) {
+                if (page === 1) {
+                    setNotificationHistory(response.results)
+                } else {
+                    setNotificationHistory(prev => [...prev, ...response.results])
+                }
             } else {
-                setNotificationHistory(prev => [...prev, ...response.results])
+                console.error('Ошибка загрузки истории: отсутствует response.results')
             }
+
             setHasMoreHistory(!!response.next)
             setCurrentPage(page)
         } catch (error) {
@@ -266,7 +300,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         isLoading,
         hasMoreHistory,
         currentPage,
-        registerForPushNotifications
+        registerForPushNotifications,
+        checkActualPermissions
     }
 
     return (

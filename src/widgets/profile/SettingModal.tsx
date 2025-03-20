@@ -11,6 +11,7 @@ import Animated, {
     SlideOutRight,
     runOnJS
 } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SCREEN_CONFIG, ScreenType } from './screens/configs/screens.config'
 
 interface SettingModalProps {
@@ -20,6 +21,7 @@ interface SettingModalProps {
 export const SettingModal = ({ startScreen = 'main' }: SettingModalProps) => {
     const navigation = useScreenNavigation<ScreenType>(startScreen)
     const { mutateAsync } = useUpdateProfile()
+    const insets = useSafeAreaInsets()
 
     const swipeGesture = Gesture.Pan()
         .activeOffsetX([-20, 20])
@@ -87,9 +89,9 @@ export const SettingModal = ({ startScreen = 'main' }: SettingModalProps) => {
     }
 
     return (
-        <View variant='default' className="flex-1">
+        <View variant='default' className="flex-1" style={{ paddingBottom: insets.bottom }}>
             <GestureDetector gesture={swipeGesture}>
-                <ScrollView className="flex-1 relative px-4">
+                <ScrollView showsVerticalScrollIndicator={false} className="flex-1 relative px-4" contentContainerStyle={{ flexGrow: 1 }}>
                     {renderScreen()}
                 </ScrollView>
             </GestureDetector>

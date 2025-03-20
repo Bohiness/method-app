@@ -5,7 +5,7 @@
         "version": "1.0.0",
         "orientation": "portrait",
         "icon": "./assets/images/icons/icon-light.png",
-        "scheme": "myapp",
+        "scheme": "com.anonymous.methodapp",
         "userInterfaceStyle": "automatic",
         "newArchEnabled": true,
         "jsEngine": "jsc",
@@ -14,13 +14,34 @@
                 "foregroundImage": "./assets/images/icons/icon-trans.png",
                 "backgroundColor": "#ffffff"
             },
-            "package": "com.anonymous.methodapp"
+            "package": "com.anonymous.methodapp",
+            "intentFilters": [
+                {
+                    "action": "VIEW",
+                    "autoVerify": true,
+                    "data": [
+                        {
+                            "scheme": "com.anonymous.methodapp"
+                        }
+                    ],
+                    "category": ["BROWSABLE", "DEFAULT"]
+                }
+            ]
         },
         "ios": {
             "usesAppleSignIn": true,
             "bundleIdentifier": "com.anonymous.methodapp",
             "buildNumber": "1",
-            "icon": "./assets/images/icons/icon-light.png"
+            "icon": "./assets/images/icons/icon-light.png",
+            "infoPlist": {
+                "CFBundleURLTypes": [
+                    {
+                        "CFBundleURLSchemes": [
+                            "com.googleusercontent.apps.179295677158-8lckmjr8mfutc1ris5dkJpnftq5ugpu5:/oauth2callback"
+                        ]
+                    }
+                ]
+            }
         },
         "web": {
             "bundler": "metro",

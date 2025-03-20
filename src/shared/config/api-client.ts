@@ -1,5 +1,6 @@
 // src/shared/api/base/api-client.ts
 import NetInfo from '@react-native-community/netinfo';
+import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { tokenService } from '@shared/lib/user/token/token.service';
@@ -9,13 +10,17 @@ import { Platform } from 'react-native';
 // Определяем базовый URL в зависимости от платформы
 const getDevelopmentApiUrl = () => {
     if (__DEV__) {
-        return Platform.select({
+        const devUrl = Platform.select({
             ios: 'http://localhost:8000',
             android: 'http://10.0.2.2:8000',
             default: 'http://localhost:8000',
         });
+        console.log('🚀 Using DEV API URL:', devUrl);
+        return devUrl;
     }
-    return process.env.EXPO_PUBLIC_API_URL || 'https://api.method.do';
+    const prodUrl = process.env.EXPO_PUBLIC_API_URL || 'https://api.method.do';
+    console.log('🚀 Using PROD API URL:', prodUrl);
+    return prodUrl;
 };
 
 const API_URL = getDevelopmentApiUrl();
@@ -36,6 +41,8 @@ class ApiClient {
             },
         });
 
+        console.log('📡 API Client initialized with URL:', this.API_URL);
+
         this.setupInterceptors();
     }
 
@@ -52,7 +59,12 @@ class ApiClient {
                     // Проверяем подключение к интернету
                     const netInfo = await NetInfo.fetch();
                     if (!netInfo.isConnected) {
-                        throw new Error('Нет подключения к интернету');
+                        logger.error(
+                            'No internet connection',
+                            'api-client – request interceptor',
+                            'ApiClient: Request interceptor error:'
+                        );
+                        throw new Error('No internet connection');
                     }
 
                     // Получаем и устанавливаем заголовки
@@ -61,12 +73,12 @@ class ApiClient {
 
                     return config;
                 } catch (error) {
-                    logger.error('ApiClient: Request interceptor error:', error, 'api-client');
+                    logger.error(error, 'api-client – request interceptor', 'ApiClient: Request interceptor error:');
                     return Promise.reject(error);
                 }
             },
             error => {
-                logger.error('ApiClient: Request interceptor error:', error, 'api-client');
+                logger.error(error, 'api-client – request interceptor', 'ApiClient: Request interceptor error:');
                 return Promise.reject(error);
             }
         );
@@ -96,15 +108,41 @@ class ApiClient {
                             // Повторяем оригинальный запрос
                             return this.instance(originalRequest);
                         } catch (refreshError) {
-                            logger.error('ApiClient: Token refresh failed:', refreshError, 'api-client');
+                            logger.error(
+                                refreshError,
+                                'api-client – token refresh',
+                                'ApiClient: Token refresh failed:'
+                            );
                             await tokenService.clearSession();
                             throw refreshError;
                         }
                     }
 
+                    // Универсальная проверка на CSRF ошибки
+                    if (error.response?.status === 403) {
+                        const errorDetail = (error?.response?.data as any)?.detail || '';
+
+                        // Проверяем все возможные CSRF ошибки
+                        const isCsrfError =
+                            errorDetail.includes('CSRF') ||
+                            errorDetail.includes('Referer checking failed') ||
+                            errorDetail.includes('Origin checking failed') ||
+                            errorDetail.includes('CSRF token') ||
+                            errorDetail.includes('CSRF cookie not set');
+
+                        if (isCsrfError && this.authApiService) {
+                            logger.info(
+                                'CSRF error detected, refreshing CSRF token',
+                                'api-client – response interceptor'
+                            );
+                            await this.authApiService.getCsrfToken();
+                            return this.instance(originalRequest);
+                        }
+                    }
+
                     throw error;
                 } catch (error) {
-                    logger.error('ApiClient: Response interceptor error:', error, 'api-client');
+                    logger.error(error, 'api-client – response interceptor', 'ApiClient: Response interceptor error:');
                     return Promise.reject(error);
                 }
             }
@@ -117,8 +155,8 @@ class ApiClient {
         try {
             // Получаем текущую сессию
             const session = await tokenService.getSession();
-            const language = (await storage.get<string>('app-locale')) || 'ru';
-            const csrfToken = await storage.get<string>('csrf-token');
+            const language = (await storage.get<string>(STORAGE_KEYS.APP_LOCALE)) || 'en';
+            const csrfToken = await storage.get<string>(STORAGE_KEYS.CSRF_TOKEN);
 
             // Устанавливаем базовые заголовки
             headers['Accept-Language'] = language;
@@ -139,7 +177,7 @@ class ApiClient {
 
             return headers;
         } catch (error) {
-            logger.error('ApiClient: Error getting headers:', error, 'api-client');
+            logger.error(error, 'api-client – getRequestHeaders', 'ApiClient: Error getting headers:');
             return headers;
         }
     }
@@ -149,13 +187,15 @@ class ApiClient {
         const netInfo = await NetInfo.fetch();
 
         if (!netInfo.isConnected) {
-            throw new Error('Нет подключения к интернету');
+            logger.error('No internet connection', 'api-client – get', 'ApiClient: Error getting data:');
+            throw new Error('No internet connection');
         }
 
         try {
             const response = await this.instance.get<T>(endpoint, config);
             return response.data;
         } catch (error) {
+            logger.error(error, 'api-client – get', 'ApiClient: Error getting data:');
             this.handleError(error);
             throw error;
         }
@@ -167,6 +207,7 @@ class ApiClient {
             const response = await this.instance.post<T>(endpoint, data, config);
             return response.data;
         } catch (error) {
+            logger.error(error, 'api-client – post', 'ApiClient: Error posting data:');
             this.handleError(error);
             throw error;
         }
@@ -178,6 +219,7 @@ class ApiClient {
             const response = await this.instance.put<T>(endpoint, data, config);
             return response.data;
         } catch (error) {
+            logger.error(error, 'api-client – put', 'ApiClient: Error putting data:');
             this.handleError(error);
             throw error;
         }
@@ -189,6 +231,7 @@ class ApiClient {
             const response = await this.instance.patch<T>(endpoint, data, config);
             return response.data;
         } catch (error) {
+            logger.error(error, 'api-client – patch', 'ApiClient: Error patching data:');
             this.handleError(error);
             throw error;
         }
@@ -200,6 +243,7 @@ class ApiClient {
             const response = await this.instance.delete<T>(endpoint, config);
             return response.data;
         } catch (error) {
+            logger.error(error, 'api-client – delete', 'ApiClient: Error deleting data:');
             this.handleError(error);
             throw error;
         }
@@ -220,6 +264,7 @@ class ApiClient {
                     headers: error.config?.headers,
                 },
             };
+            logger.error(errorInfo, 'api-client – handleError', 'ApiClient: Error handling error:');
         }
     }
 }

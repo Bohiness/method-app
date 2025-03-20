@@ -32,8 +32,45 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
+
+# Expo specific
+.expo-shared/
+.expo-cache/
+
+# iOS
+# ios/  <- закомментировано, чтобы EAS build работал
+ios/Pods/
+ios/.xcode.env.local
+ios/build/
+ios/*.xcodeproj/*
+!ios/*.xcodeproj/project.pbxproj
+!ios/*.xcodeproj/xcshareddata/
+!ios/*.xcworkspace/contents.xcworkspacedata
+
+# Android
+android/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/debug.keystore
+android/app/release.keystore
+
+# Testing
+/coverage/
+
+# Editor specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+*.log
+*.tmp
 
 app-example

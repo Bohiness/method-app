@@ -60,7 +60,7 @@ class TasksStorageService {
     }
 
     // Получение всех задач из локального хранилища
-    async getTasks(filters?: TasksFiltersType): Promise<PaginatedResponse<TaskType>> {
+    async getTasks(filters?: TasksFiltersType): Promise<PaginatedResponse<TaskType[]>> {
         try {
             let tasks = (await storage.get<TaskType[]>(this.TASKS_KEY)) || [];
 

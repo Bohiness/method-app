@@ -103,18 +103,16 @@ export const AddButtonMenu = () => {
     return (
         <>
             <Animated.View
-                style={[
-                    {
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: screenHeight,
-                        zIndex: 999,
-                        pointerEvents: isVisible ? 'auto' : 'none',
-                    },
-                ]}
+                style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    height: screenHeight,
+                    zIndex: 999,
+                    pointerEvents: isVisible ? 'auto' : 'none',
+                }}
             >
                 <Animated.View
                     style={[

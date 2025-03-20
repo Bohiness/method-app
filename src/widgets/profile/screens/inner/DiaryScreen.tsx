@@ -8,7 +8,7 @@ export function DiaryScreen({ onBack, title }: { onBack: () => void, title: stri
 
     return (
         <View className="flex-1">
-            <HeaderMenuItem onBack={onBack} title={title} />
+            <HeaderMenuItem onBack={onBack} title={t('diary.history.lastWeekEntries')} />
             <BeautifulDiary />
         </View>
     )

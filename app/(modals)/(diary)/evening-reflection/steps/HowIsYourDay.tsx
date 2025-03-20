@@ -8,9 +8,9 @@ import { EveningReflectionStackParamList } from '../StepNavigator'
 type Props = NativeStackScreenProps<EveningReflectionStackParamList, 'HowIsYourDay'>
 
 
-export const HowIsYourDayScreen = (
+export default function HowIsYourDayScreen(
     { route, navigation }: Props
-) => {
+) {
     const { date } = route.params
     const [screen1Response, setScreen1Response] = useState(50)
 

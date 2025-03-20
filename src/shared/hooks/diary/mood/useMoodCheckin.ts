@@ -2,11 +2,12 @@
 import { MoodSyncService } from '@shared/api/diary/MoodSyncService';
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { MoodStorageService } from '@shared/lib/diary/MoodStorageService';
+import { logger } from '@shared/lib/logger/logger.service';
 import { Emotion, Factor, MoodCheckin } from '@shared/types/diary/mood/MoodType';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import debounce from 'lodash/debounce';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const moodStorageService = new MoodStorageService();
 const moodSyncService = new MoodSyncService(moodStorageService);
@@ -144,6 +145,13 @@ export const useMoodCheckinStats = (days: number) => {
         return sum / previousPeriodData.length;
     }, [previousPeriodData]);
 
+    useEffect(() => {
+        logger.log(currentPeriodData, 'useMoodCheckinStats', 'currentPeriodData');
+        logger.log(previousPeriodData, 'useMoodCheckinStats', 'previousPeriodData');
+        logger.log(currentAvg, 'useMoodCheckinStats', 'currentAvg');
+        logger.log(previousAvg, 'useMoodCheckinStats', 'previousAvg');
+    }, [currentPeriodData, previousPeriodData, currentAvg, previousAvg]);
+
     return {
         currentPeriodData,
         previousPeriodData,
@@ -151,5 +159,106 @@ export const useMoodCheckinStats = (days: number) => {
         previousAvg,
         isLoading,
         error,
+    };
+};
+
+/**
+ * Хук для получения данных о настроении по календарным неделям
+ * Возвращает данные за текущую неделю (с понедельника по воскресенье)
+ * и за предыдущую календарную неделю
+ */
+export const useMoodCheckinByCalendarWeek = () => {
+    const queryClient = useQueryClient();
+
+    // Функция для получения дат начала и конца календарной недели
+    const getWeekBoundaries = (weekOffset = 0) => {
+        const now = new Date();
+        const dayOfWeek = now.getDay() || 7; // Воскресенье = 0, преобразуем в 7
+
+        // Получаем дату начала текущей недели (понедельник)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - dayOfWeek + 1 - weekOffset * 7);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        // Получаем дату конца недели (воскресенье)
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        return { startOfWeek, endOfWeek };
+    };
+
+    // Получаем границы текущей недели
+    const currentWeek = getWeekBoundaries(0);
+    // Получаем границы предыдущей недели
+    const previousWeek = getWeekBoundaries(1);
+
+    // Запрос данных за текущую неделю
+    const {
+        data: currentWeekData,
+        isLoading: isCurrentLoading,
+        error: currentError,
+    } = useQuery<MoodCheckin[], Error>({
+        queryKey: ['mood-checkins', 'current-week', currentWeek.startOfWeek.toISOString()],
+        queryFn: async () => {
+            // Получаем все записи и фильтруем их по дате
+            const allCheckins = await moodStorageService.getMoodCheckins();
+            return allCheckins.filter(checkin => {
+                const checkinDate = new Date(checkin.created_at);
+                return checkinDate >= currentWeek.startOfWeek && checkinDate <= currentWeek.endOfWeek;
+            });
+        },
+    });
+
+    // Запрос данных за предыдущую неделю
+    const {
+        data: previousWeekData,
+        isLoading: isPreviousLoading,
+        error: previousError,
+    } = useQuery<MoodCheckin[], Error>({
+        queryKey: ['mood-checkins', 'previous-week', previousWeek.startOfWeek.toISOString()],
+        queryFn: async () => {
+            // Получаем все записи и фильтруем их по дате
+            const allCheckins = await moodStorageService.getMoodCheckins();
+            return allCheckins.filter(checkin => {
+                const checkinDate = new Date(checkin.created_at);
+                return checkinDate >= previousWeek.startOfWeek && checkinDate <= previousWeek.endOfWeek;
+            });
+        },
+    });
+
+    // Вычисление среднего значения mood_level для текущей недели
+    const currentAvg = useMemo(() => {
+        if (!currentWeekData || currentWeekData.length === 0) return 0;
+        const sum = currentWeekData.reduce((acc, checkin) => acc + checkin.mood_level, 0);
+        return sum / currentWeekData.length;
+    }, [currentWeekData]);
+
+    // Вычисление среднего значения mood_level для предыдущей недели
+    const previousAvg = useMemo(() => {
+        if (!previousWeekData || previousWeekData.length === 0) return 0;
+        const sum = previousWeekData.reduce((acc, checkin) => acc + checkin.mood_level, 0);
+        return sum / previousWeekData.length;
+    }, [previousWeekData]);
+
+    // Логирование для отладки
+    useEffect(() => {
+        logger.log(currentWeekData, 'useMoodCheckinByCalendarWeek', 'currentWeekData');
+        logger.log(previousWeekData, 'useMoodCheckinByCalendarWeek', 'previousWeekData');
+        logger.log(currentAvg, 'useMoodCheckinByCalendarWeek', 'currentAvg');
+        logger.log(previousAvg, 'useMoodCheckinByCalendarWeek', 'previousAvg');
+        logger.log(currentWeek, 'useMoodCheckinByCalendarWeek', 'currentWeek');
+        logger.log(previousWeek, 'useMoodCheckinByCalendarWeek', 'previousWeek');
+    }, [currentWeekData, previousWeekData, currentAvg, previousAvg, currentWeek, previousWeek]);
+
+    return {
+        currentPeriodData: currentWeekData || [],
+        previousPeriodData: previousWeekData || [],
+        currentAvg,
+        previousAvg,
+        isLoading: isCurrentLoading || isPreviousLoading,
+        error: currentError || previousError,
+        currentWeekBoundaries: currentWeek,
+        previousWeekBoundaries: previousWeek,
     };
 };

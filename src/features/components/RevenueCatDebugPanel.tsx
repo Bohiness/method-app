@@ -1,8 +1,10 @@
 import { subscriptionService } from '@shared/lib/subscription/subscription.service'
+import { Alert, AlertTitle } from '@shared/ui/alert'
 import { Button } from '@shared/ui/button'
 import { Text } from '@shared/ui/text'
+import { View } from '@shared/ui/view'
 import React, { useState } from 'react'
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Platform, ScrollView } from 'react-native'
 import { PurchasesPackage } from 'react-native-purchases'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -55,7 +57,7 @@ export const RevenueCatDebugPanel: React.FC = () => {
 
     if (!isVisible) {
         return (
-            <View style={[styles.toggleButton, { bottom: insets.bottom + 8 }]}>
+            <View >
                 <Button
                     variant="secondary"
                     size="sm"
@@ -68,11 +70,13 @@ export const RevenueCatDebugPanel: React.FC = () => {
     }
 
     return (
-        <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
-            <View style={styles.card}>
-                <Text className="text-lg font-bold mb-4">RevenueCat Дебаг {isIOS ? '' : '(Только iOS)'}</Text>
+        <View>
+            <View>
+                <Text className="text-lg font-bold mb-4">
+                    RevenueCat Дебаг {isIOS ? '' : '(Только iOS)'}
+                </Text>
 
-                <View style={styles.buttonsContainer}>
+                <View>
                     <Button
                         variant="secondary"
                         size="sm"
@@ -92,32 +96,34 @@ export const RevenueCatDebugPanel: React.FC = () => {
                 </View>
 
                 {platformWarning && (
-                    <View style={styles.warningContainer}>
-                        <Text className="text-amber-600">{platformWarning}</Text>
-                    </View>
+                    <Alert>
+                        <AlertTitle>
+                            <Text>{platformWarning}</Text>
+                        </AlertTitle>
+                    </Alert>
                 )}
 
                 {loading && (
-                    <View style={styles.loadingContainer}>
+                    <View>
                         <ActivityIndicator size="large" />
                         <Text className="mt-2">Загрузка данных...</Text>
                     </View>
                 )}
 
                 {error && (
-                    <View style={styles.errorContainer}>
+                    <View>
                         <Text className="text-red-500">{error}</Text>
                     </View>
                 )}
 
                 {!isIOS && !platformWarning && (
-                    <View style={styles.warningContainer}>
+                    <View>
                         <Text className="text-center">Проверка RevenueCat доступна только на iOS устройствах</Text>
                     </View>
                 )}
 
                 {subscriptionStatus && isIOS && (
-                    <View style={styles.statusContainer}>
+                    <View>
                         <Text className="text-md font-bold mb-1">Статус подписки:</Text>
                         <Text>Премиум: {subscriptionStatus.isPremium ? 'Да' : 'Нет'}</Text>
                         <Text>Премиум AI: {subscriptionStatus.isPremiumAI ? 'Да' : 'Нет'}</Text>
@@ -126,11 +132,11 @@ export const RevenueCatDebugPanel: React.FC = () => {
                 )}
 
                 {packages.length > 0 && isIOS ? (
-                    <ScrollView style={styles.packagesContainer}>
+                    <ScrollView>
                         <Text className="text-md font-bold mb-2">Доступные пакеты iOS ({packages.length}):</Text>
 
                         {packages.map((pkg, index) => (
-                            <View key={pkg.identifier} style={styles.packageItem}>
+                            <View key={pkg.identifier}>
                                 <Text className="font-bold">{index + 1}. {pkg.identifier}</Text>
                                 <Text>Тип: {pkg.packageType}</Text>
                                 <Text>Цена: {pkg.product.priceString}</Text>
@@ -157,67 +163,3 @@ export const RevenueCatDebugPanel: React.FC = () => {
         </View>
     )
 }
-
-const styles = StyleSheet.create({
-    toggleButton: {
-        position: 'absolute',
-        right: 16,
-        zIndex: 1000,
-    },
-    container: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 1000,
-        padding: 16,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    },
-    card: {
-        padding: 16,
-        borderRadius: 12,
-        maxHeight: 500,
-        backgroundColor: '#FFFFFF',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    loadingContainer: {
-        alignItems: 'center',
-        padding: 16,
-    },
-    errorContainer: {
-        padding: 8,
-        marginVertical: 8,
-        borderRadius: 8,
-        backgroundColor: 'rgba(255, 0, 0, 0.1)',
-    },
-    warningContainer: {
-        padding: 8,
-        marginVertical: 8,
-        borderRadius: 8,
-        backgroundColor: 'rgba(255, 204, 0, 0.1)',
-    },
-    statusContainer: {
-        marginVertical: 8,
-        padding: 8,
-        borderRadius: 8,
-        backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    },
-    packagesContainer: {
-        maxHeight: 300,
-    },
-    packageItem: {
-        marginVertical: 8,
-        padding: 8,
-        borderRadius: 8,
-        backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    },
-}) 

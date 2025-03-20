@@ -52,7 +52,7 @@ export const useEveningReflection = () => {
             debounce(async () => {
                 try {
                     await eveningReflectionSyncService.syncChanges();
-                    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EVENING_REFLECTION });
+                    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EVENING_REFLECTION] });
                 } catch (error) {
                     console.error('Failed to sync changes:', error);
                 }
@@ -89,7 +89,7 @@ export const useEveningReflection = () => {
             return newReflection;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EVENING_REFLECTION });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EVENING_REFLECTION] });
         },
     });
 
@@ -107,7 +107,7 @@ export const useEveningReflection = () => {
             return updatedReflection;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EVENING_REFLECTION });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EVENING_REFLECTION] });
         },
     });
 
@@ -125,7 +125,7 @@ export const useEveningReflection = () => {
             return id;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EVENING_REFLECTION });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EVENING_REFLECTION] });
         },
     });
 

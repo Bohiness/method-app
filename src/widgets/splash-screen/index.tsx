@@ -1,6 +1,5 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { useUser } from '@shared/context/user-provider'
-import { subscriptionService } from '@shared/lib/subscription/subscription.service'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
@@ -22,6 +21,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type UpdateStatus = 'checking' | 'available' | 'no-update' | 'error'
+type StoreUpdateStatus = 'checking' | 'available' | 'no-update' | 'error'
 
 interface SplashScreenProps {
     onComplete: () => void
@@ -31,6 +31,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     const { checkAuth } = useUser()
     const { t } = useTranslation()
     const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('checking')
+    const [storeUpdateStatus, setStoreUpdateStatus] = useState<StoreUpdateStatus>('checking')
     const insets = useSafeAreaInsets()
     const { width: screenWidth } = useWindowDimensions()
 
@@ -62,18 +63,40 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
         }
     }
 
+
     const initialize = async () => {
+        // Главная обертка try-catch для всего процесса инициализации
         try {
-            await checkForUpdates()
-            await checkAuth()
+            // Сначала проверяем обновления через OTA
+            try {
+                await checkForUpdates().catch(err => {
+                    console.error('OTA update check failed:', err)
+                })
+            } catch (otaError) {
+                console.error('Critical OTA update error:', otaError)
+                // Продолжаем работу даже при критических ошибках
+            }
 
-            // Инициализируем сервис подписок и проверяем статус
-            await subscriptionService.initialize()
-            await subscriptionService.checkSubscriptionStatus()
+            // Проверяем авторизацию пользователя
+            try {
+                await checkAuth().catch(err => {
+                    console.error('Auth check failed:', err)
+                })
+            } catch (authError) {
+                console.error('Critical auth error:', authError)
+                // Продолжаем работу даже при критических ошибках авторизации
+            }
 
+            // Полностью пропускаем инициализацию subscriptionService
+            // чтобы исключить возможные проблемы с нативными модулями
+
+            // Безопасно завершаем инициализацию
             onComplete()
         } catch (error) {
-            console.error('Initialization failed:', error)
+            // Это критический обработчик ошибок - последняя линия защиты
+            console.error('Critical initialization error:', error)
+
+            // В любом случае завершаем загрузку сплэш-скрина и переходим к приложению
             onComplete()
         }
     }
@@ -151,7 +174,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                     ].map(({ text, delay }) => (
                         <Animated.View
                             key={text}
-                            style={[createTextStyle(delay),]}
+                            style={createTextStyle(delay)}
                         >
                             <Text
                                 variant="secondary"

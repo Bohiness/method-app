@@ -1,11 +1,9 @@
 import { userApiService } from '@shared/api/user/user-api.service';
 import { StorageService } from '@shared/lib/storage/storage.service';
 import { SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
-import axios, { AxiosInstance } from 'axios';
+import { logger } from '../logger/logger.service';
 
 const SUBSCRIPTION_CACHE_KEY = 'subscription_cache';
-const SUBSCRIPTION_CACHE_TIMESTAMP_KEY = 'subscription_cache_timestamp';
-const CACHE_EXPIRATION_TIME = 1000 * 60 * 60; // 1 час в миллисекундах
 
 export interface SubscriptionCacheData {
     isPremium: boolean;
@@ -19,13 +17,11 @@ export interface SubscriptionCacheData {
 export class SubscriptionCacheService {
     private static instance: SubscriptionCacheService;
     private storageService: StorageService;
-    private apiClient: AxiosInstance;
+    // Делаем время кэша настраиваемым
+    private cacheExpirationTime: number = 1000 * 60 * 60 * 24;
 
     private constructor() {
         this.storageService = new StorageService();
-        this.apiClient = axios.create({
-            baseURL: process.env.EXPO_PUBLIC_API_URL || 'https://api.method.do',
-        });
     }
 
     public static getInstance(): SubscriptionCacheService {
@@ -33,6 +29,25 @@ export class SubscriptionCacheService {
             SubscriptionCacheService.instance = new SubscriptionCacheService();
         }
         return SubscriptionCacheService.instance;
+    }
+
+    /**
+     * Настраивает время жизни кэша в миллисекундах
+     */
+    public setCacheExpirationTime(milliseconds: number): void {
+        if (milliseconds <= 0) {
+            logger.warn(
+                'Invalid cache expiration time, must be greater than 0. Using default.',
+                'subscription cache service – setCacheExpirationTime'
+            );
+            return;
+        }
+
+        this.cacheExpirationTime = milliseconds;
+        logger.log(
+            { cacheExpirationTime: this.cacheExpirationTime },
+            'subscription cache service – setCacheExpirationTime'
+        );
     }
 
     /**
@@ -47,14 +62,31 @@ export class SubscriptionCacheService {
             }
 
             const now = Date.now();
-            if (now - cachedData.timestamp > CACHE_EXPIRATION_TIME) {
+            if (now - cachedData.timestamp > this.cacheExpirationTime) {
                 // Кэш устарел
+                logger.log('Subscription cache expired', 'subscription cache service – getCachedSubscription');
                 return null;
+            }
+
+            // Проверяем, не истекла ли сама подписка, если есть дата истечения
+            if (cachedData.expirationDate) {
+                const expirationDate = new Date(cachedData.expirationDate).getTime();
+                if (now > expirationDate) {
+                    logger.log('Subscription has expired', 'subscription cache service – getCachedSubscription');
+                    // Очищаем кэш т.к. подписка истекла
+                    await this.clearCache();
+                    return null;
+                }
+            }
+
+            // Убедимся, что isPremium включает в себя isPremiumAI
+            if (cachedData.isPremiumAI && !cachedData.isPremium) {
+                cachedData.isPremium = true;
             }
 
             return cachedData;
         } catch (error) {
-            console.error('Ошибка при получении кэша подписки:', error);
+            logger.error(error, 'subscription cache service – getCachedSubscription', 'error');
             return null;
         }
     }
@@ -64,19 +96,33 @@ export class SubscriptionCacheService {
      */
     public async cacheSubscription(data: Omit<SubscriptionCacheData, 'timestamp'>): Promise<void> {
         try {
+            // Валидация данных
+            if (data.tier === undefined) {
+                logger.error(
+                    'Invalid subscription data: tier is required',
+                    'subscription cache service – cacheSubscription'
+                );
+                return;
+            }
+
+            // Убедимся, что isPremium включает в себя isPremiumAI
+            const isPremium = data.isPremium || data.isPremiumAI;
+
             const cacheData: SubscriptionCacheData = {
                 ...data,
+                isPremium,
                 timestamp: Date.now(),
             };
 
             await this.storageService.set(SUBSCRIPTION_CACHE_KEY, cacheData);
+            logger.log(cacheData, 'subscription cache service – cacheSubscription', 'cached subscription data');
 
             // Синхронизируем с сервером
             this.syncWithServer(cacheData).catch(error => {
-                console.error('Ошибка при синхронизации подписки с сервером:', error);
+                logger.error(error, 'subscription cache service – syncWithServer', 'error');
             });
         } catch (error) {
-            console.error('Ошибка при кэшировании подписки:', error);
+            logger.error(error, 'subscription cache service – cacheSubscription', 'error');
         }
     }
 
@@ -86,8 +132,74 @@ export class SubscriptionCacheService {
     public async clearCache(): Promise<void> {
         try {
             await this.storageService.remove(SUBSCRIPTION_CACHE_KEY);
+            logger.log('Subscription cache cleared', 'subscription cache service – clearCache');
         } catch (error) {
-            console.error('Ошибка при очистке кэша подписки:', error);
+            logger.error(error, 'subscription cache service – clearCache', 'error');
+        }
+    }
+
+    /**
+     * Принудительно обновляет кэш подписки
+     */
+    public async forceRefresh(): Promise<void> {
+        try {
+            // Сначала очищаем кэш
+            await this.clearCache();
+            logger.log('Force refreshing subscription cache', 'subscription cache service – forceRefresh');
+        } catch (error) {
+            logger.error(error, 'subscription cache service – forceRefresh', 'error');
+        }
+    }
+
+    /**
+     * Проверяет, истек ли срок подписки
+     */
+    public async isSubscriptionExpired(): Promise<boolean> {
+        try {
+            const cachedData = await this.getCachedSubscription();
+
+            if (!cachedData || !cachedData.isPremium) {
+                return true;
+            }
+
+            if (!cachedData.expirationDate) {
+                // Если дата истечения не указана, но подписка активна, считаем её действующей
+                return false;
+            }
+
+            const now = Date.now();
+            const expirationDate = new Date(cachedData.expirationDate).getTime();
+            return now > expirationDate;
+        } catch (error) {
+            logger.error(error, 'subscription cache service – isSubscriptionExpired', 'error');
+            // В случае ошибки считаем, что подписка истекла
+            return true;
+        }
+    }
+
+    /**
+     * Получает время до истечения подписки в миллисекундах
+     * @returns Время в миллисекундах или null, если подписка истекла или нет данных
+     */
+    public async getTimeUntilExpiration(): Promise<number | null> {
+        try {
+            const cachedData = await this.getCachedSubscription();
+
+            if (!cachedData || !cachedData.isPremium || !cachedData.expirationDate) {
+                return null;
+            }
+
+            const now = Date.now();
+            const expirationDate = new Date(cachedData.expirationDate).getTime();
+
+            if (now > expirationDate) {
+                return null;
+            }
+
+            return expirationDate - now;
+        } catch (error) {
+            logger.error(error, 'subscription cache service – getTimeUntilExpiration', 'error');
+            return null;
         }
     }
 
@@ -96,6 +208,11 @@ export class SubscriptionCacheService {
      */
     private async syncWithServer(data: SubscriptionCacheData): Promise<void> {
         try {
+            if (!data || typeof data.isPremium !== 'boolean') {
+                logger.error('Invalid data for syncing with server', 'subscription cache service – syncWithServer');
+                return;
+            }
+
             await userApiService.syncSubscription({
                 isPremium: data.isPremium,
                 isPremiumAI: data.isPremiumAI,
@@ -103,8 +220,9 @@ export class SubscriptionCacheService {
                 expirationDate: data.expirationDate,
                 productId: data.productId,
             });
+            logger.log('Subscription data synced with server', 'subscription cache service – syncWithServer');
         } catch (error) {
-            console.error('Ошибка при синхронизации подписки с сервером:', error);
+            logger.error(error, 'subscription cache service – syncWithServer', 'error');
             throw error;
         }
     }

@@ -6,18 +6,22 @@ export const API_ROUTES = {
     BASE: process.env.EXPO_PUBLIC_API_URL || 'https://api.method.do',
     AUTH: {
         REFRESH_TOKEN: '/api/token/refresh/',
-        CHECK_EMAIL: '/apiV2/auth/check-email/',
-        FORGOT_PASSWORD: 'api/v2/auth/forgotpassword/sendcode/',
-        CHECK_CODE: 'api/v2/auth/forgotpassword/checkcode/',
-        SET_PASSWORD: 'api/v2/auth/forgotpassword/setpassword/',
-        LOGIN: '/apiV2/auth/login/',
-        REGISTER: '/apiV2/auth/register/',
-        CHECK_AUTH: '/apiV2/user/checkAuthenticate/',
-        LOGOUT: '/apiV2/auth/logout/',
+        CHECK_EMAIL: '/api/v2/auth/check-email/',
+        FORGOT_PASSWORD: '/api/v2/auth/forgotpassword/sendcode/',
+        CHECK_CODE: '/api/v2/auth/forgotpassword/checkcode/',
+        SET_PASSWORD: '/api/v2/auth/forgotpassword/setpassword/',
+        LOGIN: '/api/v2/auth/login/',
+        REGISTER: '/api/v2/auth/register/',
+        CHECK_AUTH: '/api/v2/auth/checkAuthenticate/',
+        LOGOUT: '/api/v2/auth/logout/',
+        CSRF_TOKEN: '/api/auth/csrf-token/',
+        GOOGLE_AUTH: '/api/google/login/',
+        GOOGLE_AUTH_CALLBACK: '/api/google/callback/mobile/',
+        APPLE_AUTH: '/api/apple/login/',
         // Добавляем маршруты для анонимных пользователей
         ANONYMOUS: {
             CREATE: '/api/v2/user/anonymous/',
-            CONVERT: '/api/v2/user/anonymous/convert/',
+            CONVERT: '/api/v2/user/convert/',
         },
     },
     FAVORITES: {
@@ -38,6 +42,7 @@ export const API_ROUTES = {
         UPDATE_PHOTO: '/api/user/upload_profile_photo/',
         update: (id: number) => `${API_ROUTES.USER.BASE}${id}/`,
         SUBSCRIPTION: '/api/user/app/subscription/',
+        VERIFY_SUBSCRIPTION: '/api/user/app/subscription/verify/',
     },
     PLANS: {
         TASKS: '/api/v1/plans/tasks/',
@@ -63,4 +68,5 @@ export const API_ROUTES = {
         EVENING_REFLECTION: '/api/diary/evening-reflections/',
         START_DAY: '/api/diary/start-day/',
     },
+    ERROR_REPORT: '/api/mobile/error-report/',
 } as const;

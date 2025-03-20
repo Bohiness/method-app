@@ -10,8 +10,7 @@ import { View } from '@shared/ui/view'
 import { router } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { KeyboardAvoidingView, Platform, Pressable } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Pressable } from 'react-native'
 
 interface ProjectCreateOrUpdateModalProps {
     project?: ProjectType
@@ -28,8 +27,7 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
     const [description, setDescription] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [selectedColor, setSelectedColor] = useState('')
-    const { keyboardHeight, isKeyboardVisible, dismissKeyboard } = useKeyboard()
-    const insets = useSafeAreaInsets()
+    const { dismissKeyboard, isKeyboardVisible } = useKeyboard()
 
     const isEditMode = !!project
 
@@ -86,77 +84,68 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
     }, [isVisible])
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1"
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 44 : 0}
-        >
-            <Pressable
-                className="flex-1"
-                onPress={dismissKeyboard}
-            >
-                <View variant='default' className="flex-1 gap-y-4 justify-between">
-                    <View className="px-4 gap-y-4">
-                        <Title>
-                            {isEditMode
-                                ? t('plans.projects.editProject.title')
-                                : t('plans.projects.createProject.title')
-                            }
-                        </Title>
+        <Pressable onPress={dismissKeyboard} className='flex-1'>
+            <View variant='default' className="flex-1 justify-between">
+                <View className="px-4 gap-y-4">
+                    <Title>
+                        {isEditMode
+                            ? t('plans.projects.editProject.title')
+                            : t('plans.projects.createProject.title')
+                        }
+                    </Title>
 
-                        <TextInput
-                            label={t('plans.projects.form.nameLabel')}
-                            value={name}
-                            onChangeText={setName}
-                            placeholder={t('plans.projects.form.namePlaceholder')}
-                        />
+                    <TextInput
+                        label={t('plans.projects.form.nameLabel')}
+                        value={name}
+                        onChangeText={setName}
+                        placeholder={t('plans.projects.form.namePlaceholder')}
+                    />
 
-                        <TextInput
-                            label={t('plans.projects.form.descriptionLabel')}
-                            value={description}
-                            onChangeText={setDescription}
-                            placeholder={t('plans.projects.form.descriptionPlaceholder')}
-                            multiline
-                            numberOfLines={4}
-                            voiceInput
-                        />
+                    <TextInput
+                        label={t('plans.projects.form.descriptionLabel')}
+                        value={description}
+                        onChangeText={setDescription}
+                        placeholder={t('plans.projects.form.descriptionPlaceholder')}
+                        multiline
+                        numberOfLines={4}
+                        voiceInput
+                    />
 
-                        <ColorPicker
-                            selectedColor={selectedColor}
-                            onSelectColor={setSelectedColor}
-                            label={t('plans.projects.form.selectColor')}
-                        />
+                    <ColorPicker
+                        selectedColor={selectedColor}
+                        onSelectColor={setSelectedColor}
+                        label={t('plans.projects.form.selectColor')}
+                    />
 
-                    </View>
-                    <View className='px-4' style={{ marginBottom: insets.bottom }}>
-                        <Button
-                            onPress={handleSubmit}
-                            loading={isLoading}
-                            disabled={!name.trim()}
-                        >
-                            {isEditMode
-                                ? t('plans.projects.editProject.saveButton')
-                                : t('plans.projects.createProject.createButton')
-                            }
-                        </Button>
-                    </View>
                 </View>
-            </Pressable>
-            {isKeyboardVisible && (
-                <View
-                    className="absolute right-4"
-                    style={{ bottom: keyboardHeight + 16 }}
-                >
+                {!isKeyboardVisible && (<View className='px-4'>
                     <Button
                         onPress={handleSubmit}
                         loading={isLoading}
                         disabled={!name.trim()}
-                        variant="outline"
                     >
-                        {t('common.save')}
+                        {isEditMode
+                            ? t('plans.projects.editProject.saveButton')
+                            : t('plans.projects.createProject.createButton')
+                        }
                     </Button>
                 </View>
-            )}
-        </KeyboardAvoidingView>
+                )}
+
+                {isKeyboardVisible && (
+                    <View className='px-4 flex-row justify-end' style={{ marginBottom: 16 }}>
+                        <Button
+                            onPress={handleSubmit}
+                            disabled={!name.trim()}
+                            variant='outline'
+                            leftIcon='ChevronRight'
+                            className='w-fit'
+                        />
+                    </View>
+                )}
+
+            </View >
+        </Pressable>
+
     )
 }

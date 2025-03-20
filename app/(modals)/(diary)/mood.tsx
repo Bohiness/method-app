@@ -2,8 +2,7 @@ import { NavigationIndependentTree } from '@react-navigation/native'
 import { useNavigation } from 'expo-router'
 import React, { useLayoutEffect, useState } from 'react'
 import { View } from 'react-native'
-import { StepNavigatorMood } from './mood/StepNavigator'
-
+import StepNavigatorMood from './mood/StepNavigator'
 export default function Mood() {
     const [currentStep, setCurrentStep] = useState(1)
     const navigation = useNavigation()

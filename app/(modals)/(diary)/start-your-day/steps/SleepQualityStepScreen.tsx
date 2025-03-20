@@ -7,9 +7,9 @@ import { StartYourDayStackParamList } from '../StepNavigator'
 
 type Props = NativeStackScreenProps<StartYourDayStackParamList, 'SleepQualityStep'>
 
-export const SleepQualityStepScreen = (
+export default function SleepQualityStepScreen(
     { route, navigation }: Props
-) => {
+) {
     const { date } = route.params
     const [screen1Response, setScreen1Response] = useState(50)
 

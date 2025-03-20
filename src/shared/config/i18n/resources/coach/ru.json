@@ -102,5 +102,11 @@
         "executiveCoaching": "Коучинг руководителей",
         "lifeCoaching": "Лайф-коучинг",
         "financialCoaching": "Финансовый коучинг"
+    },
+    "maritalStatus": {
+        "single": "Не женат/не замужем",
+        "married": "Женат/замужем",
+        "divorced": "Разведен/разведена",
+        "widowed": "Вдовец/вдова"
     }
 }

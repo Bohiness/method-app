@@ -1,10 +1,10 @@
 import { useTheme } from '@shared/context/theme-provider'
+import { useMood } from '@shared/hooks/diary/mood/useMood'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { Slider } from '@shared/ui/slider'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import * as Haptics from 'expo-haptics'
-import { Angry, Frown, Laugh, Meh, Smile } from 'lucide-react-native'
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
@@ -22,38 +22,6 @@ interface MoodLevelStepProps {
   onNextStep?: () => void
 }
 
-export const moods = [
-  {
-    level: 1,
-    label: 'diary.mood.moods.terrible',
-    icon: (color: string) => <Angry size={32} color={color} />,
-    range: [1, 20],
-  },
-  {
-    level: 2,
-    label: 'diary.mood.moods.bad',
-    icon: (color: string) => <Frown size={32} color={color} />,
-    range: [21, 40],
-  },
-  {
-    level: 3,
-    label: 'diary.mood.moods.normal',
-    icon: (color: string) => <Meh size={32} color={color} />,
-    range: [41, 60],
-  },
-  {
-    level: 4,
-    label: 'diary.mood.moods.good',
-    icon: (color: string) => <Smile size={32} color={color} />,
-    range: [61, 80],
-  },
-  {
-    level: 5,
-    label: 'diary.mood.moods.excellent',
-    icon: (color: string) => <Laugh size={32} color={color} />,
-    range: [81, 100],
-  },
-]
 
 export function MoodLevelStep({
   value,
@@ -65,6 +33,8 @@ export function MoodLevelStep({
   const { t } = useTranslation()
   const { isDark } = useTheme()
   const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+  const { moods } = useMood()
+
   const [sliderValue, setSliderValue] = useState(() => {
     const initialMood = moods.find(m => m.level === value)
     return initialMood ? (initialMood.range[0] + initialMood.range[1]) / 2 : 50

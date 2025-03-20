@@ -42,6 +42,9 @@ export const useLoginForm = (nextPage?: string, isExpertPage = false) => {
     const [loginLikeExpert, setLoginLikeExpert] = useState(false);
     const [errors, setErrors] = useState<ErrorState>({});
     const [emailChecked, setEmailChecked] = useState(false);
+    const [checkingEmail, setCheckingEmail] = useState(false);
+    const [loggingIn, setLoggingIn] = useState(false);
+    const [registering, setRegistering] = useState(false);
 
     // Мутация для проверки email
     const checkEmailMutation = useMutation({
@@ -92,6 +95,7 @@ export const useLoginForm = (nextPage?: string, isExpertPage = false) => {
             return;
         }
 
+        setCheckingEmail(true);
         try {
             const result = await checkEmailMutation.mutateAsync(email);
             if (result.status === 'register') {
@@ -108,6 +112,8 @@ export const useLoginForm = (nextPage?: string, isExpertPage = false) => {
             console.error('Check email error:', error);
             setErrors({ send: handleErrorMessage(error) });
             setEmailChecked(false);
+        } finally {
+            setCheckingEmail(false);
         }
     }, [email, t, checkEmailMutation, handleErrorMessage]);
 
@@ -121,6 +127,7 @@ export const useLoginForm = (nextPage?: string, isExpertPage = false) => {
             return;
         }
 
+        setLoggingIn(true);
         try {
             await signIn({ email, password });
 
@@ -128,13 +135,15 @@ export const useLoginForm = (nextPage?: string, isExpertPage = false) => {
             await storage.set('last-email', email);
 
             // Редирект после успешного входа
+            router.navigate('/(tabs)');
             router.dismissAll();
-            router.push(returnTo);
         } catch (error) {
             console.error('Login error:', error);
             setErrors({ send: handleErrorMessage(error) });
+        } finally {
+            setLoggingIn(false);
         }
-    }, [email, password, signIn, loginLikeExpert, returnTo, router, handleErrorMessage]);
+    }, [email, password, signIn, returnTo, router, handleErrorMessage]);
 
     const handleRegister = useCallback(async () => {
         if (!password) {
@@ -158,15 +167,29 @@ export const useLoginForm = (nextPage?: string, isExpertPage = false) => {
             lastName,
         };
 
+        setRegistering(true);
         try {
             await convertToRegistered(userData);
+            router.navigate('/(tabs)');
             router.dismissAll();
-            router.replace(returnTo);
         } catch (error) {
             console.error('Register error:', error);
             setErrors({ send: handleErrorMessage(error) });
+        } finally {
+            setRegistering(false);
         }
-    }, [email, password, name, firstName, lastName, isExpertPage, returnTo, router, handleErrorMessage]);
+    }, [
+        email,
+        password,
+        name,
+        firstName,
+        lastName,
+        isExpertPage,
+        returnTo,
+        router,
+        handleErrorMessage,
+        convertToRegistered,
+    ]);
 
     const handleSubmit = useCallback(async () => {
         setErrors({});
@@ -189,7 +212,7 @@ export const useLoginForm = (nextPage?: string, isExpertPage = false) => {
         return password.length >= 8 && /\d/.test(password) && /[A-Z]/.test(password);
     }, [password]);
 
-    const isLoading = checkEmailMutation.isPending;
+    const isLoading = checkEmailMutation.isPending || checkingEmail || loggingIn || registering;
 
     const isSuccess = checkEmailMutation.isSuccess;
 

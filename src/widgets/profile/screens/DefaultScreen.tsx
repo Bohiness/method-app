@@ -1,4 +1,3 @@
-import { useUser } from '@shared/context/user-provider'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { MenuItem } from '@shared/ui/modals/menu-item'
 import { Title } from '@shared/ui/text'
@@ -12,7 +11,6 @@ interface DefaultScreenProps {
 
 export const DefaultScreen = ({ onNavigate }: DefaultScreenProps) => {
     const { t } = useTranslation()
-    const { user } = useUser()
 
     return (
         <View>
@@ -25,8 +23,6 @@ export const DefaultScreen = ({ onNavigate }: DefaultScreenProps) => {
                     </Title>
 
                     <SubscriptionCard />
-
-                    {/* <ProfilePreview onPress={() => onNavigate('profile')} /> */}
 
                     <View className="gap-y-3 mt-6">
                         <MenuItem

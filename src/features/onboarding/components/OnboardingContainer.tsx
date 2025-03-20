@@ -18,11 +18,10 @@ const OnboardingContent = () => {
     } = useOnboarding()
 
     const screenConfig = screens.find(s => s.key === currentScreen)
-    if (!screenConfig) return null
     const { t } = useTranslation()
-
-    const ScreenComponent = screenConfig.component
     const insets = useSafeAreaInsets()
+    if (!screenConfig) return null
+    const ScreenComponent = screenConfig.component
 
     return (
         <BackgroundWithNoise className="flex-1 bg-surface-paper dark:bg-surface-paper-dark" >

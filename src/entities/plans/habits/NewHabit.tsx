@@ -19,20 +19,22 @@ interface NewHabitModalProps {
 
 export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) {
     const { createHabit } = useHabits()
-
     const { t } = useTranslation()
     const { keyboardHeight, isKeyboardVisible, dismissKeyboard } = useKeyboard()
-
-    if (!isVisible) return null
 
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [color, setColor] = useState('#000000')
     const [icon, setIcon] = useState('')
-    const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('daily')
+    const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily')
+    const [useCustomFrequency, setUseCustomFrequency] = useState(false)
     const [dailyTarget, setDailyTarget] = useState(1)
     const [customIntervalDays, setCustomIntervalDays] = useState<number | ''>('')
     const [isLoading, setIsLoading] = useState(false)
+    const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>([])
+    const [selectedMonthDays, setSelectedMonthDays] = useState<(number | 'last')[]>([])
+
+    if (!isVisible) return null
 
     const handleSubmit = async () => {
         if (!title.trim()) return
@@ -41,12 +43,11 @@ export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) 
         try {
             const newHabit = await createHabit.mutateAsync({
                 title: title.trim(),
-                description: description.trim(),
                 color,
                 icon,
-                frequency,
+                frequency: useCustomFrequency ? 'custom' : frequency,
                 daily_target: dailyTarget,
-                custom_interval_days: frequency === 'custom' ? Number(customIntervalDays) : undefined,
+                custom_interval_days: useCustomFrequency ? Number(customIntervalDays) : undefined,
             })
             onSuccess(newHabit)
         } catch (error) {
@@ -63,8 +64,11 @@ export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) 
         setColor('#000000')
         setIcon('')
         setFrequency('daily')
+        setUseCustomFrequency(false)
         setDailyTarget(1)
         setCustomIntervalDays('')
+        setSelectedWeekDays([])
+        setSelectedMonthDays([])
     }
 
     useEffect(() => {
@@ -117,11 +121,41 @@ export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) 
 
                         <CycleSelectionButton
                             initialCycle={frequency}
+                            initialWeekDays={selectedWeekDays}
+                            initialMonthDays={selectedMonthDays}
                             onSelect={(cycle, selectedDays) => {
                                 setFrequency(cycle)
-                                setSelectedDays(selectedDays)
+                                if (cycle === 'weekly' && selectedDays) {
+                                    setSelectedWeekDays(selectedDays as number[])
+                                } else if (cycle === 'monthly' && selectedDays) {
+                                    setSelectedMonthDays(selectedDays as (number | 'last')[])
+                                }
                             }}
                         />
+
+                        <View className="flex-row items-center gap-x-2 mt-2">
+                            <Button
+                                onPress={() => setUseCustomFrequency(!useCustomFrequency)}
+                                variant={useCustomFrequency ? 'default' : 'outline'}
+                                size="sm"
+                            >
+                                {t('plans.habits.newHabit.customFrequency', 'Пользовательская частота')}
+                            </Button>
+
+                            {useCustomFrequency && (
+                                <TextInput
+                                    placeholder={t('plans.habits.newHabit.daysInterval', 'Интервал в днях')}
+                                    value={customIntervalDays.toString()}
+                                    onChangeText={(text) => {
+                                        const value = text.replace(/[^0-9]/g, '')
+                                        setCustomIntervalDays(value === '' ? '' : Number(value))
+                                    }}
+                                    keyboardType="numeric"
+                                    className="flex-1"
+                                    size="sm"
+                                />
+                            )}
+                        </View>
                     </View>
                     <View
                         className="flex-row justify-between items-center py-4 px-2 border-t border-border dark:border-border-dark"

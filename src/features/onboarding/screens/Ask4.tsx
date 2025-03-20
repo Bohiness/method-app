@@ -1,40 +1,42 @@
 import { Button } from '@shared/ui/button'
-import { Input } from '@shared/ui/input'
+import { CheckboxGroup } from '@shared/ui/checkbox-group'
 import { Text, Title } from '@shared/ui/text'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Keyboard, TouchableWithoutFeedback, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOnboarding } from '../context/OnboardingContext'
-
 
 export const Ask4Screen = () => {
     const { setNextScreen, updateOnboardingData } = useOnboarding()
     const { t } = useTranslation()
     const insets = useSafeAreaInsets()
-    const [firstName, setFirstName] = useState<string>('')
-    const [isValid, setIsValid] = useState(false)
+    const [selectedFocuses, setSelectedFocuses] = useState<string[]>([])
 
-    const handleNameChange = (value: string) => {
-        setFirstName(value)
-        setIsValid(value.trim().length >= 2)
+    // Обновленная функция для обработки множественного выбора
+    const handleFocusSelect = (values: string[]) => {
+        setSelectedFocuses(values)
+        updateOnboardingData({ focuses: values })
     }
 
+    // Функция для перехода на следующий экран
     const handleContinue = () => {
-        if (isValid) {
-            updateOnboardingData({ first_name: firstName.trim() })
+        if (selectedFocuses.length > 0) {
             setNextScreen()
         }
     }
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="flex-1 bg-white dark:bg-black top-20" style={{
+        <View
+            className="flex-1 flex justify-between top-20"
+            style={{
                 paddingTop: insets.top,
                 paddingBottom: insets.bottom
-            }}>
-                {/* Заголовок и описание */}
+            }}
+        >
+            {/* Верхняя часть с заголовком и описанием */}
+            <View className="flex-1">
                 <Animated.View
                     className="flex justify-center px-6"
                     entering={SlideInRight.duration(800)}
@@ -44,7 +46,7 @@ export const Ask4Screen = () => {
                         weight='bold'
                         className="text-center mb-4"
                     >
-                        {t('screens.onboarding.ask4.title')}
+                        {t('screens.onboarding.ask3.title')}
                     </Title>
 
                     <Text
@@ -52,43 +54,47 @@ export const Ask4Screen = () => {
                         variant="secondary"
                         className="text-center mb-8"
                     >
-                        {t('screens.onboarding.ask4.description')}
+                        {t('screens.onboarding.ask3.description')}
                     </Text>
                 </Animated.View>
 
-                {/* Поле ввода */}
+                {/* Анимированный контейнер для чекбоксов */}
                 <Animated.View
-                    className="flex-1 px-6"
+                    className="flex justify-center px-6"
                     entering={FadeIn.delay(400).duration(800)}
                 >
-                    <Input
-                        label={t('screens.onboarding.ask4.label')}
-                        placeholder={t('screens.onboarding.ask4.placeholder')}
-                        value={firstName}
-                        onChangeText={handleNameChange}
-                        autoFocus
-                        returnKeyType="done"
-                        onSubmitEditing={handleContinue}
-                        className="mb-8"
-                        inputClassName="bg-background dark:bg-background-dark text-text dark:text-text-dark"
+                    <CheckboxGroup
+                        options={[
+                            { label: t('screens.onboarding.ask3.option1'), value: 'work' },
+                            { label: t('screens.onboarding.ask3.option2'), value: 'personal' },
+                            { label: t('screens.onboarding.ask3.option3'), value: 'relationships' },
+                            { label: t('screens.onboarding.ask3.option4'), value: 'health' },
+                            { label: t('screens.onboarding.ask3.option5'), value: 'finance' },
+                            { label: t('screens.onboarding.ask3.option6'), value: 'other' },
+                        ]}
+                        values={selectedFocuses}
+                        onChange={handleFocusSelect}
+                        containerClassName="bg-background dark:bg-background-dark"
+                        checkboxClassName="px-6 py-6"
+                        textSize="lg"
                     />
                 </Animated.View>
-
-                {/* Кнопка внизу */}
-                <Animated.View
-                    className="px-6 mb-10"
-                    entering={FadeIn.delay(400).duration(800)}
-                >
-                    <Button
-                        onPress={handleContinue}
-                        className="w-fit self-center px-20 mb-10"
-                        size='lg'
-                        disabled={!isValid}
-                    >
-                        {t('common.continue')}
-                    </Button>
-                </Animated.View>
             </View>
-        </TouchableWithoutFeedback>
+
+            {/* Кнопка продолжить внизу экрана */}
+            <Animated.View
+                className="px-6 pb-20"
+                entering={FadeIn.delay(400).duration(800)}
+            >
+                <Button
+                    onPress={handleContinue}
+                    className="w-fit self-center px-20"
+                    size='lg'
+                    disabled={selectedFocuses.length === 0}
+                >
+                    {t('common.continue')}
+                </Button>
+            </Animated.View>
+        </View>
     )
 }

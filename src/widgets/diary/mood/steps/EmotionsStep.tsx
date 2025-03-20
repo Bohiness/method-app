@@ -1,4 +1,5 @@
 import { useTheme } from '@shared/context/theme-provider'
+import { useMood } from '@shared/hooks/diary/mood/useMood'
 import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Button } from '@shared/ui/button'
 import { Text, Title } from '@shared/ui/text'
@@ -7,7 +8,6 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, ScrollView, View } from 'react-native'
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated'
-import { moods } from './MoodLevelStep'
 
 interface EmotionsStepProps {
     emotions: Emotion[]
@@ -26,8 +26,7 @@ export function EmotionsStep({
     onNextStep,
     onBackStep
 }: EmotionsStepProps) {
-    console.log('selectedEmotions', selectedEmotions)
-    console.log('moodLevel', moodLevel)
+    const { moods } = useMood()
     const [selectedMood, setSelectedMood] = useState<number>(moodLevel)
     const [filteredEmotions, setFilteredEmotions] = useState<Emotion[]>([])
     const { t } = useTranslation()

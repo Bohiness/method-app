@@ -2,11 +2,10 @@
 import { Slider } from '@shared/ui/slider'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import { TransitionScreenProps } from '@widgets/transitions/TransitionContext'
 import * as Haptics from 'expo-haptics'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Animated, { Layout } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated'
 
 type SleepRange = {
     range: [number, number]
@@ -21,7 +20,7 @@ const sleepRanges: SleepRange[] = [
     { range: [81, 100], value: 5 },
 ]
 
-interface SleepQualityStepProps extends TransitionScreenProps {
+interface SleepQualityStepProps {
     initialValue?: number
     onChange?: (value: number) => void
 }
@@ -88,7 +87,12 @@ export const SleepQualityStep: React.FC<SleepQualityStepProps> = ({
 
             <View className="flex-row justify-between px-4 mb-6">
                 <Title className="mt-4 text-center">
-                    <Animated.Text layout={Layout.springify()}>
+                    <Animated.Text
+                        key={currentRange.value}
+                        layout={Layout.springify()}
+                        entering={FadeIn.duration(300)}
+                        exiting={FadeOut.duration(300)}
+                    >
                         {t(`diary.startday.sleep.quality.${currentRange.value}`)}
                     </Animated.Text>
                 </Title>

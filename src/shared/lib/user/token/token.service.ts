@@ -15,17 +15,17 @@ class TokenService {
      */
     async getSession(): Promise<AuthTokensType | null> {
         try {
-            logger.debug('TokenService: Getting session...');
+            logger.debug('TokenService: Getting session...', 'token service – getSession');
             const session = await storage.get<AuthTokensType>(this.SESSION_KEY, true);
 
             if (!this.isValidSession(session)) {
-                logger.debug('TokenService: No session found');
+                logger.debug('TokenService: No session found', 'token service – getSession');
                 return null;
             }
 
             return session;
         } catch (error) {
-            logger.error('TokenService: Error getting session:', error);
+            logger.error(error, 'token service – getSession', 'Error getting session:');
             return null;
         }
     }
@@ -35,7 +35,7 @@ class TokenService {
      */
     async setSession(newTokens: AuthTokensType): Promise<void> {
         try {
-            logger.debug('TokenService: Setting new session...');
+            logger.debug('TokenService: Setting new session...', 'token service – setSession');
 
             const tokens: AuthTokensType = {
                 access: newTokens.access,
@@ -44,14 +44,14 @@ class TokenService {
             };
 
             if (!tokens.access || !tokens.refresh) {
-                logger.error('TokenService: Invalid token data', tokens);
+                logger.error('TokenService: Invalid token data', 'token service – setSession');
                 throw new Error('Invalid token data');
             }
 
             await storage.set(this.SESSION_KEY, tokens, true);
-            logger.debug('TokenService: Session set successfully');
+            logger.debug('TokenService: Session set successfully', 'token service – setSession');
         } catch (error) {
-            logger.error('TokenService: Error setting session:', error);
+            logger.error(error, 'token service – setSession', 'Error setting session:');
             throw error;
         }
     }
@@ -68,7 +68,7 @@ class TokenService {
             const bufferTime = 60 * 1000;
             return !session.access || (session.expiresAt ? Date.now() + bufferTime >= session.expiresAt : false);
         } catch (error) {
-            logger.error('TokenService: Error checking refresh:', error);
+            logger.error(error, 'token service – shouldRefreshToken', 'Error checking refresh:');
             return true;
         }
     }
@@ -81,7 +81,7 @@ class TokenService {
             const session = await this.getSession();
             return session?.refresh || null;
         } catch (error) {
-            logger.error('TokenService: Error getting refresh token:', error);
+            logger.error(error, 'token service – getRefreshToken', 'Error getting refresh token:');
             return null;
         }
     }
@@ -91,11 +91,11 @@ class TokenService {
      */
     async clearSession(): Promise<void> {
         try {
-            logger.debug('TokenService: Clearing session...');
+            logger.debug('TokenService: Clearing session...', 'token service – clearSession');
             await storage.remove(this.SESSION_KEY);
-            logger.debug('TokenService: Session cleared successfully');
+            logger.debug('TokenService: Session cleared successfully', 'token service – clearSession');
         } catch (error) {
-            logger.error('TokenService: Error clearing session:', error);
+            logger.error(error, 'token service – clearSession', 'Error clearing session:');
             throw error;
         }
     }

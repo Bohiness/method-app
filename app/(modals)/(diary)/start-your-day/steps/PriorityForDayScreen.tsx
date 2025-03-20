@@ -9,9 +9,9 @@ import { StartYourDayStackParamList } from '../StepNavigator'
 
 type Props = NativeStackScreenProps<StartYourDayStackParamList, 'PriorityForDay'>
 
-export const PriorityForDayScreen = (
+export default function PriorityForDayScreen(
     { route, navigation }: Props
-) => {
+) {
     const [selectedFactors, setSelectedFactors] = useState<number[]>([])
     const { t } = useTranslation()
     const { date, sleepQuality } = route.params || {}
@@ -43,25 +43,26 @@ export const PriorityForDayScreen = (
     }
 
     return (
-        <View className='flex-1'>
-            <View className="p-4 flex-1 gap-y-8" variant='default'>
-                <Title align='center'>
-                    {t('diary.startday.priority.title')}
-                </Title>
-                <FactorsScrollView
-                    selectedFactors={selectedFactors}
-                    onSelect={handleFactorSelect}
-                    iconView
-                />
-                <BottomButton
-                    onNext={handleNextStep}
-                    enabledNextButton={isNextEnabled}
-                    canSkip={false}
-                    canBack={false}
-                    showButtonBlock={true}
-                    onBack={handleBackStep}
-                />
-            </View>
+        <View className='flex-1 gap-y-4' variant='default'>
+            <Title align='center'>
+                {t('diary.startday.priority.title')}
+            </Title>
+
+            <FactorsScrollView
+                selectedFactors={selectedFactors}
+                onSelect={handleFactorSelect}
+                iconView
+                search
+                showSelectedFactorsBadges
+            />
+            <BottomButton
+                onNext={handleNextStep}
+                enabledNextButton={isNextEnabled}
+                canSkip={false}
+                canBack={false}
+                showButtonBlock={true}
+                onBack={handleBackStep}
+            />
         </View>
     )
 }   

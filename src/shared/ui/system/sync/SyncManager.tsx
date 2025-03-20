@@ -16,15 +16,9 @@ export const SyncManager = () => {
 
     const syncOfflineData = async () => {
         try {
-            // Передаем queryClient в метод синхронизации
             await syncService.syncMoodCheckins(queryClient)
             await syncService.syncFavorites(queryClient)
             await plansSyncService.syncTasks(queryClient)
-
-            // В будущем добавьте другие типы данных
-            // await syncService.syncUserProfile();
-            // await syncService.syncSettings();
-            // и т.д.
         } catch (error) {
             console.error('Sync failed:', error)
         }

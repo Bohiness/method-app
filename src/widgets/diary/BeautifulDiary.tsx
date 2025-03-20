@@ -1,99 +1,71 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useEmotions } from '@shared/hooks/diary/mood/useEmotions'
 import { useFactors } from '@shared/hooks/diary/mood/useFactors'
-import { moodHelpers, useMoodHistory } from '@shared/hooks/diary/mood/useMoodCheckin'
-import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
+import { EveningReflectionType } from '@shared/types/diary/eveningreflection/EveningReflectionType'
 import { MoodCheckin } from '@shared/types/diary/mood/MoodType'
-import { Badge } from '@shared/ui/badge'
+import { StartDayType } from '@shared/types/diary/startday/StartDayType'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 
-// Компонент для отображения отдельной записи с использованием Badge для эмоций и факторов
-interface DiaryEntryCardProps {
-    entry: MoodCheckin
+import { EveningReflectionCard } from '@entities/diary/beautifulDiary/EveningReflectionCard'
+import { MoodEntryCard } from '@entities/diary/beautifulDiary/MoodEntryCard'
+import { StartDayCard } from '@entities/diary/beautifulDiary/StartDayCard'
+import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
+import {
+    CardSkeleton,
+    TextSkeleton
+} from '@shared/ui/skeleton'
+import { ScrollView } from 'react-native'
+import { DiaryEntry, useDiary } from '../../shared/hooks/diary/useDiary'
+
+// Компонент для отображения диаграммы записи с информацией о типе
+interface UniversalDiaryEntryProps {
+    diaryEntry: DiaryEntry
     emotions: any
     factors: any
     t: (key: string) => string
 }
 
-const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, emotions, factors, t }) => {
+const UniversalDiaryEntry: React.FC<UniversalDiaryEntryProps> = ({ diaryEntry, emotions, factors, t }) => {
     const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
 
+    // Форматирование времени создания
+    const timeFormatted = formateDataTimeWithTimezoneAndLocale(diaryEntry.created_at, 'HH:mm')
+
+    // Отображение в зависимости от типа записи
+    const renderEntry = () => {
+        switch (diaryEntry.type) {
+            case 'mood':
+                return (
+                    <MoodEntryCard
+                        entry={diaryEntry.data as MoodCheckin}
+                        emotions={emotions}
+                        factors={factors}
+                    />
+                )
+            case 'startDay':
+                return (
+                    <StartDayCard
+                        entry={diaryEntry.data as StartDayType}
+                    />
+                )
+            case 'eveningReflection':
+                return (
+                    <EveningReflectionCard
+                        entry={diaryEntry.data as EveningReflectionType}
+                    />
+                )
+            default:
+                return <Text>{t('diary.beautifuldiary.unknownEntry')}</Text>
+        }
+    }
+
     return (
-        <View key={entry.id} className="p-4 my-2 rounded-lg bg-surface-paper dark:bg-surface-paper-dark">
-            <Text weight='semibold' className="mb-1">
-                {t('diary.history.moodLevel')}: {entry.mood_level}
-            </Text>
-
-            {entry.emotions.length > 0 && (
-                <View className="mb-1">
-                    <Text weight='semibold' className="mb-2">
-                        {t('diary.history.emotions')}:
-                    </Text>
-                    <View className="flex flex-wrap gap-2">
-                        {entry.emotions.map(id => {
-                            const emotionName = moodHelpers.getEmotionName(emotions, id)
-                            if (!emotionName) return null
-                            return (
-                                <Badge
-                                    key={`emotion-${id}`}
-                                    variant='outline'
-                                    size='sm'
-                                >
-                                    {emotionName}
-                                </Badge>
-                            )
-                        })}
-                    </View>
-                </View>
-            )}
-
-            {entry.factors.length > 0 && (
-                <View className="mb-1">
-                    <Text weight='semibold' className="mb-2">
-                        {t('diary.history.factors')}:
-                    </Text>
-                    <View className="flex flex-wrap gap-2">
-                        {entry.factors.map(id => {
-                            const factorName = moodHelpers.getFactorName(factors, id)
-                            if (!factorName) return null
-                            return (
-                                <Badge
-                                    key={`factor-${id}`}
-                                    variant='outline'
-                                    size='sm'
-                                >
-                                    {factorName}
-                                </Badge>
-                            )
-                        })}
-                    </View>
-                </View>
-            )}
-
-            {entry.factor_review_notes && (
-                <View className="mb-1">
-                    <Text className="font-semibold">
-                        {t('diary.history.factorNotes')}:{' '}
-                    </Text>
-                    <Text>{entry.factor_review_notes}</Text>
-                </View>
-            )}
-
-            {entry.factor_emotion_review_notes && (
-                <View className="mb-1">
-                    <Text variant='secondary' size='sm'>
-                        {t('diary.history.emotionNotes')}:{' '}
-                    </Text>
-                    <Text>{entry.factor_emotion_review_notes}</Text>
-                </View>
-            )}
-
-            <Text variant='secondary' size='sm' className="mt-2">
-                {formateDataTimeWithTimezoneAndLocale(entry.created_at, 'HH:mm')}
-            </Text>
+        <View className="mb-4">
+            <Text variant='secondary' className="text-sm mb-1">{timeFormatted}</Text>
+            {renderEntry()}
         </View>
     )
 }
@@ -101,36 +73,50 @@ const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, emotions, factor
 // Основной компонент для отображения записей за последнюю неделю с добавлением прокрутки
 export function BeautifulDiary() {
     const { t } = useTranslation()
-    const { data: moodCheckins, isPending, error } = useMoodHistory()
     const { data: emotions } = useEmotions()
     const { factors } = useFactors()
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
-
-    const lastWeekEntries = useMemo(() => {
-        if (!moodCheckins || !Array.isArray(moodCheckins)) return {}
-
-        const now = new Date()
-        const weekAgo = new Date()
-        weekAgo.setDate(now.getDate() - 7)
-
-        const filtered = moodCheckins.filter(
-            entry => new Date(entry.created_at) >= weekAgo
-        )
-
-        return filtered.reduce((acc, entry) => {
-            const day = formateDataTimeWithTimezoneAndLocale(entry.created_at, 'dd MMMM')
-            if (!acc[day]) acc[day] = []
-            acc[day].push(entry)
-            return acc
-        }, {} as Record<string, MoodCheckin[]>)
-
-    }, [moodCheckins])
+    const { entriesByDay, isPending, error } = useDiary()
 
     if (isPending) {
         return (
-            <View className="p-4">
-                <Text>{t('common.loading')}</Text>
-            </View>
+            <ScrollView className="p-4" contentContainerStyle={{ flexGrow: 1 }}>
+                {/* Скелетон для первого дня */}
+                <View className="mb-6">
+                    <TextSkeleton size="lg" width="40%" className="mb-2" />
+
+                    {/* Несколько карточек записей */}
+                    <View className="mb-4">
+                        <TextSkeleton size="sm" width="15%" className="mb-1" />
+                        <CardSkeleton height={120} className="rounded-xl" />
+                    </View>
+
+                    <View className="mb-4">
+                        <TextSkeleton size="sm" width="15%" className="mb-1" />
+                        <CardSkeleton height={150} className="rounded-xl" />
+                    </View>
+                </View>
+
+                {/* Скелетон для второго дня */}
+                <View className="mb-6">
+                    <TextSkeleton size="lg" width="35%" className="mb-2" />
+
+                    {/* Несколько карточек записей */}
+                    <View className="mb-4">
+                        <TextSkeleton size="sm" width="15%" className="mb-1" />
+                        <CardSkeleton height={130} className="rounded-xl" />
+                    </View>
+
+                    <View className="mb-4">
+                        <TextSkeleton size="sm" width="15%" className="mb-1" />
+                        <CardSkeleton height={100} className="rounded-xl" />
+                    </View>
+
+                    <View className="mb-4">
+                        <TextSkeleton size="sm" width="15%" className="mb-1" />
+                        <CardSkeleton height={140} className="rounded-xl" />
+                    </View>
+                </View>
+            </ScrollView>
         )
     }
 
@@ -143,28 +129,27 @@ export function BeautifulDiary() {
     }
 
     return (
-        <View className="p-4 bg-gray-200 min-h-[800px] overflow-y-scroll">
-
-            {Object.entries(lastWeekEntries).map(([date, entries]) => (
-                <View key={date} className="mb-6">
-                    <Text className="text-xl font-semibold mb-2">{date}</Text>
-                    {entries.map(entry => (
-                        <DiaryEntryCard
-                            key={entry.id}
-                            entry={entry}
-                            emotions={emotions}
-                            factors={factors}
-                            t={t}
-                        />
-                    ))}
-                </View>
-            ))}
-
-            {Object.keys(lastWeekEntries).length === 0 && (
+        <ScrollView className="p-4" contentContainerStyle={{ flexGrow: 1 }}>
+            {Object.entries(entriesByDay).length > 0 ? (
+                Object.entries(entriesByDay).map(([date, entries]) => (
+                    <View key={date} className="mb-6">
+                        <Text className="text-xl font-semibold mb-2">{date}</Text>
+                        {entries.map(entry => (
+                            <UniversalDiaryEntry
+                                key={entry.id}
+                                diaryEntry={entry}
+                                emotions={emotions}
+                                factors={factors}
+                                t={t}
+                            />
+                        ))}
+                    </View>
+                ))
+            ) : (
                 <Text className="text-center text-gray-500">
                     {t('diary.history.noEntries')}
                 </Text>
             )}
-        </View>
+        </ScrollView>
     )
 } 

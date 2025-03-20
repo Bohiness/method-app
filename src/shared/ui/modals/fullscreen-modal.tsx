@@ -69,7 +69,7 @@ export const FullScreenModal: React.FC<FullScreenModalProps> = ({
                 entering={FadeIn.duration(300)}
                 exiting={FadeOut.duration(300)}
                 className="flex-1 bg-background dark:bg-background-dark"
-                style={[animatedStyle]}
+                style={animatedStyle}
             >
                 {showCloseButton && (
                     <View

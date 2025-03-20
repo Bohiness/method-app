@@ -54,9 +54,9 @@ export const BottomButton: React.FC<BottomButtonProps> = ({
         >
             <View
                 variant="default"
-                className={`pt-4 ${actualIsKeyboardVisible ? 'px-0' : 'px-6'}`}
+                className={`pt-4 ${actualIsKeyboardVisible ? 'px-4' : 'px-6'}`}
                 style={{
-                    paddingBottom: actualIsKeyboardVisible ? 0 : insets.bottom,
+                    paddingBottom: actualIsKeyboardVisible ? 16 : insets.bottom,
                     position: actualIsKeyboardVisible ? 'absolute' : 'relative',
                     bottom: actualIsKeyboardVisible ? keyboardHeight : 0,
                     left: 0,

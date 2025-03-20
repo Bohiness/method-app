@@ -7,14 +7,13 @@ import { LogData, LogLevel } from '../logger.types';
 import { BaseTransport } from './base.transport';
 
 export interface LogstashConfig {
-    host: string;
-    port: number;
     maxRetries: number;
     retryDelay: number;
     batchSize: number;
     flushInterval: number;
     enabled: boolean;
     levels: LogLevel[];
+    url: string;
 }
 
 export class LogstashTransport extends BaseTransport {
@@ -27,14 +26,13 @@ export class LogstashTransport extends BaseTransport {
     constructor(config: Partial<LogstashConfig> = {}) {
         super();
         this.config = {
-            host: process.env.EXPO_PUBLIC_LOGSTASH_HOST || '192.168.0.243',
-            port: Number(process.env.EXPO_PUBLIC_LOGSTASH_PORT) || 5044,
             maxRetries: 3,
             retryDelay: 5000,
             batchSize: 100,
             flushInterval: 5000,
             enabled: true,
-            levels: ['DEBUG', 'INFO', 'WARN', 'ERROR', 'COMPONENT', 'API', 'HTTP', 'CUSTOM', 'TABLE', 'JSON', 'GROUP'],
+            levels: ['ERROR', 'WARN'],
+            url: 'https://api.method.do/logs/api/add/',
             ...config,
         };
 
@@ -96,7 +94,7 @@ export class LogstashTransport extends BaseTransport {
                 },
             };
 
-            const response = await fetch(`http://${this.config.host}:${this.config.port}`, {
+            const response = await fetch(this.config.url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,6 +125,10 @@ export class LogstashTransport extends BaseTransport {
     }
 
     async write(data: LogData): Promise<void> {
+        if (!this.config.levels.includes(data.level)) {
+            return;
+        }
+
         this.queue.push(data);
 
         if (this.queue.length >= this.config.batchSize && networkService.getConnectionStatus()) {

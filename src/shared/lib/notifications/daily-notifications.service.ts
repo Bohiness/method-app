@@ -18,8 +18,8 @@ const getDeviceLocale = (): string => {
 };
 
 // Идентификаторы для наших уведомлений
-const MORNING_NOTIFICATION_ID = 'morning-notification';
-const EVENING_NOTIFICATION_ID = 'evening-notification';
+export const MORNING_NOTIFICATION_ID = 'morning-notification';
+export const EVENING_NOTIFICATION_ID = 'evening-notification';
 
 // Тексты для утренних уведомлений (можно добавить больше вариантов)
 const MORNING_TITLES = {
@@ -52,6 +52,24 @@ const EVENING_BODIES = {
 };
 
 class DailyNotificationsService {
+    // Время уведомлений по умолчанию
+    private morningHour = 8;
+    private morningMinute = 0;
+    private eveningHour = 20;
+    private eveningMinute = 0;
+
+    // Метод для установки времени утреннего уведомления
+    setMorningTime(hour: number, minute: number) {
+        this.morningHour = hour;
+        this.morningMinute = minute;
+    }
+
+    // Метод для установки времени вечернего уведомления
+    setEveningTime(hour: number, minute: number) {
+        this.eveningHour = hour;
+        this.eveningMinute = minute;
+    }
+
     // Получение случайного текста из массива
     private getRandomText(texts: Record<string, string[]>): string {
         const locale = getDeviceLocale() as keyof typeof texts;
@@ -63,7 +81,7 @@ class DailyNotificationsService {
     // Создание триггера для ежедневного уведомления в указанное время
     private createDailyTrigger(hour: number, minute: number): Notifications.NotificationTriggerInput {
         return {
-            type: SchedulableTriggerInputTypes.CALENDAR,
+            type: SchedulableTriggerInputTypes.CALENDAR, // Используем CALENDAR вместо TIME
             hour: hour,
             minute: minute,
             repeats: true,
@@ -71,37 +89,46 @@ class DailyNotificationsService {
     }
 
     // Настройка утреннего уведомления
-    async scheduleMorningNotification(): Promise<string> {
+    async scheduleMorningNotification(customHour?: number, customMinute?: number): Promise<string> {
         // Отменяем предыдущее утреннее уведомление, если оно существует
         await this.cancelMorningNotification();
 
         const title = this.getRandomText(MORNING_TITLES);
         const body = this.getRandomText(MORNING_BODIES);
 
+        // Используем пользовательское время или время по умолчанию
+        const hour = customHour !== undefined ? customHour : this.morningHour;
+        const minute = customMinute !== undefined ? customMinute : this.morningMinute;
+
         const notification: LocalNotification = {
+            id: MORNING_NOTIFICATION_ID,
             title,
             body,
             data: { type: 'morning_reflection', screen: 'StartYourDay' },
-            trigger: this.createDailyTrigger(8, 55),
+            trigger: this.createDailyTrigger(hour, minute),
         };
 
         return await notificationsService.scheduleLocalNotification(notification);
     }
 
     // Настройка вечернего уведомления
-    async scheduleEveningNotification(): Promise<string> {
+    async scheduleEveningNotification(customHour?: number, customMinute?: number): Promise<string> {
         // Отменяем предыдущее вечернее уведомление, если оно существует
         await this.cancelEveningNotification();
 
         const title = this.getRandomText(EVENING_TITLES);
         const body = this.getRandomText(EVENING_BODIES);
 
+        // Используем пользовательское время или время по умолчанию
+        const hour = customHour !== undefined ? customHour : this.eveningHour;
+        const minute = customMinute !== undefined ? customMinute : this.eveningMinute;
+
         const notification: LocalNotification = {
             id: EVENING_NOTIFICATION_ID,
             title,
             body,
             data: { type: 'evening_reflection', screen: 'EveningReflection' },
-            trigger: this.createDailyTrigger(20, 55),
+            trigger: this.createDailyTrigger(hour, minute),
         };
 
         return await notificationsService.scheduleLocalNotification(notification);
@@ -109,11 +136,21 @@ class DailyNotificationsService {
 
     // Отмена утреннего уведомления
     async cancelMorningNotification(): Promise<void> {
-        const notifications = await notificationsService.getScheduledNotifications();
-        const morningNotification = notifications.find(n => n.data && (n.data as any).type === 'morning_reflection');
+        try {
+            // Сначала пробуем отменить по известному ID
+            await notificationsService.cancelNotification(MORNING_NOTIFICATION_ID);
+        } catch {
+            // Если не получилось, поищем по типу (как запасной вариант)
+            const notifications = await notificationsService.getScheduledNotifications();
+            const morningNotifications = notifications.filter(
+                n => n.data && (n.data as any).type === 'morning_reflection'
+            );
 
-        if (morningNotification && morningNotification.id) {
-            await notificationsService.cancelNotification(morningNotification.id);
+            for (const notification of morningNotifications) {
+                if (notification.id) {
+                    await notificationsService.cancelNotification(notification.id);
+                }
+            }
         }
     }
 

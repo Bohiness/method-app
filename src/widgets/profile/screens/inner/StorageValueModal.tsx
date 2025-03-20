@@ -122,6 +122,7 @@ export const StorageValueModal = ({ storageKey, value, size }: StorageValueModal
 
     return (
         <View
+            variant="default"
             className="flex-1"
             style={{
                 paddingTop: insets.top,
@@ -154,7 +155,7 @@ export const StorageValueModal = ({ storageKey, value, size }: StorageValueModal
             </View>
 
             {/* Значение */}
-            <View className="flex-1 bg-surface-paper dark:bg-surface-paper-dark rounded-lg p-4">
+            <View className="flex-1 rounded-lg p-4">
                 <ScrollView
                     className="flex-1"
                     showsVerticalScrollIndicator={true}

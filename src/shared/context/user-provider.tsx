@@ -1,11 +1,16 @@
 // src/shared/context/user-provider.tsx
 import { authApiService } from '@shared/api/auth/auth-api.service'
 import { userApiService } from '@shared/api/user/user-api.service'
+import { QUERY_KEYS } from '@shared/constants/QUERY_KEYS'
+import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS'
+import { logger } from '@shared/lib/logger/logger.service'
 import { useStorage } from '@shared/lib/storage/storage.service'
+import { subscriptionService } from '@shared/lib/subscription/subscription.service'
 import { anonymousUserService } from '@shared/lib/user/anonymous.service'
 import { tokenService } from '@shared/lib/user/token/token.service'
 import { UserType } from '@shared/types/user/UserType'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { router } from 'expo-router'
 import { createContext, useContext, useEffect, useState } from 'react'
 
 interface UserContextValue {
@@ -30,14 +35,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const signOutMutation = useMutation({
         mutationFn: async () => {
-            return authApiService.logout()
+            await authApiService.logout()
+            await subscriptionService.logout()
         },
-        onSuccess: async () => {
+        onSettled: async () => {
             queryClient.clear()
             setUser(null)
-            await storage.clear()
-            await signInAnonymously()
-        }
+            await storage.remove(STORAGE_KEYS.USER_DATA)
+            router.dismissAll()
+            try {
+                await signInAnonymously()
+                logger.debug('UserProvider: Successfully signed in anonymously after logout', 'user provider – signOut')
+            } catch (error) {
+                logger.error(error, 'user provider – signOut', 'UserProvider: Failed to sign in anonymously after logout:')
+            }
+        },
+        retry: false
     })
 
     const signInMutation = useMutation({
@@ -46,7 +59,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         onSuccess: async ({ user, tokens }) => {
             setUser(user)
-        }
+        },
+        retry: false
     })
 
     const signUpMutation = useMutation({
@@ -65,9 +79,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         onSuccess: async ({ user, tokens }) => {
             await tokenService.setSession(tokens)
-            await storage.set('user-data', user)
+            await storage.set(STORAGE_KEYS.USER_DATA, user)
             setUser(user)
-        }
+        },
+        retry: false
     })
 
     const convertToRegisteredMutation = useMutation({
@@ -76,25 +91,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         onSuccess: async ({ user: registeredUser }) => {
             setUser(registeredUser)
-            await storage.set('user-data', registeredUser)
+            await storage.set(STORAGE_KEYS.USER_DATA, registeredUser)
         }
     })
 
     const checkAuth = async () => {
-        console.debug('UserProvider: Checking authentication...')
+        logger.debug('UserProvider: Checking authentication...', 'user provider – checkAuth')
 
         const session = await tokenService.getSession()
-        console.debug('UserProvider: Session status:', !!session)
+        logger.debug(session, 'user provider – checkAuth', 'UserProvider: Session status:')
 
         if (session) {
             try {
                 const checkResponse = await authApiService.checkAuth()
-                console.debug('UserProvider: Got user data:', !!checkResponse)
+                logger.debug(!!checkResponse, 'user provider – checkAuth', 'UserProvider: Got user data:')
                 setUser(checkResponse.userData)
-                await storage.set('user-data', checkResponse.userData)
-                await storage.set('csrf-token', checkResponse.csrfToken)
+                await storage.set(STORAGE_KEYS.USER_DATA, checkResponse.userData)
+                await storage.set(STORAGE_KEYS.CSRF_TOKEN, checkResponse.csrfToken)
             } catch (error) {
-                console.error('UserProvider: Auth check failed:', error)
+                logger.error(error, 'user provider – checkAuth', 'UserProvider: Auth check failed:')
                 await signInAnonymously()
             }
         } else {
@@ -104,7 +119,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const signInAnonymously = async () => {
         try {
-            console.debug('UserProvider: Creating anonymous session...')
+            logger.debug('UserProvider: Creating anonymous session...', 'user provider – signInAnonymously')
             const response = await anonymousUserService.getOrCreateAnonymousUser()
 
             if (!response.user) {
@@ -112,19 +127,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             }
 
             setUser(response.user)
-            console.debug('UserProvider: Anonymous session created successfully')
+            logger.debug('UserProvider: Anonymous session created successfully', 'user provider – signInAnonymously')
         } catch (error) {
-            console.error('UserProvider: Failed to create anonymous session:', error)
+            logger.error(error, 'user provider – signInAnonymously', 'UserProvider: Failed to create anonymous session:')
             setUser(null)
             throw error // Пробрасываем ошибку дальше
         }
     }
 
     const updateUser = async (userData: Partial<UserType>) => {
-        const result = await userApiService.updateProfile(user!.id, userData)
-        await storage.set('user-data', result)
-        setUser(result)
-        return result
+        try {
+            const result = await userApiService.updateProfile(user!.id, userData)
+            await storage.set(STORAGE_KEYS.USER_DATA, result)
+            setUser(result)
+            return result
+        } catch (error) {
+            logger.error(error, 'user provider – updateUser', 'UserProvider: Failed to update user data:')
+            throw error
+        }
     }
 
     useEffect(() => {
@@ -159,6 +179,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 export function useUser() {
     const context = useContext(UserContext)
     if (context === undefined) {
+        logger.error('useUser must be used within a UserProvider', 'user provider – useUser')
         throw new Error('useUser must be used within a UserProvider')
     }
     return context
@@ -172,7 +193,7 @@ export const useUpdateProfile = () => {
         mutationFn: (data: Partial<UserType>) =>
             userApiService.updateProfile(user!.id, data),
         onSuccess: (updatedUser) => {
-            queryClient.setQueryData(['user'], updatedUser)
+            queryClient.setQueryData([QUERY_KEYS.USER], updatedUser)
         }
     })
 }

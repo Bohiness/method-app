@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns';
 import { storage } from '../storage/storage.service';
+import { LOG_COLORS, LOG_MARKERS } from './logger.colors';
 import { JsonLogOptions, LogData, LogLevel, LogStyle, TableOptions } from './logger.types';
 import { BaseTransport } from './transports/base.transport';
 import { FileTransport } from './transports/file.transport';
@@ -10,18 +11,41 @@ import { StorageTransport } from './transports/storage.transport';
 
 class Logger {
     private transports: BaseTransport[] = [];
+    private groupDepth: number = 0;
+    private enabledLevels: LogLevel[] = [
+        'DEBUG',
+        'INFO',
+        'WARN',
+        'ERROR',
+        'COMPONENT',
+        'API',
+        'HTTP',
+        'CUSTOM',
+        'TABLE',
+        'JSON',
+        'GROUP',
+        'START',
+        'FINISH',
+    ];
+    private includeTimestamp: boolean = true;
 
     constructor() {
         // Инициализируем транспорты
         this.transports = [new StorageTransport(), new FileTransport(), new LogstashTransport()];
     }
 
+    /**
+     * Получить содержимое лог-файла
+     */
     async getFileLogContent(): Promise<string> {
         const fileTransport = this.transports.find(t => t instanceof FileTransport) as FileTransport;
 
         return fileTransport ? await fileTransport.getLogFileContent() : '';
     }
 
+    /**
+     * Проверить состояние всех транспортов
+     */
     async checkTransports(): Promise<void> {
         for (const transport of this.transports) {
             try {
@@ -38,7 +62,39 @@ class Logger {
         }
     }
 
+    /**
+     * Включить или отключить определенные уровни логов
+     */
+    setEnabledLevels(levels: LogLevel[]): void {
+        this.enabledLevels = levels;
+    }
+
+    /**
+     * Включить или отключить все логи
+     */
+    setLoggingEnabled(enabled: boolean): void {
+        for (const transport of this.transports) {
+            const config = transport.getConfig();
+            config.enabled = enabled;
+        }
+    }
+
+    /**
+     * Включить или отключить отображение временных меток
+     */
+    setTimestampEnabled(enabled: boolean): void {
+        this.includeTimestamp = enabled;
+    }
+
+    /**
+     * Записать лог с определенным уровнем, контекстом и дополнительной информацией
+     */
     private async writeToTransports(data: LogData) {
+        // Если уровень лога не в списке включенных, не записываем
+        if (!this.enabledLevels.includes(data.level)) {
+            return;
+        }
+
         await Promise.all(
             this.transports
                 .filter(transport => transport.shouldHandle(data.level))
@@ -46,6 +102,9 @@ class Logger {
         );
     }
 
+    /**
+     * Применить стиль к тексту для вывода в консоль
+     */
     private applyStyle(text: string, style?: LogStyle): string {
         if (!style) return text;
 
@@ -56,74 +115,176 @@ class Logger {
         return `${result}\x1b[0m`;
     }
 
-    private formatLogMessage(type: string, message: any, context?: string, title?: string): string {
-        const timestamp = format(new Date(), 'HH:mm:ss');
-        const parts = [this.applyStyle(timestamp, { dim: true }), this.applyStyle(type.padEnd(7), { color: '36' })];
+    /**
+     * Форматировать заголовок сообщения лога
+     */
+    private formatLogMessage(level: LogLevel, message: any, context?: string, title?: string): string {
+        // Пробелы для отступа в соответствии с глубиной группы
+        const indent = this.groupDepth > 0 ? '  '.repeat(this.groupDepth) : '';
 
+        // Части заголовка лога
+        const parts: string[] = [];
+
+        // Временная метка
+        if (this.includeTimestamp) {
+            parts.push(this.applyStyle(format(new Date(), 'HH:mm:ss.SSS'), { dim: true }));
+        }
+
+        // Маркер и уровень лога
+        const marker = LOG_MARKERS[level] || '';
+        const levelColor = LOG_COLORS[level] || '37';
+        parts.push(this.applyStyle(`${marker} ${level.padEnd(7)}`, { color: levelColor }));
+
+        // Контекст
         if (context) {
             parts.push(this.applyStyle(`[${context}]`, { color: '90' }));
         }
 
+        // Заголовок
         if (title) {
             parts.push(this.applyStyle(`(${title})`, { dim: true }));
         }
 
-        return parts.join(' ');
+        return indent + parts.join(' ');
     }
 
-    private async logMessage(level: LogLevel, message: any, context?: string, title?: string) {
+    /**
+     * Записать сообщение в лог с определенным уровнем
+     */
+    private async logMessage(
+        level: LogLevel,
+        message: any,
+        context?: string,
+        title?: string,
+        meta?: Record<string, any>
+    ) {
+        // Если уровень лога не в списке включенных, не логируем
+        if (!this.enabledLevels.includes(level)) {
+            return;
+        }
+
+        const timestamp = new Date().toISOString();
         const logData: LogData = {
-            timestamp: new Date().toISOString(),
+            timestamp,
             level,
             message,
             context,
             title,
+            meta,
         };
 
-        // Выводим в консоль
+        // Формируем заголовок лога
         const header = this.formatLogMessage(level, message, context, title);
-        console.log(header);
 
+        // Выводим в консоль одной строкой
         if (typeof message === 'object') {
+            console.log(header);
             console.dir(message, { depth: null, colors: true });
         } else {
-            console.log(message);
+            // Для текстовых сообщений объединяем заголовок и сообщение в одну строку
+            console.log(`${header} ${message}`);
         }
 
         // Отправляем в транспорты
         await this.writeToTransports(logData);
+
+        return timestamp; // Возвращаем временную метку для использования в потенциальных замерах времени
     }
 
+    /**
+     * Записать начало операции
+     */
+    start(message: any, context?: string, title?: string) {
+        if (typeof message === 'object') {
+            return this.logMessage('START', JSON.stringify(message), context, title, { originalData: message });
+        }
+        return this.logMessage('START', message, context, title);
+    }
+
+    /**
+     * Записать завершение операции
+     */
+    finish(message: any, context?: string, title?: string) {
+        if (typeof message === 'object') {
+            return this.logMessage('FINISH', JSON.stringify(message), context, title, { originalData: message });
+        }
+        return this.logMessage('FINISH', message, context, title);
+    }
+
+    /**
+     * Записать информацию
+     */
     log(message: any, context?: string, title?: string) {
-        this.logMessage('INFO', message, context, title);
+        if (typeof message === 'object') {
+            return this.logMessage('INFO', JSON.stringify(message), context, title, { originalData: message });
+        }
+        return this.logMessage('INFO', message, context, title);
     }
 
+    /**
+     * Записать информацию (псевдоним для log)
+     */
+    info(message: any, context?: string, title?: string) {
+        if (typeof message === 'object') {
+            return this.logMessage('INFO', JSON.stringify(message), context, title, { originalData: message });
+        }
+        return this.logMessage('INFO', message, context, title);
+    }
+
+    /**
+     * Записать отладочную информацию
+     */
     debug(message: any, context?: string, title?: string) {
-        this.logMessage('DEBUG', message, context, title);
+        if (typeof message === 'object') {
+            return this.logMessage('DEBUG', JSON.stringify(message), context, title, { originalData: message });
+        }
+        return this.logMessage('DEBUG', message, context, title);
     }
 
+    /**
+     * Записать предупреждение
+     */
     warn(message: any, context?: string, title?: string) {
-        this.logMessage('WARN', message, context, title);
+        if (typeof message === 'object') {
+            return this.logMessage('WARN', JSON.stringify(message), context, title, { originalData: message });
+        }
+        return this.logMessage('WARN', message, context, title);
     }
 
-    error(message: any, error?: any, context?: string, title?: string) {
-        this.logMessage(
-            'ERROR',
-            {
-                message,
-                error: error
-                    ? {
-                          name: error.name,
-                          message: error.message,
-                          stack: error.stack,
-                      }
-                    : undefined,
-            },
-            context,
-            title
-        );
+    /**
+     * Записать ошибку
+     */
+    error(messageOrError: string | Error | any, context?: string, title?: string) {
+        let errorMessage: string;
+        let errorInfo: { name?: string; message?: string; stack?: string } | undefined;
+        let originalData: any = undefined;
+
+        if (messageOrError instanceof Error) {
+            // Если передана ошибка как первый аргумент
+            errorInfo = {
+                name: messageOrError.name,
+                message: messageOrError.message,
+                stack: messageOrError.stack,
+            };
+            errorMessage = `${errorInfo.name}: ${errorInfo.message}`;
+        } else if (typeof messageOrError === 'object') {
+            // Если передан объект, но не Error
+            errorMessage = JSON.stringify(messageOrError);
+            originalData = messageOrError;
+        } else {
+            // Если передана строка или другой примитив
+            errorMessage = String(messageOrError);
+        }
+
+        return this.logMessage('ERROR', errorMessage, context, title, {
+            error: errorInfo,
+            originalData: originalData,
+        });
     }
 
+    /**
+     * Записать таблицу данных
+     */
     table(data: any[], options: TableOptions = {}) {
         const { title, context } = options;
 
@@ -133,8 +294,14 @@ class Logger {
         }
 
         console.table(data);
+
+        // Возвращаем только сообщение о типе данных, чтобы не дублировать большие объекты
+        return this.logMessage('TABLE', `Табличные данные (${data.length} строк)`, context, title, { tableData: data });
     }
 
+    /**
+     * Записать JSON-данные
+     */
     json(data: any, options: JsonLogOptions = {}) {
         const { title, context } = options;
 
@@ -144,37 +311,140 @@ class Logger {
         }
 
         console.dir(data, { depth: null, colors: true });
+
+        // Возвращаем только метаданные, чтобы не дублировать большие объекты
+        return this.logMessage('JSON', `JSON данные`, context, title, { jsonData: data });
     }
 
-    group(label: string, callback: () => void) {
+    /**
+     * Начать группу логов
+     */
+    startGroup(label: string) {
         console.group(this.applyStyle(label, { bold: true }));
-        callback();
+        this.groupDepth++;
+        return this.logMessage('GROUP', `Начало группы: ${label}`, 'Logger');
+    }
+
+    /**
+     * Завершить группу логов
+     */
+    endGroup() {
         console.groupEnd();
+        this.groupDepth = Math.max(0, this.groupDepth - 1);
+        return this.logMessage('GROUP', `Конец группы`, 'Logger');
     }
 
+    /**
+     * Выполнить функцию внутри группы логов
+     */
+    group(label: string, callback: () => void) {
+        this.startGroup(label);
+        callback();
+        this.endGroup();
+    }
+
+    /**
+     * Асинхронная группа логов
+     */
+    async asyncGroup<T>(label: string, callback: () => Promise<T>): Promise<T> {
+        this.startGroup(label);
+        try {
+            const result = await callback();
+            return result;
+        } finally {
+            this.endGroup();
+        }
+    }
+
+    /**
+     * Измерить время выполнения функции
+     */
+    async time<T>(label: string, callback: () => Promise<T>, context?: string): Promise<T> {
+        const startTime = performance.now();
+        const startTimestamp = await this.logMessage('DEBUG', `⏱️ Начало: ${label}`, context || 'Timer');
+
+        try {
+            const result = await callback();
+            const endTime = performance.now();
+            await this.logMessage(
+                'DEBUG',
+                `⏱️ Конец: ${label} (${(endTime - startTime).toFixed(2)}ms)`,
+                context || 'Timer'
+            );
+            return result;
+        } catch (error) {
+            const endTime = performance.now();
+            await this.logMessage(
+                'ERROR',
+                `⏱️ Ошибка: ${label} (${(endTime - startTime).toFixed(2)}ms)`,
+                context || 'Timer'
+            );
+            throw error;
+        }
+    }
+
+    /**
+     * Записать лог о компоненте
+     */
     component(name: string, action: string, data?: any) {
-        this.logMessage('COMPONENT', { action, data }, name);
+        const message = typeof data === 'object' ? action : `${action} ${data || ''}`.trim();
+
+        return this.logMessage('COMPONENT', message, name, undefined, { data });
     }
 
+    /**
+     * Записать лог о запросе API
+     */
     api(method: string, url: string, data?: any, response?: any) {
-        this.logMessage('API', { method, url, data, response }, 'API');
+        const message = `${method} ${url}`;
+        return this.logMessage('API', message, 'API', undefined, { data, response });
     }
 
+    /**
+     * Записать HTTP-запрос
+     */
+    http(method: string, url: string, statusCode?: number, duration?: number) {
+        const statusColor = !statusCode
+            ? ''
+            : statusCode < 300
+            ? '32' // Зеленый для успешных запросов
+            : statusCode < 400
+            ? '33' // Желтый для редиректов
+            : '31'; // Красный для ошибок
+
+        const statusText = statusCode ? this.applyStyle(`${statusCode}`, { color: statusColor }) : '';
+        const durationText = duration ? `${duration.toFixed(0)}ms` : '';
+
+        return this.logMessage('HTTP', `${method} ${url} ${statusText} ${durationText}`, 'HTTP');
+    }
+
+    /**
+     * Получить логи из хранилища
+     */
     async getLogs(): Promise<LogData[]> {
         const storageTransport = this.transports.find(t => t instanceof StorageTransport) as StorageTransport;
 
         return (await storage.get<LogData[]>(storageTransport.getStorageKey())) || [];
     }
 
+    /**
+     * Очистить все логи
+     */
     async clearLogs(): Promise<void> {
         await Promise.all(this.transports.filter(t => 'clear' in t).map(t => (t as any).clear()));
     }
 
+    /**
+     * Экспортировать логи в JSON
+     */
     async exportLogs(): Promise<string> {
         const logs = await this.getLogs();
         return JSON.stringify(logs, null, 2);
     }
 
+    /**
+     * Проверить состояние всех транспортов
+     */
     async checkTransportsState(): Promise<Record<string, any>> {
         const states: Record<string, any> = {};
 

@@ -30,7 +30,7 @@ export function UniversalScreen({
         >
             <Pressable className="flex-1" onPress={dismissKeyboard}>
                 {/* Верхний блок для отображения переданного контента */}
-                <View className="mt-4">
+                <View>
                     {topContent}
                 </View>
 

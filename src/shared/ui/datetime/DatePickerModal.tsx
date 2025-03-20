@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal, TouchableOpacity } from 'react-native'
 
+import { logger } from '@shared/lib/logger/logger.service'
 import { Button } from '../button'
 import { Calendar } from '../calendar'
 import { View } from '../view'
@@ -75,6 +76,8 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
             </View>
         </View>
     )
+
+    logger.log(selectedDate, 'DatePickerModal')
 
     return (
         <Modal

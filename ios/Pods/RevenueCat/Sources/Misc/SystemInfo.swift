@@ -25,6 +25,7 @@ import AppKit
 
 class SystemInfo {
 
+    // swiftlint:disable:next force_unwrapping
     static let appleSubscriptionsURL = URL(string: "https://apps.apple.com/account/subscriptions")!
 
     static var forceUniversalAppStore: Bool {
@@ -83,7 +84,7 @@ class SystemInfo {
     }
 
     static var frameworkVersion: String {
-        return "5.18.0"
+        return "5.19.0"
     }
 
     static var systemVersion: String {

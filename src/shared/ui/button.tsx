@@ -2,6 +2,7 @@
 import { useColors, useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import * as Haptics from 'expo-haptics'
+import React from 'react'
 import { ActivityIndicator, Pressable, PressableProps, View } from 'react-native'
 import Animated, {
     useAnimatedStyle,

@@ -2,9 +2,9 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { Caption, Text } from '@shared/ui/text'
-import { SearchIcon } from 'lucide-react-native'
+import { SearchIcon, XIcon } from 'lucide-react-native'
 import React, { forwardRef, memo, useCallback, useRef } from 'react'
-import { Platform, Pressable, TextInput as RNTextInput, TextInputProps, View } from 'react-native'
+import { GestureResponderEvent, Platform, Pressable, TextInput as RNTextInput, TextInputProps, View } from 'react-native'
 import { VoiceInputButton } from './voice/VoiceInputButton'
 
 export interface StyledTextInputProps extends TextInputProps {
@@ -24,6 +24,7 @@ export interface StyledTextInputProps extends TextInputProps {
     voiceInputSize?: 'sm' | 'md' | 'lg'
     voiceInputVerticalAlign?: 'top' | 'bottom' | 'center'
     voiceInputOnActiveOnly?: boolean
+    clearButton?: boolean
     error?: string
 }
 
@@ -53,14 +54,20 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
         voiceInputSize = 'md',
         voiceInputVerticalAlign = 'bottom',
         voiceInputOnActiveOnly = false,
+        clearButton = false,
         onChangeText,
         ...props
     },
     ref
 ) => {
     const { colors } = useTheme()
+    // Создаем внутренний ref для доступа к текстовому полю
+    const inputRef = useRef<RNTextInput | null>(null)
     // Используем useRef для хранения последнего значения текста
     const lastValueRef = useRef(value)
+
+    // Объединяем внешний ref и внутренний inputRef
+    React.useImperativeHandle(ref, () => inputRef.current as RNTextInput)
 
     // Мемоизируем стили для разных размеров
     const getSizeStyles = useCallback(() => {
@@ -139,6 +146,26 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
         }
     }, [onChangeText])
 
+    // Обработчик очистки поля ввода
+    const handleClear = useCallback((e: GestureResponderEvent) => {
+        // Останавливаем стандартную обработку нажатия на кнопку
+        e.preventDefault?.()
+        e.stopPropagation?.()
+
+        if (onChangeText) {
+            lastValueRef.current = ''
+            onChangeText('')
+
+            // Принудительно устанавливаем фокус обратно
+            if (inputRef.current) {
+                inputRef.current.focus()
+            }
+        }
+
+        // Предотвращаем потерю фокуса
+        return false
+    }, [onChangeText])
+
     const voiceInputContainerStyles = cn(
         'absolute right-3 z-10',
         voiceInputOnActiveOnly && 'opacity-0 group-focus-within:opacity-100',
@@ -146,6 +173,13 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
         voiceInputVerticalAlign === 'center' && 'top-1/2 -translate-y-1/2',
         voiceInputVerticalAlign === 'bottom' && 'bottom-3'
     )
+
+    // Определим отступ справа для текстового поля в зависимости от наличия кнопок
+    const rightPadding = () => {
+        if (rightIcon) return 'pr-10'
+        if (clearButton && value) return 'pr-10'
+        return ''
+    }
 
     return (
         <View className={containerStyles}>
@@ -172,7 +206,7 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
                 )}
 
                 <RNTextInput
-                    ref={ref}
+                    ref={inputRef}
                     {...props}
                     value={value}
                     onChangeText={handleChangeText}
@@ -184,7 +218,7 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
                     className={cn(
                         baseInputStyles,
                         leftIcon && 'pl-10',
-                        rightIcon && 'pr-10',
+                        rightPadding(),
                         className
                     )}
                     style={[
@@ -199,6 +233,16 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
                         }
                     ]}
                 />
+
+                {clearButton && value && (
+                    <Pressable
+                        onPress={handleClear}
+                        hitSlop={{ top: 15, right: 15, bottom: 15, left: 15 }}
+                        className="absolute p-2 right-3 top-1/2 -translate-y-1/2 z-10"
+                    >
+                        <XIcon size={16} color={colors.secondary.light} />
+                    </Pressable>
+                )}
 
                 {rightIcon && (
                     <Pressable

@@ -9,6 +9,7 @@ import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import { logger } from '../logger/logger.service';
 
 interface AnonymousResponse {
     user: UserType;
@@ -95,7 +96,10 @@ class AnonymousUserService {
      */
     async createAnonymousUser(): Promise<AnonymousResponse> {
         try {
-            console.debug('AnonymousService: Creating anonymous user...');
+            logger.start(
+                'AnonymousService: Creating anonymous user...',
+                'anonymous-user-service – createAnonymousUser'
+            );
             const deviceInfo = await this.getDeviceInfo();
 
             const response = await apiClient.post<AnonymousResponse>(API_ROUTES.AUTH.ANONYMOUS.CREATE, deviceInfo);
@@ -122,7 +126,11 @@ class AnonymousUserService {
                 tokens,
             };
         } catch (error) {
-            console.error('AnonymousService: Failed to create anonymous user:', error);
+            logger.error(
+                error,
+                'anonymous-user-service – createAnonymousUser',
+                'AnonymousService: Failed to create anonymous user:'
+            );
             throw error;
         }
     }
@@ -132,22 +140,36 @@ class AnonymousUserService {
      */
     async getOrCreateAnonymousUser(): Promise<AnonymousResponse> {
         try {
-            console.debug('AnonymousService: Getting or creating anonymous user...');
+            logger.start(
+                'AnonymousService: Getting or creating anonymous user...',
+                'anonymous-user-service – getOrCreateAnonymousUser'
+            );
 
             // Проверяем существующего пользователя
             const existingUser = await storage.get<UserType>(this.ANONYMOUS_USER_KEY);
             const session = await tokenService.getSession();
 
             if (existingUser && session) {
-                console.log('AnonymousService: Found existing anonymous user', existingUser);
+                logger.debug(
+                    existingUser,
+                    'anonymous-user-service – getOrCreateAnonymousUser',
+                    'AnonymousService: Found existing anonymous user'
+                );
                 return { user: existingUser, tokens: session };
             }
 
-            console.debug('AnonymousService: No existing anonymous user found');
+            logger.debug(
+                'AnonymousService: No existing anonymous user found',
+                'anonymous-user-service – getOrCreateAnonymousUser'
+            );
             // Если нет пользователя или сессии, создаем нового
             return await this.createAnonymousUser();
         } catch (error) {
-            console.error('AnonymousService: Error in getOrCreateAnonymousUser:', error);
+            logger.error(
+                error,
+                'anonymous-user-service – getOrCreateAnonymousUser',
+                'AnonymousService: Error in getOrCreateAnonymousUser:'
+            );
             throw error;
         }
     }
@@ -157,7 +179,10 @@ class AnonymousUserService {
      */
     async convertToRegisteredUser(data: Partial<UserType>): Promise<AnonymousResponse> {
         try {
-            console.debug('AnonymousService: Converting to registered user...');
+            logger.start(
+                'AnonymousService: Converting to registered user...',
+                'anonymous-user-service – convertToRegisteredUser'
+            );
 
             // Получаем текущего анонимного пользователя
             const currentUser = await storage.get<UserType>(this.ANONYMOUS_USER_KEY);
@@ -176,10 +201,17 @@ class AnonymousUserService {
             await storage.remove(this.ANONYMOUS_USER_KEY);
             await storage.set('user-data', response.user);
 
-            console.debug('AnonymousService: User converted successfully');
+            logger.finish(
+                'AnonymousService: User converted successfully',
+                'anonymous-user-service – convertToRegisteredUser'
+            );
             return response;
         } catch (error) {
-            console.error('AnonymousService: Failed to convert user:', error);
+            logger.error(
+                error,
+                'anonymous-user-service – convertToRegisteredUser',
+                'AnonymousService: Failed to convert user:'
+            );
             throw error;
         }
     }

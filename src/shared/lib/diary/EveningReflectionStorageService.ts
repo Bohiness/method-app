@@ -1,8 +1,9 @@
+import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
 import { EveningReflectionType } from '@shared/types/diary/eveningreflection/EveningReflectionType';
 import { storage } from '../storage/storage.service';
 
 export class EveningReflectionStorageService {
-    private readonly STORAGE_KEY = 'evening-reflections';
+    private readonly STORAGE_KEY = STORAGE_KEYS.EVENING_REFLECTION;
 
     // Функция для генерации простого ID без использования crypto
     private generateId(): string {
@@ -70,7 +71,7 @@ export class EveningReflectionStorageService {
             };
 
             reflections.push(newReflection);
-            await storage.set(this.STORAGE_KEY, JSON.stringify(reflections));
+            await storage.set(this.STORAGE_KEY, reflections);
 
             return newReflection;
         } catch (error) {
@@ -104,7 +105,7 @@ export class EveningReflectionStorageService {
             };
 
             reflections[index] = updatedReflection;
-            await storage.set(this.STORAGE_KEY, JSON.stringify(reflections));
+            await storage.set(this.STORAGE_KEY, reflections);
 
             return updatedReflection;
         } catch (error) {
@@ -158,7 +159,7 @@ export class EveningReflectionStorageService {
                 is_synced: false,
             };
 
-            await storage.set(this.STORAGE_KEY, JSON.stringify(reflections));
+            await storage.set(this.STORAGE_KEY, reflections);
         } catch (error) {
             console.error(`Error deleting evening reflection with id ${id}:`, error);
             throw error;
@@ -206,7 +207,7 @@ export class EveningReflectionStorageService {
                 return reflection;
             });
 
-            await storage.set(this.STORAGE_KEY, JSON.stringify(updatedReflections));
+            await storage.set(this.STORAGE_KEY, updatedReflections);
         } catch (error) {
             console.error('Error marking evening reflections as synced:', error);
             throw error;

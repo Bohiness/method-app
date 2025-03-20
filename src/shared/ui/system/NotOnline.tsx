@@ -1,14 +1,15 @@
-import { useTranslation } from 'react-i18next'
-import { Alert, AlertTitle } from '../alert'
+import { useNetwork } from '@shared/hooks/systems/network/useNetwork'
+import { Icon } from '../icon'
 
 export const NotOnline = () => {
-    const { t } = useTranslation()
+    const { isOnline } = useNetwork()
+
+    if (isOnline) return null
 
     return (
-        <Alert variant='destructive'>
-            <AlertTitle >
-                {t('common.offlineMode')}
-            </AlertTitle>
-        </Alert>
+        <Icon
+            name='WifiOff'
+            variant='error'
+        />
     )
 }

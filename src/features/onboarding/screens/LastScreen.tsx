@@ -80,7 +80,7 @@ export const LastScreen = () => {
 
     return (
         <Animated.View
-            style={[animatedScreenStyle]}
+            style={animatedScreenStyle}
             className="flex-1 bg-white dark:bg-black"
             {...panResponder.panHandlers}
         >
@@ -108,7 +108,7 @@ export const LastScreen = () => {
 
             {/* Анимированный свайп */}
             <Animated.View
-                style={[animatedIconStyle]}
+                style={animatedIconStyle}
                 className="items-center absolute bottom-12 left-0 right-0"
             >
                 <Icon name='ChevronUp' size={40} className="text-secondary mb-2" />

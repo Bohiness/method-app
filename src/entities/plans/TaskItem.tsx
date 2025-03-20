@@ -140,9 +140,9 @@ export const TaskItem = React.memo(({ task }: TaskItemProps) => {
                     onLongPress={handleLongPress}
                     onPress={() => toggleTask(task.id.toString())}
                     delayLongPress={500}
-                    style={[animatedStyle]}
+                    style={animatedStyle}
                     className={cn(
-                        "flex-col rounded-lg py-3 px-2",
+                        "flex-col rounded-lg py-3",
                         "active:bg-surface-paper",
                     )}
                 >

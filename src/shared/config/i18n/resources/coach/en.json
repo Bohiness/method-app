@@ -102,5 +102,11 @@
         "executiveCoaching": "Executive Coaching",
         "lifeCoaching": "Life Coaching",
         "financialCoaching": "Financial Coaching"
+    },
+    "maritalStatus": {
+        "single": "Single",
+        "married": "Married",
+        "divorced": "Divorced",
+        "widowed": "Widowed"
     }
 }

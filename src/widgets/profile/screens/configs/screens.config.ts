@@ -1,4 +1,3 @@
-import { RevenueCatDebugPanel } from '@features/components/RevenueCatDebugPanel';
 import { EditGender } from '@features/EditProfileField/EditGender';
 import { EditNames } from '@features/EditProfileField/EditNames';
 import { EditPhoto } from '@features/EditProfileField/EditPhoto';
@@ -12,6 +11,8 @@ import { LanguageScreen } from '../inner/LanguageScreen';
 import { LoggingScreen } from '../inner/LoggingScreen';
 import { NotificationSettingsScreen } from '../inner/NotificationScreen';
 import MyProjectsScreen from '../inner/Projects/MyProjectsScreen';
+import { RevenueCatDebugScreen } from '../inner/RevenueCatDebugScreen';
+import { SendErrorReportScreen } from '../inner/SendErrorReportScreen';
 import { StorageScreen } from '../inner/StorageScreen';
 import { StorageValueModal } from '../inner/StorageValueModal';
 import { ThemeScreen } from '../inner/ThemeScreen';
@@ -39,7 +40,8 @@ export type ScreenType =
     | 'profile_photo'
     | 'diary'
     | 'storageValue'
-    | 'revenuecat';
+    | 'revenuecat'
+    | 'sendErrorReport';
 
 type ScreenConfig = {
     [K in ScreenType]: {
@@ -118,6 +120,9 @@ export const SCREEN_CONFIG: ScreenConfig = {
     logs: {
         level: 2,
         component: LoggingScreen,
+        props: {
+            title: t('settings.logs.title'),
+        },
     },
     plans: {
         level: 1,
@@ -151,9 +156,6 @@ export const SCREEN_CONFIG: ScreenConfig = {
     diary: {
         level: 2,
         component: DiaryScreen,
-        props: {
-            title: t('diary.history.lastWeekEntries'),
-        },
     },
     storageValue: {
         level: 2,
@@ -161,6 +163,13 @@ export const SCREEN_CONFIG: ScreenConfig = {
     },
     revenuecat: {
         level: 2,
-        component: RevenueCatDebugPanel,
+        component: RevenueCatDebugScreen,
+        props: {
+            title: t('settings.revenuecat.title'),
+        },
+    },
+    sendErrorReport: {
+        level: 2,
+        component: SendErrorReportScreen,
     },
 };

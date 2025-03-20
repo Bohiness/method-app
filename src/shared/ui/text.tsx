@@ -3,7 +3,7 @@ import { cn } from '@shared/lib/utils/cn'
 import React from 'react'
 import { Text as RNText, TextProps } from 'react-native'
 
-type Variant = 'default' | 'secondary' | 'accent' | 'success' | 'error' | 'warning' | 'tint'
+type Variant = 'default' | 'defaultInverted' | 'secondary' | 'accent' | 'success' | 'error' | 'warning' | 'tint'
 type Size = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl'
 type Weight = 'normal' | 'medium' | 'semibold' | 'bold'
 
@@ -19,6 +19,7 @@ export interface StyledTextProps extends TextProps {
 const getVariantClasses = (variant: Variant, isDark: boolean): string => {
     const variants = {
         default: isDark ? 'text-text-dark' : 'text-text',
+        defaultInverted: isDark ? 'text-text' : 'text-text-dark',
         secondary: isDark ? 'text-secondary-light-dark' : 'text-secondary-light',
         accent: isDark ? 'text-accent-dark' : 'text-accent',
         success: isDark ? 'text-success-dark' : 'text-success',

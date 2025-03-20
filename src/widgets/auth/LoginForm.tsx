@@ -21,20 +21,16 @@ import { useLoginForm } from './useLoginForm'
 interface LoginFormProps {
     showTitle?: boolean
     nextPage?: string
-    showExpertLogin?: boolean
     isExpertPage?: boolean
 }
 
 export const LoginForm = ({
     showTitle = true,
     nextPage = '',
-    showExpertLogin = true,
     isExpertPage = false
 }: LoginFormProps) => {
     const { email: initialEmail, message } = useLocalSearchParams<{ email: string; message: string }>()
-
     const { t } = useTranslation()
-
     const router = useRouter()
     const [showAlert, setShowAlert] = useState(false)
 
@@ -66,7 +62,7 @@ export const LoginForm = ({
         if (initialEmail) {
             handleEmailChange(initialEmail)
         }
-    }, [initialEmail])
+    }, [initialEmail, handleEmailChange])
 
     useEffect(() => {
         if (errors) {

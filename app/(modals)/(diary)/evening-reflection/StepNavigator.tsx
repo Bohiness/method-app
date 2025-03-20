@@ -6,8 +6,8 @@ import { SuccessStepEveningReflection } from '@widgets/diary/evening-reflection/
 import { router, useNavigation } from 'expo-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EnhancedUniversalScreen } from './steps/EnhancedUniversalScreen'
-import { HowIsYourDayScreen } from './steps/HowIsYourDay'
+import EnhancedUniversalScreen from './steps/EnhancedUniversalScreen'
+import HowIsYourDayScreen from './steps/HowIsYourDay'
 
 // Определяем типы для параметров навигации
 export type EveningReflectionStackParamList = {
@@ -30,7 +30,7 @@ interface StepNavigatorProps {
     onStepChange?: (step: number) => void
 }
 
-export function StepNavigatorEveningReflection({ date = new Date(), onStepChange }: StepNavigatorProps) {
+export default function StepNavigatorEveningReflection({ date = new Date(), onStepChange }: StepNavigatorProps) {
     const { t } = useTranslation()
     const { mutateAsync: createEveningReflection } = useCreateEveningReflection()
     const navigation = useNavigation()
@@ -74,7 +74,7 @@ export function StepNavigatorEveningReflection({ date = new Date(), onStepChange
             lesson_learned: screen4Response ?? null,
             additional_thoughts: screen5Response ?? null,
         })
-        navigation.navigate('SuccessStepEveningReflection')
+        navigation.navigate('SuccessStepEveningReflection' as never)
     }
 
     return (

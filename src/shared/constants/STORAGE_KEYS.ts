@@ -1,0 +1,13 @@
+export const STORAGE_KEYS = {
+    EVENING_REFLECTION: 'evening-reflections',
+    START_DAY: 'start-day',
+    APP_TIMEZONE: 'app-timezone',
+    APP_LOCALE: 'app-locale',
+    USER_DATA: 'user-data',
+    USER_SESSION: 'user-session',
+    CSRF_TOKEN: 'csrf-token',
+    ONBOARDING_COMPLETED: 'onboarding-completed',
+    APP_SETTINGS: 'app-settings',
+    SUBSCRIPTION_STATUS: 'subscription-status',
+    SUBSCRIPTION_ACTIVE_BY_ADMIN: 'subscription-active-by-admin',
+} as const;

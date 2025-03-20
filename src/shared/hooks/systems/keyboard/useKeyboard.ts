@@ -1,3 +1,4 @@
+import { logger } from '@shared/lib/logger/logger.service';
 import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardEvent, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,10 +12,12 @@ export const useKeyboard = () => {
         const showSubscription = Keyboard.addListener(
             Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
             (event: KeyboardEvent) => {
-                const height = Platform.OS === 'ios' ? event.endCoordinates.height : event.endCoordinates.height;
+                const suggestionBarHeight = Platform.OS === 'ios' ? 0 : 0;
+                const height = event.endCoordinates.height + suggestionBarHeight;
 
                 setKeyboardHeight(height);
                 setIsKeyboardVisible(true);
+                logger.log(height, 'useKeyboard –– useEffect');
             }
         );
 

@@ -78,38 +78,50 @@ export class FileTransport extends BaseTransport {
             // Проверяем существование директории и файла
             const dirPath = `${FileSystem.documentDirectory}${this.config.directory}`;
             const dirInfo = await FileSystem.getInfoAsync(dirPath);
+            if (!dirInfo.exists) {
+                await FileSystem.makeDirectoryAsync(dirPath, { intermediates: true });
+            }
+
             const fileInfo = await FileSystem.getInfoAsync(this.currentLogFile);
+            if (!fileInfo.exists) {
+                await FileSystem.writeAsStringAsync(this.currentLogFile, '');
+            }
 
             await this.rotateLogsIfNeeded();
 
             const logEntry = this.formatLogEntry(data);
 
-            // Добавляем разделитель для лучшей читаемости
-            const separator = '-'.repeat(80) + '\n';
+            // Проверяем текущее содержимое и добавляем новый лог в конец
+            let currentContent = '';
+            try {
+                currentContent = await FileSystem.readAsStringAsync(this.currentLogFile);
+            } catch (e) {
+                // Если не удалось прочитать файл, создаем пустую строку
+                currentContent = '';
+            }
 
-            await FileSystem.writeAsStringAsync(this.currentLogFile, logEntry + separator, {
-                encoding: FileSystem.EncodingType.UTF8,
-                append: true,
-            });
-
-            // Проверяем что запись прошла успешно
-            const content = await this.getLogFileContent();
+            await FileSystem.writeAsStringAsync(this.currentLogFile, currentContent + logEntry);
         } catch (error) {
             console.error('FileTransport write error:', error);
         }
     }
 
     private formatLogEntry(data: LogData): string {
-        return [
-            `[${format(new Date(data.timestamp), 'yyyy-MM-dd HH:mm:ss.SSS')}]`,
-            `[${data.level.toUpperCase()}]`,
-            data.context ? `[${data.context}]` : '',
-            data.title ? `(${data.title})` : '',
-            typeof data.message === 'object' ? '\n' + JSON.stringify(data.message, null, 2) : data.message,
-            '\n',
-        ]
-            .filter(Boolean)
-            .join(' ');
+        const timestamp = `[${format(new Date(data.timestamp), 'yyyy-MM-dd HH:mm:ss.SSS')}]`;
+        const level = `[${data.level.toUpperCase()}]`;
+        const context = data.context ? `[${data.context}]` : '';
+        const title = data.title ? `(${data.title})` : '';
+
+        // Преобразуем сообщение в строку
+        let message = '';
+        if (typeof data.message === 'object') {
+            message = JSON.stringify(data.message);
+        } else {
+            message = String(data.message || '');
+        }
+
+        // Формируем лог-запись с переносом строки в конце
+        return `${timestamp} ${level} ${context} ${title} ${message}\n`;
     }
 
     async getLogFileContent(): Promise<string> {
@@ -137,8 +149,9 @@ export class FileTransport extends BaseTransport {
 
             return {
                 exists: fileInfo.exists,
-                size: fileInfo.size || 0,
-                modificationTime: fileInfo.modificationTime,
+                size: fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 0,
+                modificationTime:
+                    fileInfo.exists && 'modificationTime' in fileInfo ? fileInfo.modificationTime : undefined,
                 content,
             };
         } catch (error) {

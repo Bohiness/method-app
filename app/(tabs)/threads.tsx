@@ -2,6 +2,7 @@ import { MonthlyActivity } from '@features/charts/MonthlyActivity'
 import { WeeklyChart } from '@features/charts/WeeklyChart'
 import { CheckConnect } from '@features/system/CheckConnect'
 import { useMoodCheckinStats } from '@shared/hooks/diary/mood/useMoodCheckin'
+import { useCalendarWeekMoodConverter } from '@shared/hooks/diary/stats/useStatsMoodCheckinConverter'
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { Text } from '@shared/ui/text'
 import { Container } from '@shared/ui/view'
@@ -12,14 +13,16 @@ export default function ThreadsScreen() {
     const { t } = useTranslation()
     const { wrapWithSubscriptionOverlay } = useSubscriptionModal()
 
+    // Используем конвертер для получения данных по календарным неделям (пн-вс)
     const {
         currentPeriodData: weeklyData,
         previousPeriodData: prevWeeklyData,
         currentAvg: weeklyAvg,
         previousAvg: prevWeeklyAvg,
         isLoading: isWeeklyLoading
-    } = useMoodCheckinStats(7)
+    } = useCalendarWeekMoodConverter()
 
+    // Используем конвертер для получения месячных данных
     const {
         currentPeriodData: monthlyData,
         isLoading: isMonthlyLoading
@@ -38,16 +41,13 @@ export default function ThreadsScreen() {
                         </View>
 
                         <View className="flex-1 gap-y-6">
-                            {wrapWithSubscriptionOverlay({
-                                plan: 'premium',
-                                children: <WeeklyChart
-                                    currentWeekData={weeklyData?.map(item => item.mood_level) || []}
-                                    previousWeekData={prevWeeklyData?.map(item => item.mood_level) || []}
-                                    currentAvg={weeklyAvg || 0}
-                                    previousAvg={prevWeeklyAvg || 0}
-                                    isLoading={isWeeklyLoading}
-                                />
-                            })}
+                            <WeeklyChart
+                                currentWeekData={weeklyData}
+                                previousWeekData={prevWeeklyData}
+                                currentAvg={weeklyAvg || 0}
+                                previousAvg={prevWeeklyAvg || 0}
+                                isLoading={isWeeklyLoading}
+                            />
 
                             {wrapWithSubscriptionOverlay({
                                 plan: 'premium',

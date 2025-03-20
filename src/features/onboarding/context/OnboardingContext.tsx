@@ -1,11 +1,12 @@
 // src/features/onboarding/context/OnboardingContext.tsx
 import { useUser } from '@shared/context/user-provider'
+import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
+import { logger } from '@shared/lib/logger/logger.service'
 import { storage } from '@shared/lib/storage/storage.service'
 import { Gender } from '@shared/types/user/UserType'
 import { router } from 'expo-router'
 import React, { createContext, useContext, useState } from 'react'
 import { OnboardingData } from '../types/OnboardingTypes'
-
 // Расширяем существующий интерфейс контекста
 interface OnboardingContextType {
     currentScreen: string
@@ -36,6 +37,7 @@ interface OnboardingProviderProps {
 }
 
 export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children, screenKeys }) => {
+    const { showSubscriptionModal } = useSubscriptionModal()
     const [currentIndex, setCurrentIndex] = useState(0)
     const [onboardingData, setOnboardingData] = useState<OnboardingData>({})
 
@@ -74,13 +76,21 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
             await storage.set('onboarding-data', onboardingData)
             // Помечаем онбординг как завершенный
             await storage.set('onboarding-completed', true)
-            // Обновляем профиль пользователя
-            await updateUser({
+            // Обновляем профиль пользователя с проверкой
+            const userData = {
                 first_name: onboardingData.first_name,
                 gender: onboardingData.gender as Gender,
-            })
+            }
+
+            try {
+                await updateUser(userData)
+            } catch (userError) {
+                logger.warn(userError, 'onboarding – completeOnboarding', 'Failed to update user data:')
+            }
+
             // Перенаправляем на основной экран
             router.replace('/(tabs)')
+            showSubscriptionModal({ plan: 'premium_ai' })
         } catch (error) {
             console.error('Failed to complete onboarding:', error)
             throw error

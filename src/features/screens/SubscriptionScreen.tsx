@@ -1,5 +1,7 @@
 import { getSubscriptionPlans, SubscriptionPlan } from '@shared/constants/plans'
+import { API_URLS } from '@shared/constants/URLS'
 import { useSubscription } from '@shared/hooks/subscription/useSubscription'
+import { useLocale } from '@shared/hooks/systems/locale/useLocale'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Button } from '@shared/ui/button'
 import { Icon, IconName } from '@shared/ui/icon'
@@ -43,6 +45,7 @@ export interface SubscriptionScreenProps {
 
 export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: SubscriptionScreenProps) => {
   const { t } = useTranslation()
+  const { locale } = useLocale()
   // Флаг для отображения отладочной панели в режиме разработки
 
   // Получаем данные о подписках из хука
@@ -54,13 +57,12 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
     purchase,
     restore,
     error,
-    isSubscribed,
     isPremium,
     isPremiumAI
   } = useSubscription()
 
   // Используем pаckages из RevenueCat для получения актуальных цен
-  const subscriptionPlans = getSubscriptionPlans(t, packages)
+  const subscriptionPlans = getSubscriptionPlans(t, packages || [])
   const currentPlan = subscriptionPlans[selectedPlan || 'premium']
 
   const getAnnualPrice = () => {
@@ -79,14 +81,14 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
       const packageToPurchase = currentPlan.revenuecat_package
 
       if (!packageToPurchase) {
-        console.error('Не удалось найти пакет для покупки')
+        console.error(error, 'No package to purchase')
         return
       }
 
       // Покупаем пакет
       await purchase(packageToPurchase)
     } catch (error) {
-      console.error('Ошибка при покупке подписки:', error)
+      console.error(error, 'Error purchasing subscription')
     }
   }
 
@@ -96,9 +98,9 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
       const result = await restore()
       // После успешного восстановления можно показать уведомление пользователю
       // или обновить интерфейс, чтобы отразить новый статус подписки
-      console.log('Purchases restored successfully', result)
+      console.log(result, 'Purchases restored successfully')
     } catch (error) {
-      console.error('Restore failed:', error)
+      console.error(error, 'Restore failed')
       // Здесь можно показать уведомление об ошибке
     }
   }
@@ -149,8 +151,11 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
             <Button onPress={handleRestore} variant="ghost" loading={isRestoring} disabled={isPurchasing || isRestoring}>
               {t('screens.subscription.restorePurchase')}
             </Button>
-            <Button onPress={() => { Linking.openURL('https://method.do/docs/offer') }} variant="ghost">
+            <Button onPress={() => { Linking.openURL(API_URLS.DOCS.getTerms(locale)) }} variant="ghost">
               {t('screens.subscription.termsAndConditions')}
+            </Button>
+            <Button onPress={() => { Linking.openURL(API_URLS.DOCS.getPrivacy(locale)) }} variant="ghost">
+              {t('screens.subscription.privacyPolicy')}
             </Button>
           </View>
         </ScrollView>
@@ -158,7 +163,7 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
         <View className="px-6 pb-6 bg-surface-paper dark:bg-surface-paper-dark">
           <View className="mb-6 mt-4">
             {/* Показываем текущую подписку, если она есть */}
-            {isSubscribed && subscription && (
+            {subscription && (
               <View className="mb-3">
                 <Text className="text-center text-success">
                   {t('screens.subscription.active', {
@@ -175,10 +180,19 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
               </View>
             )}
 
-            <Text className="text-center mb-1" weight="bold">
-              {t('screens.subscription.trial.title', { days: currentPlan.trial_period_days })}
-            </Text>
-            <Text className="text-center mb-3" variant="secondary">
+            <View className="mb-1 flex-row justify-center">
+              <Text className="text-center" weight="bold">
+                {selectedPlan === 'premium_ai' ? t('screens.subscription.plans.premium_ai.title') : t('screens.subscription.plans.premium.title')}
+              </Text>
+              <Text>
+                {' / '}
+              </Text>
+              <Text className="text-center" weight="bold">
+                {isPremiumAI ? t('screens.subscription.plans.premium_ai.annual') : t('screens.subscription.plans.premium.annual')}
+              </Text>
+            </View>
+
+            <Text className="text-center mb-4" weight="bold">
               {t('screens.subscription.price.annual', {
                 price: prices.annually,
                 monthly: prices.monthlyInAnnual
@@ -190,7 +204,7 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
               loading={isPurchasing}
               disabled={isPurchasing || isRestoring}
             >
-              {isSubscribed
+              {subscription
                 ? isPremiumAI
                   ? t('screens.subscription.alreadySubscribed')
                   : t('screens.subscription.upgrade')
@@ -203,7 +217,7 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
               </Text>
             )}
 
-            <Text variant="secondary" className="text-center mt-3">
+            <Text className="text-center mt-3" variant="secondary">
               {t('screens.subscription.cancel.anytime')}
             </Text>
           </View>

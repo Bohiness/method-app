@@ -4,7 +4,6 @@ import { ProjectChoice } from '@entities/plans/projects/ProjectChoise'
 import { useTheme } from '@shared/context/theme-provider'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
-import { useKeyboard } from '@shared/hooks/systems/keyboard/useKeyboard'
 import { CreateTaskDtoType, SubTaskType, TaskPriority, TaskType } from '@shared/types/plans/TasksTypes'
 import { Button } from '@shared/ui/button'
 import { DatePickerModal } from '@shared/ui/datetime/DatePickerModal'
@@ -39,13 +38,10 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
     )
     const [priority, setPriority] = useState<TaskPriority>(task?.priority || 'none')
     const [selectedDate, setSelectedDate] = useState<Date>(
-        task?.start_datetime ? convertToTimeZoneAndLocale(task.start_datetime) : new Date(new Date().setHours(9, 0, 0, 0)),
+        task?.start_datetime ? convertToTimeZoneAndLocale(task.start_datetime) : new Date()
     )
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(initialProjectId || task?.project || null)
     const [isDatePickerVisible, setIsDatePickerVisible] = useState(false)
-
-    const { keyboardHeight, isKeyboardVisible } = useKeyboard()
-
 
     // Добавляем эффект для автофокуса
     useEffect(() => {
@@ -61,7 +57,16 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
             setTitle(task.text || '')
             setSubtasks(task.subtasks || [])
             setPriority(task.priority || 'none')
-            setSelectedDate(task.start_datetime ? new Date(task.start_datetime) : new Date(new Date().setHours(9, 0, 0, 0)))
+
+            // Если есть start_datetime, используем его, иначе создаем новую дату с 9:00
+            if (task.start_datetime) {
+                setSelectedDate(new Date(task.start_datetime))
+            } else {
+                const localDate = new Date()
+                localDate.setHours(9, 0, 0, 0)
+                setSelectedDate(localDate)
+            }
+
             setSelectedProjectId(task.project || null)
         }
     }, [task, mode])
@@ -136,7 +141,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
     }
 
     const handleDateSelect = (date: Date) => {
-        setSelectedDate(date)
+        setSelectedDate(convertToTimeZoneAndLocale(date))
         setIsDatePickerVisible(false)
     }
 
@@ -147,9 +152,10 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
 
     return (
         <>
-            <View variant='default' className="flex-1 px-4 relative">
+            <View variant='default' className="flex-1 px-4">
+                {/* Header */}
                 <View className="flex-row justify-between items-center mb-4">
-                    <Title>{t(mode === 'edit' ? 'common.edit' : 'common.create')}</Title>
+                    <Title>{t(mode === 'edit' ? 'common.edit' : 'plans.tasks.new.title')}</Title>
                     {!isOnline && (
                         <View className="flex-row items-center">
                             <Icon name="WifiOff" size={16} className="mr-2 text-warning" />
@@ -170,10 +176,14 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                             }}
                         />
                     )}
-
                 </View>
 
-                <ScrollView className="flex-1">
+                {/* Прокручиваемая часть контента */}
+                <ScrollView
+                    className="flex-1"
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 16 }}
+                >
                     {/* Основное поле ввода */}
                     <TextInput
                         placeholder={t('plans.tasks.new.inputPlaceholder')}
@@ -215,57 +225,51 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                     </Pressable>
                 </ScrollView>
 
-
-                <View
-                    className='absolute'
-                    style={{
-                        bottom: isKeyboardVisible ? keyboardHeight + 84 : 100,
-                        left: 16,
-                    }}
-                >
-                    <ProjectChoice
-                        selectedProjectId={selectedProjectId}
-                        onChangeSelectedProject={setSelectedProjectId}
-                    />
-                </View>
-
-                {/* Нижняя панель с иконками */}
-                <View
-                    className="flex-row justify-between items-center py-4 px-2 border-t border-border dark:border-border-dark"
-                    style={{
-                        position: 'absolute',
-                        bottom: isKeyboardVisible ? keyboardHeight : 16,
-                        left: 16,
-                        right: 16,
-                    }}
-                >
-                    <View className="flex-row justify-between items-center gap-x-4">
-                        <CalendarButton
-                            date={selectedDate}
-                            isActive={true}
-                            onPress={handleDateButtonPress}
-                        />
-                        <PriorityButton
-                            priority={priority}
-                            onPriorityChange={changePriority}
+                {/* Нижний блок */}
+                <View className="pt-2">
+                    {/* Блок выбора проекта */}
+                    <View
+                        className='absolute'
+                        style={{
+                            bottom: 84,
+                        }}
+                    >
+                        <ProjectChoice
+                            selectedProjectId={selectedProjectId}
+                            onChangeSelectedProject={setSelectedProjectId}
                         />
                     </View>
 
-                    <Button
-                        onPress={handleSubmit}
-                        disabled={!title.trim() || createTask.isPending || updateTask.isPending}
-                        leftIcon={mode === 'edit' ? 'Save' : 'Send'}
-                        variant='outline'
-                    />
+                    {/* Нижняя панель с иконками */}
+                    <View
+                        className="flex-row justify-between items-center pt-4 pb-2 px-2 border-t border-border dark:border-border-dark"
+                    >
+                        <View className="flex-row justify-between items-center gap-x-4">
+                            <CalendarButton
+                                date={selectedDate}
+                                isActive={true}
+                                onPress={handleDateButtonPress}
+                            />
+                            <PriorityButton
+                                priority={priority}
+                                onPriorityChange={changePriority}
+                            />
+                        </View>
 
+                        <Button
+                            onPress={handleSubmit}
+                            disabled={!title.trim() || createTask.isPending || updateTask.isPending}
+                            leftIcon={mode === 'edit' ? 'Save' : 'Send'}
+                            variant='outline'
+                        />
+                    </View>
                 </View>
-
             </View>
             <DatePickerModal
                 isVisible={isDatePickerVisible}
                 onClose={() => setIsDatePickerVisible(false)}
                 onSave={handleDateSelect}
-                initialDate={selectedDate}
+                initialDate={new Date(selectedDate)}
                 backdrop
                 showTimePicker
             />

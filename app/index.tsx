@@ -4,6 +4,7 @@ import { SplashScreen } from '@widgets/splash-screen'
 import { useFonts } from 'expo-font'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
+import 'react-native-get-random-values'
 
 export default function IndexScreen() {
   // Хук роутера, чтобы вызывать router.replace(...)

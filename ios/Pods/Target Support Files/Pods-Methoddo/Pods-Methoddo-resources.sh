@@ -118,8 +118,6 @@ if [[ "$CONFIGURATION" == "Debug" ]]; then
   install_resource "${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle"
   install_resource "${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle"
   install_resource "${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle"
-  install_resource "${PODS_CONFIGURATION_BUILD_DIR}/lottie-ios/LottiePrivacyInfo.bundle"
-  install_resource "${PODS_CONFIGURATION_BUILD_DIR}/lottie-react-native/Lottie_React_Native_Privacy.bundle"
 fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
   install_resource "${PODS_CONFIGURATION_BUILD_DIR}/EXApplication/ExpoApplication_privacy.bundle"
@@ -141,8 +139,6 @@ if [[ "$CONFIGURATION" == "Release" ]]; then
   install_resource "${PODS_CONFIGURATION_BUILD_DIR}/SuperwallKit/SuperwallKit.bundle"
   install_resource "${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle"
   install_resource "${PODS_CONFIGURATION_BUILD_DIR}/glog/glog_privacy.bundle"
-  install_resource "${PODS_CONFIGURATION_BUILD_DIR}/lottie-ios/LottiePrivacyInfo.bundle"
-  install_resource "${PODS_CONFIGURATION_BUILD_DIR}/lottie-react-native/Lottie_React_Native_Privacy.bundle"
 fi
 
 mkdir -p "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"

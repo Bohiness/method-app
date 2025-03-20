@@ -2,6 +2,7 @@
 import { cn } from '@shared/lib/utils/cn'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Icon } from '@shared/ui/icon'
+import { NotOnline } from '@shared/ui/system/NotOnline'
 import { Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { useRouter } from 'expo-router'
@@ -16,6 +17,7 @@ interface CustomHeaderProps {
     onBackPress?: () => void
     rightElement?: React.ReactNode
     leftElement?: React.ReactNode
+    showNetStatus?: boolean
 }
 
 export const CustomHeader = ({
@@ -24,7 +26,8 @@ export const CustomHeader = ({
     showBackButton = false,
     onBackPress,
     rightElement,
-    leftElement
+    leftElement,
+    showNetStatus = true
 }: CustomHeaderProps) => {
     const router = useRouter()
     const { t } = useTranslation()
@@ -63,8 +66,9 @@ export const CustomHeader = ({
                         {leftElement}
                     </View>
 
-                    <View className="absolute inset-0 items-center justify-center">
+                    <View className="absolute inset-0 items-center justify-center flex flex-row gap-x-2">
                         {title && <Title>{t(title)}</Title>}
+                        {showNetStatus && <NotOnline />}
                     </View>
 
                     <View className="z-10">

@@ -1,5 +1,6 @@
 import { storage } from '@shared/lib/storage/storage.service';
 import { MoodCheckin } from '@shared/types/diary/mood/MoodType';
+import { logger } from '../logger/logger.service';
 
 const MOOD_STORAGE_KEY = 'mood-checkins';
 const PENDING_CHANGES_KEY = 'mood-checkins-pending-changes';
@@ -11,7 +12,7 @@ export class MoodStorageService {
             const checkins = await storage.get<MoodCheckin[]>(MOOD_STORAGE_KEY);
             return checkins || [];
         } catch (error) {
-            console.error('Failed to get mood checkins from storage:', error);
+            logger.error(error, 'Failed to get mood checkins from storage:');
             return [];
         }
     }
@@ -19,24 +20,25 @@ export class MoodStorageService {
     async getMoodCheckinsByDays(days: number): Promise<MoodCheckin[]> {
         try {
             const checkins = await this.getMoodCheckins();
-            const today = new Date();
-            today.setHours(23, 59, 59, 999); // End of today
+            const now = new Date();
 
-            const cutoffDate = new Date(today);
-            cutoffDate.setDate(today.getDate() - days);
-            cutoffDate.setHours(0, 0, 0, 0); // Start of cutoff day
+            // Начало периода (days дней назад)
+            const cutoffDate = new Date(now);
+            cutoffDate.setDate(now.getDate() - days);
+            cutoffDate.setHours(0, 0, 0, 0);
 
             const filteredCheckins = checkins.filter(checkin => {
                 const checkinDate = new Date(checkin.created_at);
-                return checkinDate >= cutoffDate && checkinDate <= today;
+                return checkinDate >= cutoffDate;
             });
 
-            console.log(
-                `MoodStorageService.getMoodCheckinsByDays: Found ${filteredCheckins.length} entries for last ${days} days`
+            logger.log(
+                ` Найдено ${filteredCheckins.length} записей за последние ${days} дней`,
+                'MoodStorageService.getMoodCheckinsByDays'
             );
             return filteredCheckins;
         } catch (error) {
-            console.error('Error in getMoodCheckinsByDays:', error);
+            logger.error(error, 'Error in getMoodCheckinsByDays:');
             return [];
         }
     }
@@ -44,35 +46,37 @@ export class MoodStorageService {
     async getMoodCheckinsByDaysRange(startDays: number, endDays: number): Promise<MoodCheckin[]> {
         try {
             const checkins = await this.getMoodCheckins();
-            const today = new Date();
-            today.setHours(23, 59, 59, 999); // End of today
+            const now = new Date();
 
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() - endDays);
-            startDate.setHours(0, 0, 0, 0); // Start of start day
+            // Начало периода (более старые записи)
+            const startDate = new Date(now);
+            startDate.setDate(now.getDate() - endDays);
+            startDate.setHours(0, 0, 0, 0);
 
-            const endDate = new Date(today);
-            endDate.setDate(today.getDate() - startDays);
-            endDate.setHours(23, 59, 59, 999); // End of end day
+            // Конец периода (более новые записи)
+            const endDate = new Date(now);
+            endDate.setDate(now.getDate() - startDays);
+            endDate.setHours(0, 0, 0, 0);
 
             const filteredCheckins = checkins.filter(checkin => {
                 const checkinDate = new Date(checkin.created_at);
-                return checkinDate >= startDate && checkinDate <= endDate;
+                // Включаем записи строго между startDate (включительно) и endDate (исключительно)
+                return checkinDate >= startDate && checkinDate < endDate;
             });
 
-            console.log(
-                `MoodStorageService.getMoodCheckinsByDaysRange: Found ${filteredCheckins.length} entries between ${startDays} and ${endDays} days ago`
+            logger.log(
+                `MoodStorageService.getMoodCheckinsByDaysRange: Found ${filteredCheckins.length} entries строго между ${startDays} и ${endDays} днями назад`
             );
             return filteredCheckins;
         } catch (error) {
-            console.error('Error in getMoodCheckinsByDaysRange:', error);
+            logger.error(error, 'Error in getMoodCheckinsByDaysRange:');
             return [];
         }
     }
 
     async createMoodCheckin(data: Omit<MoodCheckin, 'id' | 'created_at'>): Promise<MoodCheckin> {
         try {
-            console.log('MoodStorageService.createMoodCheckin: Начало сохранения данных:', data);
+            logger.log(data, 'MoodStorageService.createMoodCheckin: Начало сохранения данных:');
 
             // Проверка данных перед сохранением
             if (data.mood_level === undefined || data.mood_level === null) {
@@ -92,7 +96,7 @@ export class MoodStorageService {
 
             // Дополнительная проверка, что checkins - это массив
             if (!Array.isArray(checkins)) {
-                console.warn('MoodStorageService: checkins не является массивом, создаем новый массив');
+                logger.warn('MoodStorageService: checkins не является массивом, создаем новый массив');
                 checkins = [];
             }
 
@@ -105,11 +109,11 @@ export class MoodStorageService {
                 factors: factors,
             };
 
-            console.log('MoodStorageService.createMoodCheckin: Создан новый объект для сохранения:', newCheckin);
+            logger.log(newCheckin, 'MoodStorageService.createMoodCheckin: Создан новый объект для сохранения:');
 
             checkins.unshift(newCheckin);
             await storage.set(MOOD_STORAGE_KEY, checkins);
-            console.log('MoodStorageService.createMoodCheckin: Данные успешно сохранены в хранилище');
+            logger.log('MoodStorageService.createMoodCheckin: Данные успешно сохранены в хранилище');
 
             // Сохраняем изменение для последующей синхронизации
             await this.savePendingChange({
@@ -117,16 +121,16 @@ export class MoodStorageService {
                 data: newCheckin,
                 timestamp: Date.now(),
             });
-            console.log('MoodStorageService.createMoodCheckin: Изменение добавлено в очередь для синхронизации');
+            logger.log('MoodStorageService.createMoodCheckin: Изменение добавлено в очередь для синхронизации');
 
             return newCheckin;
         } catch (error) {
-            console.error('MoodStorageService.createMoodCheckin: Ошибка при сохранении данных:', error);
+            logger.error(error, 'MoodStorageService.createMoodCheckin: Ошибка при сохранении данных:');
 
             // Более подробное логирование ошибки
             if (error instanceof Error) {
-                console.error('MoodStorageService.createMoodCheckin: Сообщение ошибки:', error.message);
-                console.error('MoodStorageService.createMoodCheckin: Стек ошибки:', error.stack);
+                logger.error(error.message, 'MoodStorageService.createMoodCheckin: Сообщение ошибки:');
+                logger.error(error.stack, 'MoodStorageService.createMoodCheckin: Стек ошибки:');
             }
 
             throw error;
@@ -139,7 +143,7 @@ export class MoodStorageService {
             changes.push(change);
             await storage.set(PENDING_CHANGES_KEY, changes);
         } catch (error) {
-            console.error('Failed to save pending change:', error);
+            logger.error(error, 'Failed to save pending change:');
             throw error;
         }
     }

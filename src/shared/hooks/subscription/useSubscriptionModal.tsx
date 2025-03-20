@@ -1,5 +1,5 @@
 // src/shared/hooks/subscription/useSubscriptionModal.ts
-import { subscriptionService } from '@shared/lib/subscription/subscription.service'
+import { logger } from '@shared/lib/logger/logger.service'
 import { SubscriptionPlan } from '@shared/types/subscription/SubscriptionType'
 import { SubscriptionOverlay } from '@shared/ui/subscription-overlay'
 import { router } from 'expo-router'
@@ -8,48 +8,55 @@ import { useTranslation } from 'react-i18next'
 import { useSubscription } from './useSubscription'
 
 export const useSubscriptionModal = () => {
-    const { subscription, isSubscribed, isPremium, isPremiumAI } = useSubscription()
+    const { isPremium, isPremiumAI, forceRefreshSubscription } = useSubscription()
     const { t } = useTranslation()
 
-    const showSubscriptionModal = ({ text, plan }: { text: string, plan: SubscriptionPlan }) => {
+    /**
+     * Показывает модальное окно подписки с указанными параметрами
+     */
+    const showSubscriptionModal = useCallback(({
+        text = t('screens.subscription.title'),
+        plan = 'premium'
+    }: {
+        text?: string,
+        plan?: SubscriptionPlan
+    }) => {
         router.push({
             pathname: '/(modals)/(payment)/subscription',
             params: { text, selectedPlan: plan }
         })
-    }
+    }, [])
 
-    // Показывает модальное окно подписки, если нет активной подписки
-    const showSubscriptionModalIfNeeded = useCallback(async () => {
-        // Быстрая проверка из кэша
-        const cachedStatus = await subscriptionService.checkSubscriptionStatus()
-
-        // Если в кэше есть информация о подписке и она активна, возвращаем true
-        if (cachedStatus && cachedStatus.isPremium) {
-            return true
+    /**
+     * Показывает модальное окно подписки, если нет подписки premium
+     * Если критически важно получить актуальные данные, установите forceCheck=true
+     * @returns true если у пользователя есть подписка, false если нет
+     */
+    const showSubscriptionModalIfNeeded = useCallback(async (forceCheck = false) => {
+        // Только если явно запросили обновление статуса
+        if (forceCheck) {
+            await forceRefreshSubscription()
         }
 
-        // Если в кэше нет информации или подписка не активна, проверяем состояние из хука
-        if (!isSubscribed) {
+        if (!isPremium) {
             showSubscriptionModal({
-                text: t('subscription.feature_locked'),
+                text: t('screens.subscription.title'),
                 plan: 'premium'
             })
             return false
         }
         return true
-    }, [isSubscribed, showSubscriptionModal, t])
+    }, [isPremium, forceRefreshSubscription, showSubscriptionModal, t])
 
-    // Проверяет доступность premium функций
-    const checkPremiumAccess = useCallback(async ({ text = 'subscription.feature_locked' }: { text?: string }) => {
-        // Быстрая проверка из кэша
-        const cachedStatus = await subscriptionService.checkSubscriptionStatus()
-
-        // Если в кэше есть информация о подписке и она премиум, возвращаем true
-        if (cachedStatus && cachedStatus.isPremium) {
-            return true
-        }
-
-        // Если в кэше нет информации или подписка не премиум, проверяем состояние из хука
+    /**
+     * Проверяет доступность premium функций
+     * @returns true если у пользователя есть премиум-доступ, false если нет
+     */
+    const checkPremiumAccess = useCallback(({
+        text = 'subscription.feature_locked'
+    }: {
+        text?: string
+    }) => {
         if (!isPremium) {
             showSubscriptionModal({
                 text: t(text),
@@ -60,17 +67,15 @@ export const useSubscriptionModal = () => {
         return true
     }, [isPremium, showSubscriptionModal, t])
 
-    // Проверяет доступность premium AI функций
-    const checkPremiumAIAccess = useCallback(async ({ text = 'subscription.feature_locked' }: { text?: string }) => {
-        // Быстрая проверка из кэша
-        const cachedStatus = await subscriptionService.checkSubscriptionStatus()
-
-        // Если в кэше есть информация о подписке и она премиум AI, возвращаем true
-        if (cachedStatus && cachedStatus.isPremiumAI) {
-            return true
-        }
-
-        // Если в кэше нет информации или подписка не премиум AI, проверяем состояние из хука
+    /**
+     * Проверяет доступность premium AI функций
+     * @returns true если у пользователя есть премиум AI доступ, false если нет
+     */
+    const checkPremiumAIAccess = useCallback(({
+        text = 'subscription.feature_locked'
+    }: {
+        text?: string
+    }) => {
         if (!isPremiumAI) {
             showSubscriptionModal({
                 text: t(text),
@@ -81,7 +86,9 @@ export const useSubscriptionModal = () => {
         return true
     }, [isPremiumAI, showSubscriptionModal, t])
 
-    // Оборачивает компонент в SubscriptionOverlay, если требуется подписка
+    /**
+     * Оборачивает компонент в SubscriptionOverlay, если требуется подписка
+     */
     const wrapWithSubscriptionOverlay = useCallback(({
         children,
         plan = 'premium',
@@ -95,6 +102,7 @@ export const useSubscriptionModal = () => {
         opacity?: number,
         className?: string
     }) => {
+        logger.log({ plan, isPremium, isPremiumAI }, 'wrapWithSubscriptionOverlay', 'wrapWithSubscriptionOverlay')
         const isVisible = plan === 'premium' ? !isPremium : !isPremiumAI
 
         return (
@@ -104,11 +112,12 @@ export const useSubscriptionModal = () => {
                 text={text}
                 opacity={opacity}
                 className={className}
+                onSubscribe={showSubscriptionModal}
             >
                 {children}
             </SubscriptionOverlay>
         )
-    }, [isPremium, isPremiumAI])
+    }, [isPremium, isPremiumAI, showSubscriptionModal])
 
     return {
         showSubscriptionModal,
@@ -116,8 +125,8 @@ export const useSubscriptionModal = () => {
         checkPremiumAccess,
         checkPremiumAIAccess,
         wrapWithSubscriptionOverlay,
-        isSubscribed,
         isPremium,
-        isPremiumAI
+        isPremiumAI,
+        forceRefreshSubscription
     }
 }

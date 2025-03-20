@@ -182,7 +182,7 @@ export const IconButtonWithText: React.FC<ButtonProps> = ({
                 <Text
                     className="mt-2 truncate text-center max-w-[100%]"
                     numberOfLines={1}
-                    size={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'sm'}
+                    size={'sm'}
                 >
                     {children}
                 </Text>

@@ -1,12 +1,15 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
+import { API_URLS } from '@shared/constants/URLS'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { useSubscription } from '@shared/hooks/subscription/useSubscription'
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
+import { useLocale } from '@shared/hooks/systems/locale/useLocale'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { useTranslation } from 'react-i18next'
+import { Linking } from 'react-native'
 
 export const SubscriptionSettingScreen = ({
     onBack,
@@ -17,10 +20,10 @@ export const SubscriptionSettingScreen = ({
 }) => {
     const { t } = useTranslation()
     const { showSubscriptionModal } = useSubscriptionModal()
+    const { locale } = useLocale()
 
     const {
         subscription,
-        isSubscribed,
         isPremium,
         isPremiumAI,
         isRestoring,
@@ -33,12 +36,20 @@ export const SubscriptionSettingScreen = ({
         return new Date(date).toLocaleDateString()
     }
 
+    // Функция для показа модального окна подписки с нужным планом
+    const handleShowSubscriptionModal = (plan: 'premium' | 'premium_ai' = 'premium') => {
+        showSubscriptionModal({
+            text: t('settings.subscription.upgrade'),
+            plan
+        })
+    }
+
     return (
         <View className="flex-1">
             <HeaderMenuItem onBack={onBack} title={t('settings.subscription.title')} />
 
             <View>
-                {isSubscribed && subscription ? (
+                {isPremium && subscription ? (
                     // Информация об активной подписке
                     <View className="mb-4">
                         <View className="flex-row items-center mb-4">
@@ -48,7 +59,7 @@ export const SubscriptionSettingScreen = ({
 
                         <Text className="mb-2">
                             {t('settings.subscription.plan', {
-                                plan: isPremiumAI ? 'Premium AI' : 'Premium'
+                                plan: isPremiumAI ? t('screens.subscription.plans.premium_ai.title') : t('screens.subscription.plans.premium.title')
                             })}
                         </Text>
 
@@ -74,7 +85,7 @@ export const SubscriptionSettingScreen = ({
                             <Button
                                 variant="outline"
                                 className="mt-4"
-                                onPress={showSubscriptionModal}
+                                onPress={() => handleShowSubscriptionModal('premium_ai')}
                                 loading={isPurchasing}
                             >
                                 {t('settings.subscription.upgrade')}
@@ -91,7 +102,7 @@ export const SubscriptionSettingScreen = ({
                             </Text>
                             <Button
                                 variant="default"
-                                onPress={showSubscriptionModal}
+                                onPress={() => handleShowSubscriptionModal('premium')}
                                 loading={isPurchasing}
                             >
                                 {t('settings.subscription.activatePremium')}
@@ -115,13 +126,13 @@ export const SubscriptionSettingScreen = ({
                 <View>
                     <Button
                         variant="ghost"
-                        onPress={() => onNavigate('terms')}
+                        onPress={() => { Linking.openURL(API_URLS.DOCS.getTerms(locale)) }}
                     >
                         {t('settings.subscription.terms')}
                     </Button>
                     <Button
                         variant="ghost"
-                        onPress={() => onNavigate('privacy')}
+                        onPress={() => { Linking.openURL(API_URLS.DOCS.getPrivacy(locale)) }}
                     >
                         {t('settings.subscription.privacy')}
                     </Button>

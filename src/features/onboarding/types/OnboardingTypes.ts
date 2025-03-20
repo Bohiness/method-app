@@ -18,6 +18,7 @@ export interface OnboardingData {
     age?: string;
     gender?: string;
     focus?: string;
+    focuses?: string[];
     first_name?: string;
     notifications?: {
         morning: {

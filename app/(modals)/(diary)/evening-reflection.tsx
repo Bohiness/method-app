@@ -1,7 +1,7 @@
 import { NavigationIndependentTree, useNavigation } from '@react-navigation/native'
 import { View } from '@shared/ui/view'
 import React, { useLayoutEffect, useState } from 'react'
-import { StepNavigatorEveningReflection } from './evening-reflection/StepNavigator'
+import StepNavigatorEveningReflection from './evening-reflection/StepNavigator'
 
 export default function EveningReflection() {
     const [currentStep, setCurrentStep] = useState(1)

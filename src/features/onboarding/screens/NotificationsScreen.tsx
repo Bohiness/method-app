@@ -1,15 +1,14 @@
 //src/features/onboarding/screens/NotificationsScreen.tsx
-import DateTimePicker from '@react-native-community/datetimepicker'
 import { useNotification } from '@shared/context/notification-provider'
 import { useLocale } from '@shared/hooks/systems/locale/useLocale'
+import { dailyNotificationsService } from '@shared/lib/notifications/daily-notifications.service'
 import { Button } from '@shared/ui/button'
 import { NotificationsContainer } from '@shared/ui/notifications/notification'
-import { Separator } from '@shared/ui/separator'
-import { Switch } from '@shared/ui/switch'
 import { Text } from '@shared/ui/text'
+import { View } from '@shared/ui/view'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import Animated, { FadeIn } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOnboarding } from '../context/OnboardingContext'
 
@@ -20,7 +19,6 @@ export const NotificationsScreen = () => {
     const {
         settings,
         updateSettings,
-        scheduleLocalNotification,
         cancelAllNotifications,
         registerForPushNotifications
     } = useNotification()
@@ -30,7 +28,6 @@ export const NotificationsScreen = () => {
     const [morningTime, setMorningTime] = useState(new Date().setHours(8, 0))
     const [eveningTime, setEveningTime] = useState(new Date().setHours(22, 0))
     const [morningEnabled, setMorningEnabled] = useState(true)
-    const [eveningEnabled, setEveningEnabled] = useState(true)
 
     const notifications = [
         {
@@ -47,60 +44,32 @@ export const NotificationsScreen = () => {
         },
     ]
 
-    const handleTimeChange = (event: any, selectedDate: Date | undefined, isMorning: boolean) => {
-        if (!selectedDate) return
-
-        if (isMorning) {
-            setMorningTime(selectedDate.getTime())
-            if (morningEnabled) {
-                updateNotificationSchedule(selectedDate, true)
-            }
-        } else {
-            setEveningTime(selectedDate.getTime())
-            if (eveningEnabled) {
-                updateNotificationSchedule(selectedDate, false)
-            }
-        }
-    }
-
 
     const updateNotificationSchedule = async (time: Date, isMorning: boolean) => {
         try {
-            // Теперь проверяем наличие разрешений перед планированием
+            // Проверяем наличие разрешений перед планированием
             if (!settings?.push_enabled) {
                 return
             }
 
-            await scheduleLocalNotification({
-                title: isMorning ? t('notifications.morning.title') : t('notifications.evening.title'),
-                body: isMorning ? t('notifications.morning.body') : t('notifications.evening.body'),
-                trigger: {
-                    hour: time.getHours(),
-                    minute: time.getMinutes(),
-                    repeats: true,
-                    type: 'time'
-                }
-            })
+            // Используем dailyNotificationsService для настройки ежедневных уведомлений с пользовательским временем
+            if (isMorning) {
+                // Устанавливаем настраиваемое время утреннего уведомления
+                await dailyNotificationsService.scheduleMorningNotification(
+                    time.getHours(),
+                    time.getMinutes()
+                )
+            } else {
+                // Устанавливаем настраиваемое время вечернего уведомления
+                await dailyNotificationsService.scheduleEveningNotification(
+                    time.getHours(),
+                    time.getMinutes()
+                )
+            }
         } catch (error) {
             console.error('Ошибка в updateNotificationSchedule:', error)
         }
     }
-
-    const handleCheckboxChange = async (value: boolean, isMorning: boolean) => {
-        if (isMorning) {
-            setMorningEnabled(value)
-            if (value) {
-                await updateNotificationSchedule(new Date(morningTime), true)
-            }
-        } else {
-            setEveningEnabled(value)
-            if (value) {
-                await updateNotificationSchedule(new Date(eveningTime), false)
-            }
-        }
-    }
-
-
 
     const handleNotifications = async () => {
         setLoading(true)
@@ -109,7 +78,7 @@ export const NotificationsScreen = () => {
             await registerForPushNotifications()
 
             // После получения разрешения настраиваем уведомления
-            await cancelAllNotifications()
+            await dailyNotificationsService.cancelAllDailyNotifications()
 
             await updateSettings({
                 push_enabled: true,
@@ -151,96 +120,58 @@ export const NotificationsScreen = () => {
         }
     }
 
+    // Синхронизация времени в сервисе и наших настройках при инициализации
+    useEffect(() => {
+        // Устанавливаем сохраненное время для утренних уведомлений
+        const morningDate = new Date(morningTime)
+        dailyNotificationsService.setMorningTime(morningDate.getHours(), morningDate.getMinutes())
+
+        // Устанавливаем сохраненное время для вечерних уведомлений
+        const eveningDate = new Date(eveningTime)
+        dailyNotificationsService.setEveningTime(eveningDate.getHours(), eveningDate.getMinutes())
+    }, [])
+
     // Очистка при размонтировании
     useEffect(() => {
         return () => {
             // Если пользователь не завершил онбординг, отменяем уведомления
             if (!settings?.push_enabled) {
-                cancelAllNotifications()
+                dailyNotificationsService.cancelAllDailyNotifications()
             }
         }
     }, [])
 
     return (
-        <View className="flex-1" style={{ paddingTop: insets.top }}>
-            <View className="flex-1 items-center justify-start p-4 pt-20">
+        <View className="flex-1 justify-center" style={{ paddingTop: insets.top }}>
+            <View className="flex-1 items-center justify-center">
                 <View className="w-full max-w-sm">
-                    <Text size="2xl" weight="bold" className="text-center mb-6">
+                    <Text size="2xl" weight="bold" className="text-center mb-10">
                         {t('screens.onboarding.notifications.title')}
                     </Text>
 
-                    <View style={{ height: notifications.length * 16 + 100 }} className="relative w-full">
+                    <View style={{ height: notifications.length * 16 + 100 }} className="relative w-full mb-2">
                         <NotificationsContainer notifications={notifications} />
                     </View>
 
-                    <Text size="lg" variant="secondary" className="text-center mb-6">
-                        {t('screens.onboarding.notifications.subtitle')}
-                    </Text>
-
-                    <View className="bg-background dark:bg-background-dark rounded-2xl p-6 mb-8 w-full gap-4">
-                        {/* Утреннее время */}
-                        <View className="flex-row items-center justify-between">
-                            <View className="flex-1 -ml-3">
-                                <Text size="lg" weight="bold" className="mb-1 ml-3">
-                                    {t('screens.onboarding.notifications.morning')}
-                                </Text>
-                                <DateTimePicker
-                                    value={new Date(morningTime)}
-                                    mode="time"
-                                    is24Hour={!hour12}
-                                    display="default"
-                                    locale={locale}
-                                    onChange={(event, date) => handleTimeChange(event, date, true)}
-                                />
-                            </View>
-                            <Switch
-                                checked={morningEnabled}
-                                onChange={(value) => handleCheckboxChange(value, true)}
-                                value="morning"
-                            />
-                        </View>
-
-                        <Separator />
-
-                        {/* Вечернее время */}
-                        <View className="flex-row items-center justify-between">
-                            <View className="flex-1 -ml-3">
-                                <Text size="lg" weight="bold" className="mb-1 ml-3">
-                                    {t('screens.onboarding.notifications.evening')}
-                                </Text>
-                                <DateTimePicker
-                                    value={new Date(eveningTime)}
-                                    mode="time"
-                                    is24Hour={!hour12}
-                                    display="default"
-                                    locale={locale}
-                                    onChange={(event, date) => handleTimeChange(event, date, false)}
-                                />
-                            </View>
-                            <Switch
-                                checked={eveningEnabled}
-                                onChange={(value) => handleCheckboxChange(value, false)}
-                                value="evening"
-                            />
-                        </View>
-                    </View>
-
-                    <Text size="sm" variant="secondary" className="text-center mb-4">
-                        {t('screens.onboarding.notifications.smart_system')}
+                    <Text size="lg" variant="secondary" className="text-center">
+                        {t('screens.onboarding.notifications.productivity_system')}
                     </Text>
                 </View>
             </View>
 
-            <View className="p-4 pb-8">
+            <Animated.View
+                className="px-6 pb-10"
+                entering={FadeIn.delay(400).duration(800)}
+            >
                 <Button
                     onPress={handleNotifications}
-                    className="w-full"
-                    size="lg"
+                    className="w-fit self-center px-20"
+                    size='lg'
                     loading={loading}
                 >
                     {t('common.allow')}
                 </Button>
-            </View>
+            </Animated.View>
         </View>
     )
 }

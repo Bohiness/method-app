@@ -21,6 +21,13 @@ class UserApiService {
     }): Promise<void> {
         await apiClient.put(API_ROUTES.USER.SUBSCRIPTION, data);
     }
+
+    /**
+     * Проверяет валидность подписки на сервере
+     */
+    async verifySubscription(): Promise<{ isValid: boolean }> {
+        return await apiClient.get(API_ROUTES.USER.VERIFY_SUBSCRIPTION);
+    }
 }
 
 export const userApiService = new UserApiService();

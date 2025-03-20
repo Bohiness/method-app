@@ -92,7 +92,7 @@ export const Calendar = ({
 }: CalendarProps) => {
     const { isDark } = useTheme()
     const colors = useColors()
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+    const { formatDateTime } = useDateTime()
     const [currentDate, setCurrentDate] = useState<Date>(value)
     const isMounted = useRef(false)
 
@@ -160,8 +160,8 @@ export const Calendar = ({
         return eachDayOfInterval({
             start: weekStart,
             end: endOfWeek(weekStart, { weekStartsOn })
-        }).map(day => formateDataTimeWithTimezoneAndLocale(day, 'EEEEEE'))
-    }, [formateDataTimeWithTimezoneAndLocale, weekStartsOn])
+        }).map(day => formatDateTime(day, 'EEEEEE'))
+    }, [formatDateTime, weekStartsOn])
 
     const isDateDisabled = (date: Date) => {
         if (minDate && date < minDate) return true
@@ -217,7 +217,7 @@ export const Calendar = ({
                         />
                     )}
                     <Text className={mergedTextStyles.headerText}>
-                        {formateDataTimeWithTimezoneAndLocale(currentDate, 'LLLL yyyy')}
+                        {formatDateTime(currentDate, 'LLLL yyyy')}
                     </Text>
                     {showMonthNavigation && (
                         <Button
@@ -251,7 +251,7 @@ export const Calendar = ({
                         {showWeekNumbers && (
                             <RNView className={mergedStyles.weekNumber}>
                                 <Text className={mergedTextStyles.weekNumberText}>
-                                    {formateDataTimeWithTimezoneAndLocale(week[0], 'w')}
+                                    {formatDateTime(week[0], 'w')}
                                 </Text>
                             </RNView>
                         )}
@@ -260,7 +260,7 @@ export const Calendar = ({
                             const isDayToday = isToday(day)
                             const isCurrentMonth = isSameMonth(day, currentDate)
                             const disabled = isDateDisabled(day)
-                            const dateKey = formateDataTimeWithTimezoneAndLocale(day, 'yyyy-MM-dd')
+                            const dateKey = formatDateTime(day, 'yyyy-MM-dd')
                             const marked = markedDates?.[dateKey]
 
                             return (
@@ -284,7 +284,7 @@ export const Calendar = ({
                                             disabled && mergedTextStyles.disabledDayText
                                         )}
                                     >
-                                        {formateDataTimeWithTimezoneAndLocale(day, 'd')}
+                                        {formatDateTime(day, 'd')}
                                     </Text>
                                     {marked?.marked && (
                                         <RNView

@@ -160,7 +160,7 @@ class NotificationsApiService {
             category?: string;
             read?: boolean;
         }
-    ): Promise<PaginatedResponse<NotificationHistory>> {
+    ): Promise<PaginatedResponse<NotificationHistory[]>> {
         try {
             const queryParams = new URLSearchParams({
                 page: page.toString(),
@@ -175,7 +175,7 @@ class NotificationsApiService {
                 if (filters.read !== undefined) queryParams.append('read', filters.read.toString());
             }
 
-            const response = await apiClient.get<PaginatedResponse<NotificationHistory>>(
+            const response = await apiClient.get<PaginatedResponse<NotificationHistory[]>>(
                 `${this.BASE_PATH}/history/?${queryParams}`
             );
             return response;

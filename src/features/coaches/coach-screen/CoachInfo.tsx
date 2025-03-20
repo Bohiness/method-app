@@ -5,6 +5,7 @@ import { ExpandableImage } from '@shared/ui/image/ExpandableImage'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface CoachHeaderProps {
     image: string
@@ -26,6 +27,7 @@ export const CoachInfo = ({
     marital_status,
 }: CoachHeaderProps) => {
     const calculateAge = useCalculateAge()
+    const { t } = useTranslation()
 
     return (
         <View className="p-4">
@@ -60,7 +62,7 @@ export const CoachInfo = ({
                         <Text
                             variant="secondary"
                         >
-                            {`${country && `${country}, `}${calculateAge(date_of_birth)}, ${marital_status}`}
+                            {`${country && `${country}, `}${calculateAge(date_of_birth)}, ${t(`coach.maritalStatus.${marital_status}`)}`}
                         </Text>
                     </View>
                 </View>

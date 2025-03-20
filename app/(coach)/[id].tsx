@@ -16,7 +16,7 @@ export default function CoachScreen() {
                 id: id,
             })
         }
-    }, [coach])
+    }, [coach, id])
 
     const handleBooking = () => {
         const url = `https://method.do/coach/${id}`

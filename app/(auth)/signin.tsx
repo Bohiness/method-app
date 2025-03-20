@@ -1,15 +1,13 @@
 // src/app/profile.tsx
 
 import { SignInScreen } from '@features/screens/SignInScreen'
-import { WebSignIn } from '@shared/lib/user/WebSignIn'
-import { Platform } from 'react-native'
+import { ModalBottomContentView } from '@shared/ui/view'
 
 export default function ProfileScreen() {
-    if (Platform.OS === 'web') {
-        return <WebSignIn />
-    }
 
     return (
-        <SignInScreen />
+        <ModalBottomContentView showHeader>
+            <SignInScreen />
+        </ModalBottomContentView>
     )
 }

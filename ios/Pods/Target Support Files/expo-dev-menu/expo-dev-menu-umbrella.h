@@ -16,6 +16,7 @@
 #import "EXDevMenu/DevMenuRCTBridge.h"
 #import "EXDevMenu/DevMenuRCTDevSettings.h"
 #import "EXDevMenu/DevMenuRootView.h"
+#import "EXDevMenu/EXAppDependencyProvider.h"
 #import "EXDevMenu/EXDevMenuAppInfo.h"
 #import "EXDevMenu/EXDevMenu.h"
 #import "EXDevMenu/RCTCxxBridge+Private.h"

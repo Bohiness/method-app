@@ -50,11 +50,31 @@ export class StorageService {
             }
 
             try {
-                // Пытаемся распарсить JSON, даже если это изначально строка
-                return JSON.parse(value) as T;
+                // Пытаемся распарсить JSON
+                const parsedValue = JSON.parse(value) as T;
+
+                // Специальная обработка для известных ключей, которые должны содержать массивы
+                if ((key === 'start_day' || key === 'evening-reflections') && !Array.isArray(parsedValue)) {
+                    console.error(`Value for key ${key} should be an array but got:`, parsedValue);
+                    if (typeof parsedValue === 'object' && parsedValue !== null) {
+                        // Если это объект, но не массив, обернем его в массив
+                        return [parsedValue] as unknown as T;
+                    }
+                    // Если не объект, возвращаем пустой массив
+                    return [] as unknown as T;
+                }
+
+                return parsedValue;
             } catch (parseError) {
                 // Если не удалось распарсить, возможно это просто строка
-                console.warn('Failed to parse JSON, returning as is:', parseError);
+                console.warn('Failed to parse JSON for key:', key, parseError);
+
+                // Проверяем, не должен ли это быть массив
+                if (key === 'start_day' || key === 'evening-reflections') {
+                    console.warn(`Value for key ${key} should be an array, returning empty array`);
+                    return [] as unknown as T;
+                }
+
                 return value as unknown as T;
             }
         } catch (error) {

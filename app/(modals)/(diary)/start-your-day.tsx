@@ -1,7 +1,7 @@
 import { NavigationIndependentTree, useNavigation } from '@react-navigation/native'
 import React, { useLayoutEffect, useState } from 'react'
 import { View } from 'react-native'
-import { StepNavigatorStartYourDay } from './start-your-day/StepNavigator'
+import StepNavigatorStartYourDay from './start-your-day/StepNavigator'
 
 export default function StartYourDayScreen() {
     const [currentStep, setCurrentStep] = useState(1)

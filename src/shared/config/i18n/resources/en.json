@@ -28,6 +28,8 @@
         "close": "Close",
         "yes": "Yes",
         "no": "No",
+        "at": "at",
+        "ok": "OK",
         "date": {
             "today": "today",
             "tomorrow": "tomorrow",
@@ -49,7 +51,9 @@
             "photoLibraryDenied": "Photo library access denied",
             "requiredField": "This field is required",
             "photoRequired": "Photo is required"
-        }
+        },
+        "later": "Later",
+        "update": "Update"
     },
     "components": {
         "iconPicker": {
@@ -105,6 +109,7 @@
             "forgotPassword": "Forgot Password",
             "enterEmailToLoginOrCreate": "Enter email to login or create an account",
             "loginLikeExpert": "Login as Expert",
+            "invalidEmail": "Invalid email",
             "errors": {
                 "passwordRequired": "Password is required",
                 "passwordsDoNotMatch": "Passwords do not match",
@@ -162,6 +167,16 @@
     },
     "diary": {
         "moodcheckin": {
+            "title": "Mood check-in",
+            "description": "Check in with your mood",
+            "sumUpYourDay": "Sum up your day",
+            "moods": {
+                "terrible": "Terrible",
+                "bad": "Bad",
+                "normal": "Normal",
+                "good": "Good",
+                "excellent": "Excellent"
+            },
             "step1": {
                 "title": "How are you feeling now?",
                 "description": "at"
@@ -183,21 +198,6 @@
                 "title": "Good job! Mood recorded",
                 "description": "Keep tracking your mood every day for better self-awareness"
             }
-        },
-        "mood": {
-            "eveningReflection": "Evening reflection",
-            "sumUpYourDay": "Sum up your day",
-            "moods": {
-                "terrible": "Terrible",
-                "bad": "Bad",
-                "normal": "Normal",
-                "good": "Good",
-                "excellent": "Excellent"
-            }
-        },
-        "moodCheckin": {
-            "title": "Mood check-in",
-            "description": "Check how you're feeling today"
         },
         "startYourDay": {
             "title": "Start your day",
@@ -245,6 +245,8 @@
             }
         },
         "eveningreflection": {
+            "title": "Evening reflection",
+            "description": "Reflect on your day",
             "howisyourday": {
                 "title": "How is your day?",
                 "subtitle": "Reflect on your day",
@@ -278,6 +280,28 @@
                 "title": "Evening reflection completed!",
                 "description": "You've successfully completed your evening reflection. Keep up the good work to maintain your streak!"
             }
+        },
+        "beautifuldiary": {
+            "emotions": "You felt",
+            "factors": "Why you felt that way",
+            "factorNote": "Factor Note",
+            "emotionNote": "Emotion Note",
+            "mood": {
+                "title": "Mood Check-in"
+            },
+            "startDay": {
+                "title": "Start Day",
+                "sleepQuality": "Sleep Quality",
+                "plansForDay": "Plans for Day",
+                "priorities": "Priorities"
+            },
+            "eveningReflection": {
+                "title": "Evening Reflection",
+                "positiveAspects": "Positive Aspects",
+                "improvementAreas": "Improvement Areas",
+                "lessonLearned": "Lesson Learned",
+                "additionalThoughts": "Additional Thoughts"
+            }
         }
     },
     "plans": {
@@ -288,6 +312,7 @@
         },
         "tasks": {
             "new": {
+                "title": "New task",
                 "inputPlaceholder": "What needs to be done?",
                 "subtaskPlaceholder": "Add subtask",
                 "addSubtask": "Add subtask"
@@ -342,6 +367,15 @@
                 "iconPlaceholder": "Select icon",
                 "colorLabel": "Color",
                 "saveButton": "Save"
+            }
+        },
+        "settings": {
+            "history": {
+                "menuItem": "Tasks history",
+                "title": "Tasks history"
+            },
+            "projects": {
+                "menuItem": "My projects"
             }
         }
     },
@@ -398,6 +432,9 @@
         "settings": "Settings",
         "title": "Settings",
         "myDiary": "My Diary",
+        "preferences": {
+            "title": "Preferences"
+        },
         "theme": {
             "title": "Theme",
             "description": "Choose a theme that suits you",
@@ -438,6 +475,7 @@
         },
         "storage": {
             "title": "Storage",
+            "noItems": "No items",
             "totalUsed": "Storage used",
             "clearCache": {
                 "button": "Clear cache",
@@ -450,6 +488,7 @@
         },
         "subscription": {
             "title": "Subscription",
+            "upgrade": "Upgrade to {{plan}}",
             "active": "Active Subscription",
             "noActive": "No Active Subscription",
             "plan": "Plan: {{plan}}",
@@ -474,6 +513,37 @@
         "plans": {
             "title": "Settings",
             "description": "View and manage your plans"
+        },
+        "revenuecat": {
+            "title": "RevenueCat",
+            "description": "View and manage your revenuecat"
+        },
+        "admin": {
+            "title": "Only for admins and developers",
+            "activatePlanByAdmin": "Activate Premium Plan",
+            "activatePlanByAdminSuccess": "Premium plan activated",
+            "deactivatePlanByAdmin": "Deactivate Premium Plan",
+            "deactivatePlanByAdminSuccess": "Premium plan deactivated"
+        },
+        "sendErrorReport": {
+            "title": "Send error report",
+            "description": "Please describe the problem you encountered. This will help us improve the app.",
+            "descriptionPlaceholder": "Describe what happened...",
+            "sendButton": "Send Report",
+            "note": "The following information will be included in your report:",
+            "includedInfo": {
+                "logs": "Today's application logs",
+                "userInfo": "Your account information (email and name)",
+                "deviceInfo": "Device information (model and OS version)"
+            },
+            "success": {
+                "title": "Thank You",
+                "message": "Your error report has been sent successfully. We appreciate your help in improving our app."
+            },
+            "error": {
+                "title": "Error",
+                "message": "Failed to send error report. Please try again later."
+            }
         }
     },
     "threads": {
@@ -482,9 +552,11 @@
     },
     "screens": {
         "splashscreen": {
-            "yourgoals": "your goals.",
-            "yourenergy": "your energy.",
-            "yourjourney": "your journey."
+            "yourgoals": "Your goals",
+            "yourenergy": "Your energy",
+            "yourjourney": "Your journey",
+            "newversion": "New Version Available",
+            "newversionmessage": "A new version of the app is available in the App Store. Would you like to update now?"
         },
         "onboarding": {
             "welcome": {
@@ -529,9 +601,21 @@
                 "subtitle": "When would you prefer to receive reminders for self-reflection?",
                 "morning": "Morning",
                 "evening": "Evening",
+                "alert_description": "Hey, buddy! It's time to plan your day. Let's get started!",
+                "productivity_system": "Connect a smart notification system that adapts to your schedule, and helps you stay productive"
+            },
+            "notifications2": {
+                "title": "Step by step you can\nchange your life",
+                "subtitle": "When would you prefer to receive reminders for self-reflection?",
+                "morning": "Morning",
+                "evening": "Evening",
                 "smart_system": "Smart notification system is enabled,\nwhich adapts to your schedule",
                 "alert_description": "Hey, buddy! It's time to plan your day. Let's get started!",
-                "allow": "Allow notifications"
+                "allow": "Allow notifications",
+                "error": {
+                    "title": "Notifications not enabled",
+                    "message": "To set up notification times, you need to enable notifications in the previous step."
+                }
             },
             "last": {
                 "title": "Welcome to Method",
@@ -553,7 +637,8 @@
             "title": "Do you want fast growth?",
             "subtitle": "Get premium and begin the journey to your goals in inner peace.",
             "restorePurchase": "Restore purchase",
-            "termsAndConditions": "Terms and conditions",
+            "termsAndConditions": "Terms of Use (EULA)",
+            "privacyPolicy": "Privacy policy",
             "disclaimer": "This subscription will renew at the end of your current period. You can cancel anytime.",
             "active": "Active subscription: {{plan}}",
             "upgrade": "Upgrade subscription",
@@ -566,6 +651,7 @@
                 "premium": {
                     "title": "Premium",
                     "description": "Advanced features for productivity",
+                    "annual": "Yearly subscription",
                     "features": {
                         "planning": {
                             "title": "Smart Planning",
@@ -600,6 +686,7 @@
                 "premium_ai": {
                     "title": "Premium + AI",
                     "description": "All Premium features + advanced AI assistant",
+                    "annual": "Yearly subscription + AI assistant",
                     "features": {
                         "premium": {
                             "title": "All Premium + AI Features",
@@ -633,7 +720,7 @@
                 "button": "Try {{days}} days free"
             },
             "price": {
-                "annual": "{{price}} per year (${{monthly}}/month)"
+                "annual": "{{price}} annually ({{monthly}}/month)"
             },
             "cancel": {
                 "anytime": "Cancel subscription at any time"
@@ -666,7 +753,27 @@
         "error_message": "Failed to complete subscription. Please try again",
         "restore_error_title": "Restore Failed",
         "restore_error_message": "Failed to restore purchases. Please try again",
-        "terms_text": "By subscribing you agree to our Terms of Service and Privacy Policy. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period."
+        "terms_text": "By subscribing you agree to our Terms of Service and Privacy Policy. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.",
+        "error": {
+            "purchase_cancelled_by_user": "Purchase cancelled by user",
+            "unknown_error": "An unknown error occurred",
+            "network_error": "Network error. Check your internet connection",
+            "already_purchased": "This subscription has already been purchased. Try restoring purchases",
+            "receipt_invalid": "Invalid purchase receipt",
+            "purchase_failed": "Purchase failed. Please try again",
+            "purchase_cancelled": "Purchase cancelled",
+            "purchase_restored": "Purchases restored",
+            "restore_empty_title": "No Purchases Found",
+            "restore_empty_message": "No previous purchases were found to restore"
+        },
+        "success": {
+            "success_bought": "Success!",
+            "success_bought_message": "You have successfully purchased the subscription",
+            "success_restored": "Success!",
+            "success_restored_message": "Your purchases have been successfully restored",
+            "success_cleared": "Success!",
+            "success_cleared_message": "Your subscription cache has been successfully cleared"
+        }
     },
     "coaches": {
         "list": {
@@ -724,6 +831,11 @@
                 "message": "I found an amazing coach - {{name}}! Professional coach with {{experience}} years of experience. {{about}}",
                 "dialog_title": "Share Coach Profile",
                 "error": "Unable to share coach profile"
+            },
+            "stats": {
+                "perSession": "per session",
+                "rating": "rating",
+                "experience": "years of experience"
             }
         },
         "booking": {

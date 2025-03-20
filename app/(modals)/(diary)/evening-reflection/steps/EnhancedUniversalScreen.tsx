@@ -2,10 +2,10 @@ import { BottomButton } from '@entities/modals/bottom-button'
 import { UniversalScreen } from '@features/screens/UniversalScreen'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { View } from '@shared/ui/view'
-import { MoodStackParamList } from '../StepNavigator'
+import { EveningReflectionStackParamList } from '../StepNavigator'
 
 // Тип для параметров компонента экрана
-type ScreenProps = NativeStackScreenProps<MoodStackParamList, keyof MoodStackParamList>
+type ScreenProps = NativeStackScreenProps<EveningReflectionStackParamList, keyof EveningReflectionStackParamList>
 
 // Обертка для UniversalScreen с кнопками навигации
 interface EnhancedUniversalScreenProps {
@@ -14,12 +14,12 @@ interface EnhancedUniversalScreenProps {
     onInputChange: (text: string) => void
     placeholder?: string
     navigation: ScreenProps['navigation']
-    nextScreen?: keyof MoodStackParamList
+    nextScreen?: keyof EveningReflectionStackParamList
     isLastScreen?: boolean
     onComplete?: () => void
 }
 
-export function EnhancedUniversalScreen({
+export default function EnhancedUniversalScreen({
     topContent,
     inputValue,
     onInputChange,

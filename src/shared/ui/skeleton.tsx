@@ -2,7 +2,7 @@
 import { useColors } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import React from 'react'
-import { View, ViewProps } from 'react-native'
+import { View, ViewProps, ViewStyle } from 'react-native'
 import Animated, {
     useAnimatedStyle,
     withRepeat,
@@ -71,9 +71,9 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     // Размеры по умолчанию для разных вариантов
     const defaultSizes = {
         text: {
-            sm: { height: 16, width: '100%' },
-            md: { height: 20, width: '100%' },
-            lg: { height: 24, width: '100%' },
+            sm: { height: 16, width: '100%' as const },
+            md: { height: 20, width: '100%' as const },
+            lg: { height: 24, width: '100%' as const },
         },
         circular: {
             sm: { height: 24, width: 24, borderRadius: 12 },
@@ -81,14 +81,14 @@ export const Skeleton: React.FC<SkeletonProps> = ({
             lg: { height: 56, width: 56, borderRadius: 28 },
         },
         rectangular: {
-            sm: { height: 40, width: '100%' },
-            md: { height: 60, width: '100%' },
-            lg: { height: 80, width: '100%' },
+            sm: { height: 40, width: '100%' as const },
+            md: { height: 60, width: '100%' as const },
+            lg: { height: 80, width: '100%' as const },
         },
     }
 
     // Получаем размеры в зависимости от варианта и размера
-    const getSize = () => {
+    const getSize = (): ViewStyle => {
         if (height || width) {
             return {
                 height: height || 'auto',
@@ -103,7 +103,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
             }
         }
 
-        return defaultSizes[variant][size]
+        return defaultSizes[variant][size] as ViewStyle
     }
 
     // Анимация мерцания

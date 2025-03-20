@@ -2,6 +2,7 @@ import SuccessScreen from '@features/screens/SuccessScreen'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { apiClient } from '@shared/config/api-client'
 import { API_ROUTES } from '@shared/constants/api-routes'
+import { useUpdateStartDay } from '@shared/hooks/diary/startday/useStartDay'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { TaskResponseType } from '@shared/types/plans/TasksTypes'
@@ -17,12 +18,13 @@ import { StartYourDayStackParamList } from '../StepNavigator'
 
 type SuccessStepStartYourDayProps = NativeStackScreenProps<StartYourDayStackParamList, 'SuccessStepStartYourDay'>
 
-export function SuccessStepStartYourDay({ route }: SuccessStepStartYourDayProps) {
+export default function SuccessStepStartYourDay({ route }: SuccessStepStartYourDayProps) {
     const { t } = useTranslation()
-    const { planForDay } = route.params
+    const { planForDay, startDayId } = route.params
     const [isLoading, setIsLoading] = useState(false)
     const { syncTasks } = useOfflineTasks()
     const { checkPremiumAIAccess } = useSubscriptionModal()
+    const updateStartDay = useUpdateStartDay()
 
     const handleCreateTasks = async () => {
         if (!planForDay) return
@@ -52,7 +54,18 @@ export function SuccessStepStartYourDay({ route }: SuccessStepStartYourDayProps)
             const tasksData = Array.isArray(response) ? response : (response?.tasks || [])
 
             if (tasksData.length > 0) {
+                // Синхронизируем задачи
                 syncTasks()
+
+                // Обновляем запись StartDay, установив is_added_to_tasks в true
+                if (startDayId) {
+                    await updateStartDay.mutateAsync({
+                        id: startDayId,
+                        data: {
+                            is_added_to_tasks: true
+                        }
+                    })
+                }
             }
             // После успешного создания задач закрываем модальное окно
             router.dismissTo('/(tabs)/plans')

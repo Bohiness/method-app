@@ -4,7 +4,6 @@ import { TasksList } from '@entities/plans/TasksList'
 import { API_ROUTES } from '@shared/constants/api-routes'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useProjects } from '@shared/hooks/plans/useProjects'
-import { NotOnline } from '@shared/ui/system/NotOnline'
 import { View } from '@shared/ui/view'
 import { VoiceInputButton } from '@shared/ui/voice/VoiceInputButton'
 import { useQueryClient } from '@tanstack/react-query'
@@ -121,7 +120,6 @@ export const TaskManager = () => {
 
     return (
         <View variant="default" className="flex-1 relative">
-            {!isOnline && <NotOnline />}
 
             <View className="flex-row gap-x-4">
                 {periods.map((period) => (

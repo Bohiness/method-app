@@ -1,4 +1,4 @@
-import { Container } from '@shared/ui/view'
+import { ModalBottomContentView } from '@shared/ui/view'
 import { LoginForm } from '@widgets/auth/LoginForm'
 
 
@@ -6,8 +6,8 @@ import { LoginForm } from '@widgets/auth/LoginForm'
 export default function ProfileScreen() {
 
     return (
-        <Container>
+        <ModalBottomContentView showHeader className='px-4'>
             <LoginForm />
-        </Container>
+        </ModalBottomContentView>
     )
 }

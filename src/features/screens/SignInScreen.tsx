@@ -1,70 +1,21 @@
-import { useTheme } from '@shared/context/theme-provider'
-import { useUser } from '@shared/context/user-provider'
-import { useAppleAuth } from '@shared/hooks/auth/useAppleAuth'
-import { useGoogleAuth } from '@shared/hooks/auth/useGoogleAuth'
+import { API_URLS } from '@shared/constants/URLS'
+import { useLocale } from '@shared/hooks/systems/locale/useLocale'
 import { Button } from '@shared/ui/button'
 import { Logo } from '@shared/ui/system/logo'
 import { Text } from '@shared/ui/text'
 import { Container, View } from '@shared/ui/view'
-import * as AppleAuthentication from 'expo-apple-authentication'
 import { router } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Alert, Platform } from 'react-native'
+import { Alert, Linking } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export function SignInScreen() {
-    const insets = useSafeAreaInsets()
     const { t } = useTranslation()
-    const { signOut } = useUser()
-    const { isDark } = useTheme()
     const [isLoading, setIsLoading] = useState(false)
-    const [showAppleSignIn, setShowAppleSignIn] = useState(false)
-    const { signIn: googleSignIn } = useGoogleAuth()
-    const { isAvailable: isAppleAuthAvailable, signIn: appleSignIn } = useAppleAuth()
+    const { locale } = useLocale()
+    const insets = useSafeAreaInsets()
 
-    // Проверяем доступность Apple Sign In
-    useEffect(() => {
-        if (Platform.OS === 'ios') {
-            AppleAuthentication.isAvailableAsync().then(setShowAppleSignIn)
-        }
-    }, [])
-
-    const handleGoogleSignIn = async () => {
-        try {
-            setIsLoading(true)
-            await googleSignIn()
-            router.dismissAll()
-            router.push('/(tabs)')
-        } catch (error) {
-            Alert.alert(
-                t('common.error'),
-                t('auth.errors.googleSignIn')
-            )
-            console.error('Google sign in error:', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handleAppleSignIn = async () => {
-        try {
-            setIsLoading(true)
-            await appleSignIn()
-            router.dismissAll()
-            router.push('/(tabs)')
-        } catch (error) {
-            if (error instanceof Error && error.message !== 'Apple sign in was cancelled') {
-                Alert.alert(
-                    t('common.error'),
-                    t('auth.errors.appleSignIn')
-                )
-            }
-            console.error('Apple sign in error:', error)
-        } finally {
-            setIsLoading(false)
-        }
-    }
 
     const handleEmailSignIn = () => {
         router.push('/(auth)/email')
@@ -74,7 +25,6 @@ export function SignInScreen() {
         try {
             setIsLoading(true)
             router.dismissAll()
-            router.push('/(tabs)')
         } catch (error) {
             Alert.alert(
                 t('common.error'),
@@ -102,51 +52,6 @@ export function SignInScreen() {
 
             {/* Кнопки авторизации */}
             <View className="gap-y-4 mb-8">
-                {/* Google */}
-                {/* <Button
-                    variant="outline"
-                    onPress={handleGoogleSignIn}
-                    loading={isLoading}
-                    disabled={isLoading}
-                    className="w-full"
-                >
-                    <View className="flex-row items-center gap-x-2">
-                        <Image
-                            source={require('@assets/images/icons/google-icon.svg')}
-                            style={{ height: 20, width: 20 }}
-                            contentFit="contain"
-                        />
-                        <Text weight="medium">
-                            {t('auth.continueWithGoogle')}
-                        </Text>
-                    </View>
-                </Button> */}
-
-                {/* Apple - показываем только на iOS если доступно */}
-                {/* {isAppleAuthAvailable && (
-                    <Button
-                        variant="outline"
-                        onPress={handleAppleSignIn}
-                        loading={isLoading}
-                        disabled={isLoading}
-                        className="w-full"
-                    >
-                        <View className="flex-row items-center gap-x-2">
-                            <Image
-                                source={isDark
-                                    ? require('@assets/images/icons/apple-logo-gray.svg')
-                                    : require('@assets/images/icons/apple-logo-black.svg')}
-                                style={{ height: 20, width: 20 }}
-                                contentFit="contain"
-                            />
-                            <Text weight="medium">
-                                {t('auth.continueWithApple')}
-                            </Text>
-                        </View>
-                    </Button>
-                )} */}
-
-                {/* Email */}
                 <Button
                     variant="default"
                     onPress={handleEmailSignIn}
@@ -174,6 +79,7 @@ export function SignInScreen() {
                     variant="secondary"
                     size="sm"
                     className="text-center mb-4"
+                    onPress={() => { Linking.openURL(API_URLS.DOCS.getTerms(locale)) }}
                 >
                     {t('auth.termsNotice')}
                 </Text>
@@ -181,6 +87,7 @@ export function SignInScreen() {
                     variant="secondary"
                     size="sm"
                     className="text-center mb-4"
+                    onPress={() => { Linking.openURL(API_URLS.DOCS.getPrivacy(locale)) }}
                 >
                     {t('auth.privacyPolicy')}
                 </Text>

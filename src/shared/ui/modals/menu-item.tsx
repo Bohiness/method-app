@@ -1,9 +1,10 @@
 // src/shared/ui/menu-item/index.tsx
 import { useTheme } from '@shared/context/theme-provider'
+import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Text } from '@shared/ui/text'
 import { ChevronRight } from 'lucide-react-native'
 import React from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import { Icon, IconName } from '../icon'
 import { Separator } from '../separator'
 
@@ -43,11 +44,16 @@ export const MenuItem = ({
 }: MenuItemProps) => {
     const { colors, isDark } = useTheme()
 
+    const handlePress = () => {
+        if (disabled) return
+        onPress?.()
+    }
+
     return (
         <View>
-            <Pressable
-                onPress={disabled ? undefined : onPress}
-                className={`
+            <HapticTab onPress={handlePress} >
+                <View
+                    className={`
                     flex-row items-center justify-between
                     py-4 px-4 
                     ${isDark ? 'bg-surface-paper-dark' : 'bg-surface-paper'}
@@ -55,39 +61,39 @@ export const MenuItem = ({
                     ${isLast ? 'rounded-b-xl' : ''}
                     ${disabled ? 'opacity-50' : ''}
                     ${className}
-                `}
-            >
-                {/* Левая часть */}
-                <View className="flex-row items-center flex-1 gap-x-2">
-                    {leftIcon && (
-                        <Icon
-                            name={leftIcon}
-                            size={18}
-                            color={colors.inactive}
-                        />
-                    )}
+                `}>
+                    {/* Левая часть */}
+                    <View className="flex-row items-center flex-1 gap-x-2">
+                        {leftIcon && (
+                            <Icon
+                                name={leftIcon}
+                                size={18}
+                                color={colors.inactive}
+                            />
+                        )}
 
-                    <Text
-                        variant="default"
-                        size="base"
-                        className={labelClassName}
-                    >
-                        {label}
-                    </Text>
-                </View>
+                        <Text
+                            variant="default"
+                            size="base"
+                            className={labelClassName}
+                        >
+                            {label}
+                        </Text>
+                    </View>
 
-                {/* Правая часть */}
-                <View className="flex-row items-center">
-                    {rightContent}
-                    {showChevron && (
-                        <ChevronRight
-                            size={20}
-                            color={colors.inactive}
-                            className="m-2"
-                        />
-                    )}
+                    {/* Правая часть */}
+                    <View className="flex-row items-center">
+                        {rightContent}
+                        {showChevron && (
+                            <ChevronRight
+                                size={20}
+                                color={colors.inactive}
+                                className="m-2"
+                            />
+                        )}
+                    </View>
                 </View>
-            </Pressable>
+            </HapticTab>
 
             {/* Разделитель */}
             {showSeparator && !isLast && (

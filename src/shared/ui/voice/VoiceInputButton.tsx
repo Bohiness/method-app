@@ -39,7 +39,14 @@ export const VoiceInputButton = ({
         url
     })
 
+    const pulseStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ scale: innerScale }]
+        }
+    })
+
     const handlePress = async () => {
+        // TODO: Добавить проверку на премиум доступ
         const hasAccess = await checkPremiumAIAccess({
             text: 'subscription.feature_locked',
         })
@@ -138,16 +145,12 @@ export const VoiceInputButton = ({
         )
     }
 
-    const pulseStyle = useAnimatedStyle(() => {
-        return {
-            transform: [{ scale: innerScale }]
-        }
-    })
+
 
     return (
         <>
             <Pressable
-                style={[pulseStyle]}
+                style={pulseStyle}
                 onPress={handlePress}
                 className={cn(
                     'items-center justify-center rounded-full',

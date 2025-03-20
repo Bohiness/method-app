@@ -21,25 +21,13 @@ export default function AuthLayout() {
             <Stack.Screen
                 name="email"
                 options={{
-                    header: () => (
-                        <CustomHeader
-                            showBackButton
-                        />
-                    ),
+                    presentation: 'modal',
+                    animation: 'slide_from_bottom',
+                    header: () => (<ModalHeader />),
                 }}
             />
             <Stack.Screen
                 name="forgot"
-                options={{
-                    header: () => (
-                        <CustomHeader
-                            showBackButton
-                        />
-                    ),
-                }}
-            />
-            <Stack.Screen
-                name="reset-password"
                 options={{
                     header: () => (
                         <CustomHeader

@@ -19,7 +19,7 @@ export const LoggingScreen = ({
         <View className="flex-1">
             <HeaderMenuItem
                 onBack={onBack}
-                title={t('settings.notifications.title')}
+                title={t('settings.logs.title')}
             />
             <LogViewer />
         </View>
