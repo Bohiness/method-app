@@ -67,9 +67,6 @@ export const DefaultScreen = ({ onNavigate }: DefaultScreenProps) => {
                                 onNavigate('settings')
                             }}
                         />
-
-
-
                     </View>
                 </ScrollView>
             </View>

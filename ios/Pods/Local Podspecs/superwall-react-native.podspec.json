@@ -1,6 +1,6 @@
 {
   "name": "superwall-react-native",
-  "version": "1.4.7",
+  "version": "1.4.8",
   "summary": "The React Native package for Superwall",
   "homepage": "https://github.com/superwall-me/react-native-superwall#readme",
   "license": "MIT",
@@ -10,7 +10,7 @@
   },
   "source": {
     "git": "https://github.com/superwall-me/Superwall-React-Native.git",
-    "tag": "1.4.7"
+    "tag": "1.4.8"
   },
   "source_files": "ios/**/*.{h,m,mm,swift}",
   "dependencies": {

@@ -1,6 +1,7 @@
 // src/shared/api/base/api-client.ts
 import NetInfo from '@react-native-community/netinfo';
 import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { getCsrfToken } from '@shared/lib/getCsrfToken';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { tokenService } from '@shared/lib/user/token/token.service';
@@ -25,10 +26,29 @@ const getDevelopmentApiUrl = () => {
 
 const API_URL = getDevelopmentApiUrl();
 
+// Функция для обновления токенов авторизации
+async function refreshAuthTokens() {
+    try {
+        const response = await axios.post(`${API_URL}/api/token/refresh/`, {
+            refresh: (await tokenService.getSession())?.refresh,
+        });
+
+        if (response.data?.access) {
+            await tokenService.updateAccessToken(response.data.access);
+            return response.data;
+        }
+        throw new Error('Invalid token refresh response');
+    } catch (error) {
+        logger.error(error, 'api-client - refreshAuthTokens', 'Failed to refresh authorization tokens:');
+        await tokenService.clearSession();
+        throw error;
+    }
+}
+
 class ApiClient {
     private instance: AxiosInstance;
     private readonly API_URL: string;
-    private authApiService: any = null; // Будет установлен позже
+    private csrfInitialized: boolean = false;
 
     constructor() {
         this.API_URL = API_URL;
@@ -39,16 +59,30 @@ class ApiClient {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
             },
+            withCredentials: true, // Важно для корректной работы с CSRF
         });
 
         console.log('📡 API Client initialized with URL:', this.API_URL);
 
         this.setupInterceptors();
+        this.initCsrfToken();
     }
 
-    // Метод для установки authApiService после его инициализации
-    setAuthApiService(service: any) {
-        this.authApiService = service;
+    // Инициализация CSRF токена
+    private async initCsrfToken() {
+        try {
+            const existingToken = await storage.get<string>(STORAGE_KEYS.CSRF_TOKEN);
+            if (!existingToken) {
+                await getCsrfToken();
+                this.csrfInitialized = true;
+                logger.debug('CSRF token initialized', 'api-client - initCsrfToken');
+            } else {
+                this.csrfInitialized = true;
+                logger.debug('Using existing CSRF token', 'api-client - initCsrfToken');
+            }
+        } catch (error) {
+            logger.error(error, 'api-client - initCsrfToken', 'Failed to initialize CSRF token:');
+        }
     }
 
     private setupInterceptors() {
@@ -93,14 +127,10 @@ class ApiClient {
                         throw error;
                     }
 
-                    // Обрабатываем 401 ошибку
-                    if (
-                        error.response?.status === 401 &&
-                        originalRequest.url !== 'api/token/refresh/' &&
-                        this.authApiService
-                    ) {
+                    // Обрабатываем 401 ошибку - обновляем токен и повторяем запрос
+                    if (error.response?.status === 401 && originalRequest.url !== 'api/token/refresh/') {
                         try {
-                            const tokens = await this.authApiService.refreshTokens();
+                            const tokens = await refreshAuthTokens();
 
                             // Обновляем заголовок Authorization
                             originalRequest.headers['Authorization'] = `Bearer ${tokens.access}`;
@@ -118,9 +148,10 @@ class ApiClient {
                         }
                     }
 
-                    // Универсальная проверка на CSRF ошибки
-                    if (error.response?.status === 403) {
+                    // Расширенная обработка CSRF ошибок
+                    if (error.response?.status === 403 || error.response?.status === 400) {
                         const errorDetail = (error?.response?.data as any)?.detail || '';
+                        const errorMessage = typeof error?.response?.data === 'string' ? error.response.data : '';
 
                         // Проверяем все возможные CSRF ошибки
                         const isCsrfError =
@@ -128,15 +159,32 @@ class ApiClient {
                             errorDetail.includes('Referer checking failed') ||
                             errorDetail.includes('Origin checking failed') ||
                             errorDetail.includes('CSRF token') ||
-                            errorDetail.includes('CSRF cookie not set');
+                            errorDetail.includes('CSRF cookie not set') ||
+                            errorMessage.includes('CSRF') ||
+                            errorMessage.includes('csrf');
 
-                        if (isCsrfError && this.authApiService) {
-                            logger.info(
+                        if (isCsrfError) {
+                            logger.warn(
                                 'CSRF error detected, refreshing CSRF token',
                                 'api-client – response interceptor'
                             );
-                            await this.authApiService.getCsrfToken();
-                            return this.instance(originalRequest);
+                            try {
+                                const csrfToken = await getCsrfToken();
+
+                                // Обновляем CSRF токен в заголовках запроса
+                                if (csrfToken) {
+                                    originalRequest.headers['X-CSRFToken'] = csrfToken;
+                                }
+
+                                return this.instance(originalRequest);
+                            } catch (csrfError) {
+                                logger.error(
+                                    csrfError,
+                                    'api-client – csrf refresh',
+                                    'ApiClient: CSRF token refresh failed:'
+                                );
+                                throw csrfError;
+                            }
                         }
                     }
 
@@ -161,15 +209,37 @@ class ApiClient {
             // Устанавливаем базовые заголовки
             headers['Accept-Language'] = language;
 
+            // Добавляем Origin и Referer для CSRF проверок
+            const origin = this.API_URL;
+            headers['Origin'] = origin;
+            headers['Referer'] = origin;
+
+            // Добавляем CSRF токен, если он есть или получаем новый
             if (csrfToken) {
                 headers['X-CSRFToken'] = csrfToken;
+            } else {
+                try {
+                    const newCsrfToken = await getCsrfToken();
+                    if (newCsrfToken) {
+                        headers['X-CSRFToken'] = newCsrfToken;
+                    }
+                } catch (error) {
+                    logger.error(error, 'api-client – getRequestHeaders', 'Failed to get CSRF token:');
+                }
             }
 
             // Если есть сессия, проверяем и обновляем токен при необходимости
             if (session?.access) {
-                if ((await tokenService.shouldRefreshToken()) && this.authApiService) {
-                    const newTokens = await this.authApiService.refreshTokens();
-                    headers['Authorization'] = `Bearer ${newTokens.access}`;
+                if (await tokenService.shouldRefreshToken()) {
+                    try {
+                        const newTokens = await refreshAuthTokens();
+                        headers['Authorization'] = `Bearer ${newTokens.access}`;
+                    } catch (error) {
+                        logger.error(error, 'api-client – getRequestHeaders', 'Failed to refresh auth tokens:');
+                        if (session.access) {
+                            headers['Authorization'] = `Bearer ${session.access}`;
+                        }
+                    }
                 } else if (session.access) {
                     headers['Authorization'] = `Bearer ${session.access}`;
                 }

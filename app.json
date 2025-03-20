@@ -32,16 +32,7 @@
             "usesAppleSignIn": true,
             "bundleIdentifier": "com.anonymous.methodapp",
             "buildNumber": "1",
-            "icon": "./assets/images/icons/icon-light.png",
-            "infoPlist": {
-                "CFBundleURLTypes": [
-                    {
-                        "CFBundleURLSchemes": [
-                            "com.googleusercontent.apps.179295677158-8lckmjr8mfutc1ris5dkJpnftq5ugpu5:/oauth2callback"
-                        ]
-                    }
-                ]
-            }
+            "icon": "./assets/images/icons/icon-light.png"
         },
         "web": {
             "bundler": "metro",

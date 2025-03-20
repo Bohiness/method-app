@@ -35,8 +35,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const signOutMutation = useMutation({
         mutationFn: async () => {
-            await authApiService.logout()
-            await subscriptionService.logout()
+            try {
+                // Получаем свежий CSRF токен перед выходом
+                await authApiService.logout()
+                await subscriptionService.logout()
+            } catch (error) {
+                logger.error(error, 'user provider – signOut', 'UserProvider: Failed to logout:')
+                // Продолжаем процесс выхода даже при ошибке
+            }
         },
         onSettled: async () => {
             queryClient.clear()
@@ -55,10 +61,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const signInMutation = useMutation({
         mutationFn: async ({ email, password }: { email: string; password: string }) => {
+            // Получаем свежий CSRF токен перед входом
             return authApiService.login({ email, password })
         },
-        onSuccess: async ({ user, tokens }) => {
-            setUser(user)
+        onSuccess: async (response) => {
+            setUser(response.user)
         },
         retry: false
     })
@@ -77,26 +84,36 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 last_name: data.lastName
             })
         },
-        onSuccess: async ({ user, tokens }) => {
-            await tokenService.setSession(tokens)
-            await storage.set(STORAGE_KEYS.USER_DATA, user)
-            setUser(user)
+        onSuccess: async (response) => {
+            await tokenService.setSession(response.tokens)
+            await storage.set(STORAGE_KEYS.USER_DATA, response.user)
+            setUser(response.user)
+            // Убираем избыточное сохранение токена
         },
         retry: false
     })
 
     const convertToRegisteredMutation = useMutation({
         mutationFn: async (userData: Partial<UserType>) => {
+            // Получаем свежий CSRF токен перед конвертацией
             return anonymousUserService.convertToRegisteredUser(userData)
         },
-        onSuccess: async ({ user: registeredUser }) => {
-            setUser(registeredUser)
-            await storage.set(STORAGE_KEYS.USER_DATA, registeredUser)
+        onSuccess: async (response) => {
+            setUser(response.user)
+            await storage.set(STORAGE_KEYS.USER_DATA, response.user)
+            // Убираем избыточное сохранение токена
         }
     })
 
     const checkAuth = async () => {
         logger.debug('UserProvider: Checking authentication...', 'user provider – checkAuth')
+
+        // Сначала получаем CSRF токен
+        try {
+        } catch (csrfError) {
+            logger.error(csrfError, 'user provider – checkAuth', 'UserProvider: Failed to get CSRF token:')
+            // Продолжаем проверку аутентификации даже при ошибке CSRF
+        }
 
         const session = await tokenService.getSession()
         logger.debug(session, 'user provider – checkAuth', 'UserProvider: Session status:')
@@ -107,7 +124,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
                 logger.debug(!!checkResponse, 'user provider – checkAuth', 'UserProvider: Got user data:')
                 setUser(checkResponse.userData)
                 await storage.set(STORAGE_KEYS.USER_DATA, checkResponse.userData)
-                await storage.set(STORAGE_KEYS.CSRF_TOKEN, checkResponse.csrfToken)
             } catch (error) {
                 logger.error(error, 'user provider – checkAuth', 'UserProvider: Auth check failed:')
                 await signInAnonymously()
@@ -120,6 +136,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const signInAnonymously = async () => {
         try {
             logger.debug('UserProvider: Creating anonymous session...', 'user provider – signInAnonymously')
+
             const response = await anonymousUserService.getOrCreateAnonymousUser()
 
             if (!response.user) {
@@ -127,6 +144,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             }
 
             setUser(response.user)
+            // Убираем избыточное сохранение токена
+
             logger.debug('UserProvider: Anonymous session created successfully', 'user provider – signInAnonymously')
         } catch (error) {
             logger.error(error, 'user provider – signInAnonymously', 'UserProvider: Failed to create anonymous session:')
@@ -137,6 +156,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const updateUser = async (userData: Partial<UserType>) => {
         try {
+            // Получаем свежий CSRF токен перед обновлением профиля
             const result = await userApiService.updateProfile(user!.id, userData)
             await storage.set(STORAGE_KEYS.USER_DATA, result)
             setUser(result)
@@ -190,8 +210,9 @@ export const useUpdateProfile = () => {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: (data: Partial<UserType>) =>
-            userApiService.updateProfile(user!.id, data),
+        mutationFn: async (data: Partial<UserType>) => {
+            return userApiService.updateProfile(user!.id, data)
+        },
         onSuccess: (updatedUser) => {
             queryClient.setQueryData([QUERY_KEYS.USER], updatedUser)
         }

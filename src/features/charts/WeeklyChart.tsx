@@ -1,6 +1,5 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { hexToRgb } from '@shared/lib/utils/hexToRgb'
-import { Skeleton } from '@shared/ui/skeleton'
 import { Text } from '@shared/ui/text'
 import React, { useEffect, useState } from 'react'
 import { Dimensions, View } from 'react-native'
@@ -37,13 +36,13 @@ export const WeeklyChart = ({
             },
             {
                 data: previousWeekData,
-                color: (): string => `rgba(${hexToRgb(colors.text)}, 0.3)`,
+                color: (): string => `rgba(${hexToRgb(colors.text)}, 0.6)`,
                 strokeWidth: 4,
                 withDots: false
             },
             {
                 data: Array(7).fill(currentAvg),
-                color: (): string => `rgba(128, 128, 128, 0.3)`,
+                color: (): string => `rgba(128, 128, 128, 0.4)`,
                 strokeWidth: 1,
                 withDots: false,
                 strokeDasharray: [5, 5]
@@ -70,7 +69,7 @@ export const WeeklyChart = ({
                 },
                 {
                     data: previousWeekData,
-                    color: (): string => `rgba(${hexToRgb(colors.text)}, 0.3)`,
+                    color: (): string => `rgba(${hexToRgb(colors.text)}, 0.6)`,
                     strokeWidth: 4,
                     withDots: false
                 },
@@ -100,12 +99,6 @@ export const WeeklyChart = ({
         formatYLabel: (value: string) => Number(value).toFixed(1),
         yMin: 0,
         yMax: 5
-    }
-
-    if (isLoading) {
-        return (
-            <Skeleton height={170} />
-        )
     }
 
     return (

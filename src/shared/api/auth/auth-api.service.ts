@@ -39,6 +39,10 @@ export interface CheckEmailResponse {
     has_expert?: boolean;
 }
 
+interface CsrfTokenResponse {
+    csrfToken: string;
+}
+
 class AuthApiService {
     async checkEmail(email: string): Promise<CheckEmailResponse> {
         try {
@@ -214,12 +218,11 @@ class AuthApiService {
             throw error;
         }
     }
-
     async getCsrfToken(): Promise<string | null> {
         try {
             logger.start('Getting CSRF token...', 'auth-api service – getCsrfToken');
 
-            const csrfTokenResponse = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CSRF_TOKEN);
+            const csrfTokenResponse = await apiClient.get<CsrfTokenResponse>(API_ROUTES.AUTH.CSRF_TOKEN);
 
             if (!csrfTokenResponse?.csrfToken) {
                 logger.error('No CSRF token in response', 'auth-api service – getCsrfToken');

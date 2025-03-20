@@ -25,7 +25,6 @@ import ExpoImagePicker
 import ExpoKeepAwake
 import ExpoLinearGradient
 import ExpoLinking
-import ExpoRandom
 import ExpoHead
 import ExpoSplashScreen
 import ExpoStoreReview
@@ -63,7 +62,6 @@ public class ExpoModulesProvider: ModulesProvider {
       KeepAwakeModule.self,
       LinearGradientModule.self,
       ExpoLinkingModule.self,
-      RandomModule.self,
       ExpoHeadModule.self,
       SplashScreenModule.self,
       StoreReviewModule.self,
@@ -101,7 +99,6 @@ public class ExpoModulesProvider: ModulesProvider {
       KeepAwakeModule.self,
       LinearGradientModule.self,
       ExpoLinkingModule.self,
-      RandomModule.self,
       ExpoHeadModule.self,
       SplashScreenModule.self,
       StoreReviewModule.self,
