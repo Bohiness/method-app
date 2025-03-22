@@ -118,7 +118,8 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                 is_completed: false,
                 project: selectedProjectId || undefined,
                 subtasks: subtasks,
-                status: 'pending' as const
+                status: 'pending' as const,
+                is_time_enabled: false
             }
 
             if (mode === 'edit' && task) {
@@ -249,6 +250,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                                 date={selectedDate}
                                 isActive={true}
                                 onPress={handleDateButtonPress}
+                                isTimeEnabled={task?.is_time_enabled}
                             />
                             <PriorityButton
                                 priority={priority}
@@ -271,7 +273,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                 onSave={handleDateSelect}
                 initialDate={new Date(selectedDate)}
                 backdrop
-                showTimePicker
+                showTimePicker={task?.is_time_enabled}
             />
         </>
     )

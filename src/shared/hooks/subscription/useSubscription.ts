@@ -6,6 +6,7 @@ import { SUBSCRIPTION_TIERS } from '@shared/constants/substrations/tiers';
 import { useUser } from '@shared/context/user-provider';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
+import { createMockPackages } from '@shared/lib/subscription/mock-offerings';
 import { SubscriptionCacheService } from '@shared/lib/subscription/subscription-cache.service';
 import { subscriptionService } from '@shared/lib/subscription/subscription.service';
 import { SubscriptionStatus, SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
@@ -150,9 +151,27 @@ export const useSubscription = () => {
         queryKey: [QUERY_KEYS.SUBSCRIPTION, 'packages'],
         queryFn: async () => {
             try {
-                return await subscriptionService.getOfferings();
+                logger.debug('Fetching offerings from RevenueCat', 'useSubscription – getOfferings');
+                const offerings = await subscriptionService.getOfferings();
+
+                if (!offerings || offerings.length === 0) {
+                    logger.warn('No offerings returned from RevenueCat', 'useSubscription – getOfferings');
+                    // Возвращаем фейковые данные для тестирования
+                    if (__DEV__) {
+                        logger.debug('Using mock packages for development', 'useSubscription – getOfferings');
+                        return createMockPackages();
+                    }
+                }
+
+                logger.log(offerings, 'useSubscription – getOfferings', 'Successfully received offerings');
+                return offerings;
             } catch (err) {
-                return handleSubscriptionError(err, 'getOfferings', setError);
+                logger.error(err, 'useSubscription – getOfferings', 'Failed in getOfferings:');
+                if (__DEV__) {
+                    // В режиме разработки возвращаем моковые данные, чтобы UI работал
+                    return createMockPackages();
+                }
+                return [];
             }
         },
         staleTime: SUBSCRIPTION_CACHE_STALE_TIME,
@@ -163,7 +182,7 @@ export const useSubscription = () => {
     // Инициализация RevenueCat
     useEffect(() => {
         subscriptionService.initialize().catch(err => {
-            handleSubscriptionError(err, 'initialize', setError, t);
+            logger.error(err, 'useSubscription – initialize', 'Failed to initialize RevenueCat');
         });
     }, []);
 
@@ -171,7 +190,7 @@ export const useSubscription = () => {
     useEffect(() => {
         if (user?.id) {
             subscriptionService.setUserId(user.id.toString()).catch(err => {
-                handleSubscriptionError(err, 'setUserId', setError, t);
+                logger.error(err, 'useSubscription – setUserId', 'Failed in setUserId:');
             });
         }
     }, [user?.id]);

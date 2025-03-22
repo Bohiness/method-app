@@ -20,6 +20,7 @@ export interface TaskType {
     priority?: TaskPriority
     created_at: string
     updated_at: string
+    is_time_enabled: boolean
     subtasks?: SubTaskType[]
 }
 

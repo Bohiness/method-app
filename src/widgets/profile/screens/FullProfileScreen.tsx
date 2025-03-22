@@ -2,13 +2,14 @@ import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { useUser } from '@shared/context/user-provider'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { getGender } from '@shared/lib/utils/user/getGender'
+import { Avatar } from '@shared/ui/avatar'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
 import { InfoGroup, InfoItem } from '@shared/ui/info-item'
 import { Text } from '@shared/ui/text'
 import { router } from 'expo-router'
 import { useTranslation } from 'react-i18next'
-import { Image, TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity, View } from 'react-native'
 
 export const FullProfileScreen = ({
     onBack,
@@ -29,9 +30,10 @@ export const FullProfileScreen = ({
     const renderProfileImage = () => (
         <TouchableOpacity onPress={() => onNavigate('profile_photo')}>
             {user?.profile_photo ? (
-                <Image
+                <Avatar
                     source={{ uri: user.profile_photo }}
-                    className="w-24 h-24 rounded-full"
+                    size="2xl"
+                    shape="circle"
                 />
             ) : (
                 <Icon

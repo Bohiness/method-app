@@ -171,7 +171,7 @@ export const TaskItem = React.memo(({ task }: TaskItemProps) => {
                             variant='secondary'
                             className={cn("pl-9", task.status === 'completed' ? "line-through" : "")}
                         >
-                            {formateDataTimeWithTimezoneAndLocale(task.start_datetime, 'HH:mm, EEEE')}
+                            {formateDataTimeWithTimezoneAndLocale(task.start_datetime, task.is_time_enabled ? 'HH:mm, EEEE' : 'EEEE')}
                         </Text>
                     </View>
                 </AnimatedPressable>

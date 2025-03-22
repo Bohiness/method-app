@@ -1,12 +1,39 @@
 // src/shared/api/base/api-client.ts
 import NetInfo from '@react-native-community/netinfo';
 import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
-import { getCsrfToken } from '@shared/lib/getCsrfToken';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { tokenService } from '@shared/lib/user/token/token.service';
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders } from 'axios';
+import axios, {
+    AxiosError,
+    AxiosInstance,
+    AxiosRequestConfig,
+    AxiosRequestHeaders,
+    InternalAxiosRequestConfig,
+} from 'axios';
 import { Platform } from 'react-native';
+
+// Расширяем тип конфигурации Axios для поддержки кастомных данных
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+    _customData?: {
+        retryCount?: number;
+        [key: string]: any;
+    };
+}
+
+// Интерфейс для сервиса авторизации
+interface AuthApiService {
+    getCsrfToken: () => Promise<string | null>;
+    refreshTokens: () => Promise<{ access: string; refresh: string }>;
+}
+
+// Типы для ошибок API
+interface ApiErrorResponse {
+    detail?: string;
+    message?: string;
+    errors?: Record<string, string[]>;
+    code?: string;
+}
 
 // Определяем базовый URL в зависимости от платформы
 const getDevelopmentApiUrl = () => {
@@ -16,39 +43,24 @@ const getDevelopmentApiUrl = () => {
             android: 'http://10.0.2.2:8000',
             default: 'http://localhost:8000',
         });
-        console.log('🚀 Using DEV API URL:', devUrl);
+        logger.debug(`🚀 Using DEV API URL: ${devUrl}`, 'api-client - getDevelopmentApiUrl');
         return devUrl;
     }
     const prodUrl = process.env.EXPO_PUBLIC_API_URL || 'https://api.method.do';
-    console.log('🚀 Using PROD API URL:', prodUrl);
+    logger.debug(`🚀 Using PROD API URL: ${prodUrl}`, 'api-client - getDevelopmentApiUrl');
     return prodUrl;
 };
 
 const API_URL = getDevelopmentApiUrl();
 
-// Функция для обновления токенов авторизации
-async function refreshAuthTokens() {
-    try {
-        const response = await axios.post(`${API_URL}/api/token/refresh/`, {
-            refresh: (await tokenService.getSession())?.refresh,
-        });
-
-        if (response.data?.access) {
-            await tokenService.updateAccessToken(response.data.access);
-            return response.data;
-        }
-        throw new Error('Invalid token refresh response');
-    } catch (error) {
-        logger.error(error, 'api-client - refreshAuthTokens', 'Failed to refresh authorization tokens:');
-        await tokenService.clearSession();
-        throw error;
-    }
-}
-
 class ApiClient {
     private instance: AxiosInstance;
     private readonly API_URL: string;
+    private authApiService: AuthApiService | null = null; // Типизированный сервис авторизации
     private csrfInitialized: boolean = false;
+    private MAX_RETRY_ATTEMPTS = 3;
+    private RETRY_DELAY_MS = 1000;
+    private CSRF_RETRY_TIMEOUT_MS = 5000;
 
     constructor() {
         this.API_URL = API_URL;
@@ -62,21 +74,41 @@ class ApiClient {
             withCredentials: true, // Важно для корректной работы с CSRF
         });
 
-        console.log('📡 API Client initialized with URL:', this.API_URL);
+        logger.debug('📡 API Client initialized with URL: ' + this.API_URL, 'api-client - constructor');
 
         this.setupInterceptors();
         this.initCsrfToken();
+    }
+
+    // Метод для установки authApiService после его инициализации
+    setAuthApiService(service: AuthApiService) {
+        this.authApiService = service;
+        // Повторно инициализируем CSRF токен после установки authApiService
+        if (!this.csrfInitialized) {
+            this.initCsrfToken();
+        }
+    }
+
+    // Проверка соединения с интернетом
+    private async checkInternetConnection(): Promise<boolean> {
+        try {
+            const netInfo = await NetInfo.fetch();
+            return Boolean(netInfo.isConnected);
+        } catch (error) {
+            logger.error(error, 'api-client - checkInternetConnection', 'Failed to check internet connection');
+            return false;
+        }
     }
 
     // Инициализация CSRF токена
     private async initCsrfToken() {
         try {
             const existingToken = await storage.get<string>(STORAGE_KEYS.CSRF_TOKEN);
-            if (!existingToken) {
-                await getCsrfToken();
+            if (!existingToken && this.authApiService) {
+                await this.authApiService.getCsrfToken();
                 this.csrfInitialized = true;
                 logger.debug('CSRF token initialized', 'api-client - initCsrfToken');
-            } else {
+            } else if (existingToken) {
                 this.csrfInitialized = true;
                 logger.debug('Using existing CSRF token', 'api-client - initCsrfToken');
             }
@@ -91,13 +123,8 @@ class ApiClient {
             async config => {
                 try {
                     // Проверяем подключение к интернету
-                    const netInfo = await NetInfo.fetch();
-                    if (!netInfo.isConnected) {
-                        logger.error(
-                            'No internet connection',
-                            'api-client – request interceptor',
-                            'ApiClient: Request interceptor error:'
-                        );
+                    const isConnected = await this.checkInternetConnection();
+                    if (!isConnected) {
                         throw new Error('No internet connection');
                     }
 
@@ -120,17 +147,28 @@ class ApiClient {
         // Интерцептор ответов
         this.instance.interceptors.response.use(
             response => response,
-            async (error: AxiosError) => {
+            async (error: AxiosError<ApiErrorResponse>) => {
                 try {
-                    const originalRequest = error.config;
+                    const originalRequest = error.config as CustomAxiosRequestConfig;
                     if (!originalRequest) {
                         throw error;
                     }
 
-                    // Обрабатываем 401 ошибку - обновляем токен и повторяем запрос
-                    if (error.response?.status === 401 && originalRequest.url !== 'api/token/refresh/') {
+                    // Проверяем, можно ли повторить запрос
+                    const customData = originalRequest._customData || {};
+                    const retryCount = customData.retryCount || 0;
+                    const isIdempotentMethod = ['get', 'head', 'options', 'put', 'delete'].includes(
+                        (originalRequest.method || '').toLowerCase()
+                    );
+
+                    // Обрабатываем 401 ошибку
+                    if (
+                        error.response?.status === 401 &&
+                        originalRequest.url !== 'api/token/refresh/' &&
+                        this.authApiService
+                    ) {
                         try {
-                            const tokens = await refreshAuthTokens();
+                            const tokens = await this.authApiService.refreshTokens();
 
                             // Обновляем заголовок Authorization
                             originalRequest.headers['Authorization'] = `Bearer ${tokens.access}`;
@@ -150,8 +188,9 @@ class ApiClient {
 
                     // Расширенная обработка CSRF ошибок
                     if (error.response?.status === 403 || error.response?.status === 400) {
-                        const errorDetail = (error?.response?.data as any)?.detail || '';
-                        const errorMessage = typeof error?.response?.data === 'string' ? error.response.data : '';
+                        const errorData = error.response.data;
+                        const errorDetail = errorData?.detail || '';
+                        const errorMessage = typeof errorData === 'string' ? errorData : '';
 
                         // Проверяем все возможные CSRF ошибки
                         const isCsrfError =
@@ -163,15 +202,24 @@ class ApiClient {
                             errorMessage.includes('CSRF') ||
                             errorMessage.includes('csrf');
 
-                        if (isCsrfError) {
+                        if (isCsrfError && this.authApiService) {
                             logger.warn(
                                 'CSRF error detected, refreshing CSRF token',
                                 'api-client – response interceptor'
                             );
                             try {
-                                const csrfToken = await getCsrfToken();
+                                await Promise.race([
+                                    this.authApiService.getCsrfToken(),
+                                    new Promise((_, reject) =>
+                                        setTimeout(
+                                            () => reject(new Error('CSRF token refresh timeout')),
+                                            this.CSRF_RETRY_TIMEOUT_MS
+                                        )
+                                    ),
+                                ]);
 
                                 // Обновляем CSRF токен в заголовках запроса
+                                const csrfToken = await storage.get<string>(STORAGE_KEYS.CSRF_TOKEN);
                                 if (csrfToken) {
                                     originalRequest.headers['X-CSRFToken'] = csrfToken;
                                 }
@@ -186,6 +234,31 @@ class ApiClient {
                                 throw csrfError;
                             }
                         }
+                    }
+
+                    // Автоматический повтор запросов при сетевых ошибках или ошибках сервера
+                    if (
+                        (error.code === 'ECONNABORTED' ||
+                            error.code === 'ETIMEDOUT' ||
+                            (error.response && error.response.status >= 500)) &&
+                        retryCount < this.MAX_RETRY_ATTEMPTS &&
+                        isIdempotentMethod
+                    ) {
+                        // Сохраняем счетчик попыток в кастомном поле
+                        originalRequest._customData = {
+                            ...customData,
+                            retryCount: retryCount + 1,
+                        };
+
+                        // Задержка перед повторной попыткой
+                        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS * (retryCount + 1)));
+
+                        logger.debug(
+                            `Retrying request attempt ${retryCount + 1}/${this.MAX_RETRY_ATTEMPTS}`,
+                            'api-client - response interceptor'
+                        );
+
+                        return this.instance(originalRequest);
                     }
 
                     throw error;
@@ -214,12 +287,19 @@ class ApiClient {
             headers['Origin'] = origin;
             headers['Referer'] = origin;
 
-            // Добавляем CSRF токен, если он есть или получаем новый
             if (csrfToken) {
                 headers['X-CSRFToken'] = csrfToken;
-            } else {
+            } else if (this.authApiService) {
+                // Если CSRF токена нет, пытаемся получить его
                 try {
-                    const newCsrfToken = await getCsrfToken();
+                    await Promise.race([
+                        this.authApiService.getCsrfToken(),
+                        new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('CSRF token fetch timeout')), this.CSRF_RETRY_TIMEOUT_MS)
+                        ),
+                    ]);
+
+                    const newCsrfToken = await storage.get<string>(STORAGE_KEYS.CSRF_TOKEN);
                     if (newCsrfToken) {
                         headers['X-CSRFToken'] = newCsrfToken;
                     }
@@ -230,16 +310,9 @@ class ApiClient {
 
             // Если есть сессия, проверяем и обновляем токен при необходимости
             if (session?.access) {
-                if (await tokenService.shouldRefreshToken()) {
-                    try {
-                        const newTokens = await refreshAuthTokens();
-                        headers['Authorization'] = `Bearer ${newTokens.access}`;
-                    } catch (error) {
-                        logger.error(error, 'api-client – getRequestHeaders', 'Failed to refresh auth tokens:');
-                        if (session.access) {
-                            headers['Authorization'] = `Bearer ${session.access}`;
-                        }
-                    }
+                if ((await tokenService.shouldRefreshToken()) && this.authApiService) {
+                    const newTokens = await this.authApiService.refreshTokens();
+                    headers['Authorization'] = `Bearer ${newTokens.access}`;
                 } else if (session.access) {
                     headers['Authorization'] = `Bearer ${session.access}`;
                 }
@@ -254,15 +327,16 @@ class ApiClient {
 
     // GET запрос
     async get<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
-        const netInfo = await NetInfo.fetch();
-
-        if (!netInfo.isConnected) {
+        if (!(await this.checkInternetConnection())) {
             logger.error('No internet connection', 'api-client – get', 'ApiClient: Error getting data:');
             throw new Error('No internet connection');
         }
 
         try {
-            const response = await this.instance.get<T>(endpoint, config);
+            const controller = new AbortController();
+            const configWithSignal = { ...config, signal: controller.signal };
+
+            const response = await this.instance.get<T>(endpoint, configWithSignal);
             return response.data;
         } catch (error) {
             logger.error(error, 'api-client – get', 'ApiClient: Error getting data:');
@@ -273,8 +347,16 @@ class ApiClient {
 
     // POST запрос
     async post<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+        if (!(await this.checkInternetConnection())) {
+            logger.error('No internet connection', 'api-client – post', 'ApiClient: Error posting data:');
+            throw new Error('No internet connection');
+        }
+
         try {
-            const response = await this.instance.post<T>(endpoint, data, config);
+            const controller = new AbortController();
+            const configWithSignal = { ...config, signal: controller.signal };
+
+            const response = await this.instance.post<T>(endpoint, data, configWithSignal);
             return response.data;
         } catch (error) {
             logger.error(error, 'api-client – post', 'ApiClient: Error posting data:');
@@ -285,8 +367,16 @@ class ApiClient {
 
     // PUT запрос
     async put<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+        if (!(await this.checkInternetConnection())) {
+            logger.error('No internet connection', 'api-client – put', 'ApiClient: Error putting data:');
+            throw new Error('No internet connection');
+        }
+
         try {
-            const response = await this.instance.put<T>(endpoint, data, config);
+            const controller = new AbortController();
+            const configWithSignal = { ...config, signal: controller.signal };
+
+            const response = await this.instance.put<T>(endpoint, data, configWithSignal);
             return response.data;
         } catch (error) {
             logger.error(error, 'api-client – put', 'ApiClient: Error putting data:');
@@ -297,8 +387,16 @@ class ApiClient {
 
     // PATCH запрос
     async patch<T>(endpoint: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+        if (!(await this.checkInternetConnection())) {
+            logger.error('No internet connection', 'api-client – patch', 'ApiClient: Error patching data:');
+            throw new Error('No internet connection');
+        }
+
         try {
-            const response = await this.instance.patch<T>(endpoint, data, config);
+            const controller = new AbortController();
+            const configWithSignal = { ...config, signal: controller.signal };
+
+            const response = await this.instance.patch<T>(endpoint, data, configWithSignal);
             return response.data;
         } catch (error) {
             logger.error(error, 'api-client – patch', 'ApiClient: Error patching data:');
@@ -309,8 +407,16 @@ class ApiClient {
 
     // DELETE запрос
     async delete<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
+        if (!(await this.checkInternetConnection())) {
+            logger.error('No internet connection', 'api-client – delete', 'ApiClient: Error deleting data:');
+            throw new Error('No internet connection');
+        }
+
         try {
-            const response = await this.instance.delete<T>(endpoint, config);
+            const controller = new AbortController();
+            const configWithSignal = { ...config, signal: controller.signal };
+
+            const response = await this.instance.delete<T>(endpoint, configWithSignal);
             return response.data;
         } catch (error) {
             logger.error(error, 'api-client – delete', 'ApiClient: Error deleting data:');
@@ -322,19 +428,24 @@ class ApiClient {
     // Обработка ошибок
     private handleError(error: any) {
         if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError<ApiErrorResponse>;
             const errorInfo = {
-                message: error.message,
-                status: error.response?.status,
-                data: error.response?.data,
-                headers: error.response?.headers,
+                message: axiosError.message,
+                status: axiosError.response?.status,
+                data: axiosError.response?.data,
+                detail: axiosError.response?.data?.detail,
+                code: axiosError.code,
+                headers: axiosError.response?.headers,
                 config: {
-                    url: error.config?.url,
-                    method: error.config?.method,
-                    baseURL: error.config?.baseURL,
-                    headers: error.config?.headers,
+                    url: axiosError.config?.url,
+                    method: axiosError.config?.method,
+                    baseURL: axiosError.config?.baseURL,
+                    headers: axiosError.config?.headers,
                 },
             };
             logger.error(errorInfo, 'api-client – handleError', 'ApiClient: Error handling error:');
+        } else {
+            logger.error(error, 'api-client – handleError', 'ApiClient: Non-axios error:');
         }
     }
 }

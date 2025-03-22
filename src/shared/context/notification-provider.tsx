@@ -1,4 +1,5 @@
 // src/shared/context/notification-provider.tsx
+import { useNavigation } from '@react-navigation/native'
 import { notificationsApiService } from '@shared/api/notifications/notifications-api.service'
 import { LocalNotification, notificationsService } from '@shared/lib/notifications/notifications.service'
 import {
@@ -38,6 +39,9 @@ interface NotificationContextProps {
     isLoading: boolean
     hasMoreHistory: boolean
     currentPage: number
+
+    // Добавляем новую функцию для проверки и запроса разрешений
+    checkAndRequestNotificationPermissions: () => Promise<boolean>
 }
 
 const NotificationContext = createContext<NotificationContextProps | null>(null)
@@ -54,6 +58,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Refs для слушателей уведомлений
     const notificationListener = useRef<any>()
     const responseListener = useRef<any>()
+
+    // Добавляем хук навигации
+    const navigation = useNavigation()
 
     // Инициализация
     useEffect(() => {
@@ -154,12 +161,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             }
         )
 
-        // Слушатель нажатий на уведомления
+        // Слушатель нажатий на уведомления (объединяем с функциональностью навигации)
         responseListener.current = Notifications.addNotificationResponseReceivedListener(
             async response => {
                 console.log('Нажатие на уведомление:', response)
                 const notificationId = response.notification.request.identifier
                 await markAsRead(notificationId)
+
+                // Добавляем обработку навигации из notification-handler
+                const data = response.notification.request.content.data
+                if (data && data.screen) {
+                    handleNotificationNavigation(data)
+                }
             }
         )
     }
@@ -284,6 +297,35 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
     }
 
+    // Функция для проверки и запроса разрешений на уведомления из notification-handler.tsx
+    const checkAndRequestNotificationPermissions = async (): Promise<boolean> => {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync()
+
+        if (existingStatus === 'granted') {
+            return true
+        }
+
+        const { status } = await Notifications.requestPermissionsAsync()
+        return status === 'granted'
+    }
+
+    // Добавляем функцию обработки навигации из notification-handler
+    const handleNotificationNavigation = (data: any) => {
+        try {
+            const { screen } = data
+
+            if (screen === 'StartYourDay') {
+                // Навигация к экрану утренней подготовки
+                navigation.navigate('StartYourDay' as never)
+            } else if (screen === 'EveningReflection') {
+                // Навигация к экрану вечерней рефлексии
+                navigation.navigate('EveningReflection' as never)
+            }
+        } catch (error) {
+            console.error('Ошибка при обработке навигации по уведомлению:', error)
+        }
+    }
+
     const value: NotificationContextProps = {
         scheduleLocalNotification,
         cancelNotification,
@@ -301,7 +343,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         hasMoreHistory,
         currentPage,
         registerForPushNotifications,
-        checkActualPermissions
+        checkActualPermissions,
+        // Добавляем новую функцию в контекст
+        checkAndRequestNotificationPermissions
     }
 
     return (

@@ -2,7 +2,7 @@
 import { useColors } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { Text } from '@shared/ui/text'
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Image, ImageProps, ImageSourcePropType, View } from 'react-native'
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'
@@ -73,7 +73,7 @@ const shapeMap: Record<AvatarShape, string> = {
     square: 'rounded-2xl'
 }
 
-export const Avatar = ({
+const AvatarComponent = ({
     source,
     size = 'md',
     shape = 'circle',
@@ -85,19 +85,32 @@ export const Avatar = ({
     const colors = useColors()
     const [error, setError] = React.useState(false)
 
-    // Преобразуем строку URL в ImageSourcePropType если нужно
-    const imageSource = typeof source === 'string' ? { uri: source } : source
+    // Мемоизируем преобразование URL в ImageSourcePropType
+    const imageSource = useMemo(() => {
+        return typeof source === 'string' ? { uri: source } : source
+    }, [source])
 
-    const { container: containerSize, text: textSize } = sizeMap[size]
-    const statusSize = statusSizeMap[size]
-    const borderRadius = shapeMap[shape]
+    // Мемоизируем стили для производительности
+    const styleProps = useMemo(() => {
+        const { container: containerSize, text: textSize } = sizeMap[size]
+        const statusSize = statusSizeMap[size]
+        const borderRadius = shapeMap[shape]
 
-    const renderContent = () => {
+        return {
+            containerSize,
+            textSize,
+            statusSize,
+            borderRadius
+        }
+    }, [size, shape])
+
+    // Мемоизируем рендер контента
+    const renderContent = useMemo(() => {
         if (!error && imageSource) {
             return (
                 <Image
                     source={imageSource}
-                    className={cn("w-full h-full", borderRadius)}
+                    className={cn("w-full h-full", styleProps.borderRadius)}
                     onError={(e) => {
                         console.warn('Avatar image loading error:', e.nativeEvent.error)
                         setError(true)
@@ -109,9 +122,9 @@ export const Avatar = ({
 
         if (fallback) {
             return (
-                <View className={cn("w-full h-full bg-surface-paper dark:bg-surface-paper-dark items-center justify-center", borderRadius)}>
+                <View className={cn("w-full h-full bg-surface-paper dark:bg-surface-paper-dark items-center justify-center", styleProps.borderRadius)}>
                     <Text
-                        size={textSize}
+                        size={styleProps.textSize}
                         className="text-text dark:text-text-dark"
                     >
                         {fallback.charAt(0).toUpperCase()}
@@ -121,34 +134,34 @@ export const Avatar = ({
         }
 
         return (
-            <View className={cn("w-full h-full bg-surface-paper dark:bg-surface-paper-dark items-center justify-center", borderRadius)}>
+            <View className={cn("w-full h-full bg-surface-paper dark:bg-surface-paper-dark items-center justify-center", styleProps.borderRadius)}>
                 <Text
-                    size={textSize}
+                    size={styleProps.textSize}
                     className="text-text dark:text-text-dark"
                 >
                     ?
                 </Text>
             </View>
         )
-    }
+    }, [error, imageSource, fallback, styleProps, props])
 
     return (
         <View className={cn("relative", className)}>
             <View
                 className={cn(
-                    containerSize,
-                    borderRadius,
+                    styleProps.containerSize,
+                    styleProps.borderRadius,
                     "overflow-hidden",
                     !imageSource && !error && "bg-surface-paper dark:bg-surface-paper-dark"
                 )}
             >
-                {renderContent()}
+                {renderContent}
             </View>
 
             {isOnline && (
                 <View
                     className={cn(
-                        statusSize,
+                        styleProps.statusSize,
                         "absolute bottom-0 right-0 rounded-full border-2 border-background dark:border-background-dark",
                     )}
                     style={{ backgroundColor: colors.success }}
@@ -158,23 +171,36 @@ export const Avatar = ({
     )
 }
 
-// AvatarGroup компонент теперь тоже поддерживает shape
-export const AvatarGroup = ({
+// Оборачиваем компонент в React.memo для предотвращения ненужных перерисовок
+export const Avatar = React.memo(AvatarComponent)
+
+// AvatarGroup компонент теперь тоже поддерживает shape и обернут в React.memo
+const AvatarGroupComponent = ({
     avatars,
     size = 'md',
     shape = 'circle',
     max = 3,
     className
 }: AvatarGroupProps & { shape?: AvatarShape }) => {
-    const displayAvatars = avatars.slice(0, max)
-    const remainingCount = avatars.length - max
+    // Мемоизация обработанных данных для AvatarGroup
+    const { displayAvatars, remainingCount } = useMemo(() => {
+        return {
+            displayAvatars: avatars.slice(0, max),
+            remainingCount: avatars.length - max
+        }
+    }, [avatars, max])
+
+    // Мемоизация вычисления отступа
+    const marginOffset = useMemo(() => {
+        return -(sizeMap[size].container.split('w-')[1]) / 3
+    }, [size])
 
     return (
         <View className={cn("flex-row", className)}>
             {displayAvatars.map((avatar, index) => (
                 <View
                     key={index}
-                    style={{ marginLeft: index > 0 ? -(sizeMap[size].container.split('w-')[1]) / 3 : 0 }}
+                    style={{ marginLeft: index > 0 ? marginOffset : 0 }}
                 >
                     <Avatar
                         size={size}
@@ -191,7 +217,7 @@ export const AvatarGroup = ({
                         shapeMap[shape],
                         "bg-surface-paper dark:bg-surface-paper-dark items-center justify-center",
                     )}
-                    style={{ marginLeft: -(sizeMap[size].container.split('w-')[1]) / 3 }}
+                    style={{ marginLeft: marginOffset }}
                 >
                     <Text
                         size={sizeMap[size].text}
@@ -204,3 +230,5 @@ export const AvatarGroup = ({
         </View>
     )
 }
+
+export const AvatarGroup = React.memo(AvatarGroupComponent)

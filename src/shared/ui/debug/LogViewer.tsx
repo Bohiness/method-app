@@ -230,16 +230,16 @@ export function LogViewer() {
     // Функция для получения цвета фона по уровню лога
     const getLogBgColor = (level: string): string => {
         switch (level) {
-            case 'DEBUG': return 'bg-surface-paper'
-            case 'INFO': return 'bg-surface-paper'
-            case 'WARN': return 'bg-surface-paper'
-            case 'ERROR': return 'bg-surface-paper'
-            case 'COMPONENT': return 'bg-surface-paper'
-            case 'API': return 'bg-surface-paper'
-            case 'HTTP': return 'bg-surface-paper'
-            case 'START': return 'bg-surface-paper'
-            case 'FINISH': return 'bg-surface-paper'
-            default: return 'bg-surface-paper'
+            case 'DEBUG': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'INFO': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'WARN': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'ERROR': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'COMPONENT': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'API': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'HTTP': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'START': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            case 'FINISH': return 'bg-surface-paper dark:bg-surface-paper-dark'
+            default: return 'bg-surface-paper dark:bg-surface-paper-dark'
         }
     }
 
@@ -296,20 +296,20 @@ export function LogViewer() {
             </View>
 
             {/* Блок со статистикой */}
-            <View className="bg-surface-paper rounded-md">
-                <Text className="font-bold">Статистика логов</Text>
+            <View variant='paper' className="rounded-md">
+                <Text weight='bold' size='sm'>Статистика логов</Text>
                 <View className="flex-row flex-wrap mb-2">
-                    <View className="bg-surface-stone py-2 m-1 rounded-md">
-                        <Text className="text-xs font-bold">Всего логов: {logStats.total}</Text>
+                    <View variant='stone' className="py-2 m-1 rounded-md">
+                        <Text size='xs' weight='bold'>Всего логов: {logStats.total}</Text>
                     </View>
 
                     {Object.entries(logStats.byLevel).map(([level, count]) => (
                         <TouchableOpacity
                             key={level}
                             onPress={() => setSelectedLevel(level as LogLevel)}
-                            className="bg-surface-stone px-3 py-2 m-1 rounded-md"
+                            className="bg-surface-stone dark:bg-surface-stone-dark px-3 py-2 m-1 rounded-md"
                         >
-                            <Text className="text-xs font-bold">{LOG_EMOJIS[level] || ''} {level}: {count}</Text>
+                            <Text size='xs' weight='bold'>{LOG_EMOJIS[level] || ''} {level}: {count}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -319,9 +319,9 @@ export function LogViewer() {
                         <TouchableOpacity
                             key={level}
                             onPress={() => setSelectedLevel(level)}
-                            className={`px-3 py-1 m-1 rounded-full ${selectedLevel === level ? 'bg-tint' : 'bg-surface-stone'}`}
+                            className={`px-3 py-1 m-1 rounded-full ${selectedLevel === level ? 'bg-tint dark:bg-tint-dark' : 'bg-surface-stone dark:bg-surface-stone-dark'}`}
                         >
-                            <Text className={`text-xs font-medium ${selectedLevel === level ? 'text-background' : 'text-text'}`}>
+                            <Text size='xs' weight='medium' className={`${selectedLevel === level ? 'text-background dark:text-background-dark' : 'text-text dark:text-text-dark  '}`}>
                                 {LOG_EMOJIS[level] || ''} {level} {logStats.byLevel[level] ? `(${logStats.byLevel[level]})` : ''}
                             </Text>
                         </TouchableOpacity>
@@ -330,14 +330,14 @@ export function LogViewer() {
 
 
 
-                <Text className="font-bold text-xs mb-1">По контексту:</Text>
+                <Text weight='bold' size='xs' className="mb-1">По контексту:</Text>
                 <View className="flex-row flex-wrap">
                     {Object.entries(logStats.byContext)
                         .sort((a, b) => b[1] - a[1])
                         .slice(0, 8)
                         .map(([context, count]) => (
-                            <View key={context} className="bg-surface-stone px-3 py-2 m-1 rounded-md">
-                                <Text className="text-xs">{context}: {count}</Text>
+                            <View key={context} variant='stone' className="px-3 py-2 m-1 rounded-md">
+                                <Text size='xs'>{context}: {count}</Text>
                             </View>
                         ))
                     }
@@ -345,7 +345,7 @@ export function LogViewer() {
 
 
                 <View className="flex-row justify-between items-center mb-2">
-                    <Text className="text-sm">Автообновление каждые 5 секунд:</Text>
+                    <Text size='sm'>Автообновление каждые 5 секунд:</Text>
                     <Switch
                         checked={autoRefresh}
                         onChange={toggleAutoRefresh}
@@ -354,7 +354,7 @@ export function LogViewer() {
                 </View>
 
                 <View className="flex-row justify-between items-center mb-2">
-                    <Text className="text-sm">Показывать логи только за сегодня:</Text>
+                    <Text size='sm'>Показывать логи только за сегодня:</Text>
                     <Switch
                         checked={showOnlyToday}
                         onChange={() => setShowOnlyToday(!showOnlyToday)}
@@ -366,13 +366,13 @@ export function LogViewer() {
 
             <ScrollView className="flex-1">
                 {isLoading && (
-                    <View className="absolute inset-0 items-center justify-center bg-text bg-opacity-20 z-10">
+                    <View variant='paper' className="absolute inset-0 items-center justify-center bg-text dark:bg-text-dark bg-opacity-20 z-10">
                         <ActivityIndicator size="large" color="#007CCB" />
                     </View>
                 )}
 
                 <View className="flex-row justify-between items-center">
-                    <Text className="font-bold text-lg">
+                    <Text weight='bold' size='lg'>
                         {showOnlyToday ? 'Логи за сегодня' : 'Все логи'} ({filteredLogs.length})
                     </Text>
                 </View>
@@ -399,7 +399,7 @@ export function LogViewer() {
 
                 {filteredLogs.length === 0 ? (
                     <View className="items-center justify-center">
-                        <Text className="text-secondary-light">Нет логов за сегодня</Text>
+                        <Text variant='secondary'>Нет логов за сегодня</Text>
                     </View>
                 ) : (
                     filteredLogs.map((log, index) => {
@@ -410,39 +410,39 @@ export function LogViewer() {
                         switch (log.level) {
                             case 'DEBUG':
                                 borderColorClass = 'border-l-secondary-light'
-                                textColorClass = 'text-secondary-light'
+                                textColorClass = 'text-secondary-light dark:text-secondary-light-dark'
                                 break
                             case 'INFO':
                                 borderColorClass = 'border-l-tint'
-                                textColorClass = 'text-tint'
+                                textColorClass = 'text-tint dark:text-tint-dark'
                                 break
                             case 'WARN':
                                 borderColorClass = 'border-l-warning'
-                                textColorClass = 'text-warning'
+                                textColorClass = 'text-warning dark:text-warning-dark'
                                 break
                             case 'ERROR':
                                 borderColorClass = 'border-l-error'
-                                textColorClass = 'text-error'
+                                textColorClass = 'text-error dark:text-error-dark'
                                 break
                             case 'COMPONENT':
                                 borderColorClass = 'border-l-tint'
-                                textColorClass = 'text-tint'
+                                textColorClass = 'text-tint dark:text-tint-dark'
                                 break
                             case 'API':
                                 borderColorClass = 'border-l-success'
-                                textColorClass = 'text-success'
+                                textColorClass = 'text-success dark:text-success-dark'
                                 break
                             case 'HTTP':
                                 borderColorClass = 'border-l-success'
-                                textColorClass = 'text-success'
+                                textColorClass = 'text-success dark:text-success-dark'
                                 break
                             case 'START':
                                 borderColorClass = 'border-l-tint'
-                                textColorClass = 'text-tint'
+                                textColorClass = 'text-tint dark:text-tint-dark'
                                 break
                             case 'FINISH':
                                 borderColorClass = 'border-l-success'
-                                textColorClass = 'text-success'
+                                textColorClass = 'text-success dark:text-success-dark'
                                 break
                         }
 
@@ -457,12 +457,12 @@ export function LogViewer() {
                                 activeOpacity={0.7}
                             >
                                 <View className="flex-row justify-between">
-                                    <Text className="text-xs text-secondary-light">
+                                    <Text variant='secondary' className="text-xs">
                                         {format(log.timestamp, 'HH:mm:ss.SSS')}
                                     </Text>
                                     <View className="flex-row">
                                         {log.context && (
-                                            <Text className="text-xs font-medium ml-2 text-secondary-dark">
+                                            <Text variant='secondary' className="text-xs font-medium ml-2">
                                                 [{log.context}]
                                             </Text>
                                         )}
@@ -494,9 +494,9 @@ export function LogViewer() {
 
                                 {/* Расширенный вид лога */}
                                 {isExpanded && (
-                                    <View className="border-t border-surface-stone">
-                                        <Text className="font-bold text-xs pt-2 pb-2" variant='defaultInverted'>Полный лог:</Text>
-                                        <Text className="font-mono text-xs" variant='defaultInverted'>{log.raw}</Text>
+                                    <View variant='stone' className="border-t">
+                                        <Text weight='bold' size='xs' className="pt-2 pb-2" variant='defaultInverted'>Полный лог:</Text>
+                                        <Text className="font-mono" size='xs' variant='defaultInverted'>{log.raw}</Text>
 
                                         <View className="flex-row justify-end">
                                             <View className="px-3 py-2 rounded-md mr-2" >
@@ -521,7 +521,3 @@ export function LogViewer() {
         </View>
     )
 }
-
-// Убираем StyleSheet, так как теперь используем классы tailwind
-const logStyles: Record<string, any> = {}
-const levelTextStyles: Record<string, any> = {}

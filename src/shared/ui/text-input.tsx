@@ -73,24 +73,21 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
     const getSizeStyles = useCallback(() => {
         const baseStyles = {
             sm: {
-                paddingVertical: Platform.select({ ios: 10, android: 8 }),
+                paddingVertical: Platform.OS === 'android' ? 8 : 0,
                 paddingHorizontal: 12,
                 fontSize: 14,
-                lineHeight: 20,
                 minHeight: Platform.select({ ios: 36, android: 34 })
             },
             md: {
-                paddingVertical: Platform.select({ ios: 12, android: 10 }),
+                paddingVertical: Platform.OS === 'android' ? 10 : 0,
                 paddingHorizontal: 16,
                 fontSize: 16,
-                lineHeight: 24,
                 minHeight: Platform.select({ ios: 44, android: 42 })
             },
             lg: {
-                paddingVertical: Platform.select({ ios: 14, android: 12 }),
+                paddingVertical: Platform.OS === 'android' ? 12 : 0,
                 paddingHorizontal: 20,
                 fontSize: 18,
-                lineHeight: 28,
                 minHeight: Platform.select({ ios: 52, android: 50 })
             }
         }
@@ -223,8 +220,13 @@ const TextInputComponent = forwardRef<RNTextInput, StyledTextInputProps>((
                     )}
                     style={[
                         sizeStyle,
+                        {
+                            textAlignVertical: multiline ? 'top' : 'center',
+                            includeFontPadding: false,
+                            paddingTop: Platform.OS === 'ios' ? 12 : undefined,
+                            paddingBottom: Platform.OS === 'ios' ? 12 : undefined,
+                        },
                         multiline && {
-                            textAlignVertical: 'top',
                             minHeight: sizeStyle.minHeight ? sizeStyle.minHeight * 3 : undefined
                         },
                         flex && {

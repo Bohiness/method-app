@@ -4,9 +4,9 @@ import { TasksList } from '@entities/plans/TasksList'
 import { API_ROUTES } from '@shared/constants/api-routes'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useProjects } from '@shared/hooks/plans/useProjects'
+import { TaskType } from '@shared/types/plans/TasksTypes'
 import { View } from '@shared/ui/view'
 import { VoiceInputButton } from '@shared/ui/voice/VoiceInputButton'
-import { useQueryClient } from '@tanstack/react-query'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -23,12 +23,11 @@ type Period = 'today' | 'tomorrow' | 'week' | 'later'
 
 export const TaskManager = () => {
     const [activePeriod, setActivePeriod] = useState<Period>('today')
-    const { tasks, isLoading, error, isOnline, toggleTask } = useOfflineTasks()
+    const { tasks, isLoading, error, toggleTask } = useOfflineTasks()
     const { selectedProjectId, onChangeSelectedProject } = useProjects()
     const { t } = useTranslation()
     const { syncTasks } = useOfflineTasks()
     const translateX = useSharedValue(0)
-    const queryClient = useQueryClient()
 
     const switchPeriod = (direction: 'next' | 'prev') => {
         const currentIndex = periods.findIndex(p => p.id === activePeriod)
@@ -62,32 +61,37 @@ export const TaskManager = () => {
         const weekEnd = new Date(today)
         weekEnd.setDate(weekEnd.getDate() + 7)
 
+        // Если tasks еще не загружен или нет результатов, возвращаем пустой массив
+        if (!tasks || !tasks.results) return []
+
+        const taskResults = tasks.results as unknown as TaskType[]
+
         // Сначала фильтруем по проекту, если он выбран
         const projectFilteredTasks = selectedProjectId
-            ? tasks?.results.filter(task => task?.project === selectedProjectId)
-            : tasks?.results
+            ? taskResults.filter(task => task?.project === selectedProjectId)
+            : taskResults
 
         switch (activePeriod) {
             case 'today':
-                return projectFilteredTasks?.filter(task => {
+                return projectFilteredTasks.filter(task => {
                     const taskDate = new Date(task.start_datetime)
                     taskDate.setHours(0, 0, 0, 0)
                     return taskDate.getTime() === today.getTime()
                 })
             case 'tomorrow':
-                return projectFilteredTasks?.filter(task => {
+                return projectFilteredTasks.filter(task => {
                     const taskDate = new Date(task.start_datetime)
                     taskDate.setHours(0, 0, 0, 0)
                     return taskDate.getTime() === tomorrow.getTime()
                 })
             case 'week':
-                return projectFilteredTasks?.filter(task => {
+                return projectFilteredTasks.filter(task => {
                     const taskDate = new Date(task.start_datetime)
                     taskDate.setHours(0, 0, 0, 0)
                     return taskDate > tomorrow && taskDate <= weekEnd
                 })
             case 'later':
-                return projectFilteredTasks?.filter(task => {
+                return projectFilteredTasks.filter(task => {
                     const taskDate = new Date(task.start_datetime)
                     taskDate.setHours(0, 0, 0, 0)
                     return taskDate > weekEnd
@@ -163,7 +167,7 @@ export const TaskManager = () => {
                 />
             </View>
 
-            <View className='absolute bottom-4 right-4'>
+            <View className='absolute bottom-6 right-4'>
                 <VoiceInputButton
                     url={API_ROUTES.PLANS.CREATE_VOICE_TASKS}
                     onTranscribe={(response) => {

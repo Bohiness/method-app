@@ -1,11 +1,11 @@
 ---
 description: 
 globs: 
+alwaysApply: true
 ---
 
 # Your rule content
-
-- You can @ files here
-- You can use markdown but dont have to
-
 Для стилизации используй классы tailwind
+Чем короче код, тем лучше
+Действуй как старший индженер разрабочик с дизайнером
+Не останавливайся, пока не реализуешь функцию полностью до конца.

@@ -1,7 +1,7 @@
 import { useUser } from '@shared/context/user-provider'
+import { Avatar } from '@shared/ui/avatar'
 import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
-import { Image } from '@shared/ui/image'
 import { router } from 'expo-router'
 
 export function UserHeaderButton() {
@@ -23,9 +23,10 @@ export function UserHeaderButton() {
             size='sm'
         >
             {user?.profile_photo ? (
-                <Image
+                <Avatar
                     source={{ uri: user.profile_photo }}
-                    className="size-8 rounded-full"
+                    size="xs"
+                    shape="circle"
                 />
             ) : (
                 <Icon
