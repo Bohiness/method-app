@@ -1,31 +1,17 @@
 // src/widgets/diary/mood/steps/SuccessStep.tsx
 import { streakService } from '@shared/lib/gamification/streak.service'
-import { Icon } from '@shared/ui/icon'
+import { AnimatedCheck } from '@shared/ui/animated-icon/check'
 import { Text, Title } from '@shared/ui/text'
 import { StreakWidget } from '@widgets/gamification/streak/StreakWidget'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    useAnimatedStyle,
-    withSpring
+    FadeIn
 } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export function SuccessStep() {
     const { t } = useTranslation()
-    const insets = useSafeAreaInsets()
-    // Анимация для иконки
-    const animatedIconStyle = useAnimatedStyle(() => ({
-        transform: [{
-            scale: withSpring(1.2, {
-                damping: 10,
-                stiffness: 100,
-            })
-        }],
-    }))
 
     // Обновляем streak при успешном заполнении формы
     useEffect(() => {
@@ -47,15 +33,12 @@ export function SuccessStep() {
     return (
         <View className="flex-1 px-4">
             <View className="flex-1 items-center justify-center">
-                <Animated.View
-                    entering={FadeInDown.delay(300)}
-                    style={animatedIconStyle}
-                    className="p-6 rounded-full"
-                >
-                    <Icon name="Check" size={60} />
-                </Animated.View>
 
-                <Animated.View entering={FadeIn.delay(600)}>
+                <AnimatedCheck
+                    size={100}
+                />
+
+                <Animated.View entering={FadeIn.delay(600)} className='pt-10'>
                     <Title className="text-center mb-4">
                         {t('diary.moodcheckin.success.title')}
                     </Title>
@@ -74,8 +57,6 @@ export function SuccessStep() {
                     <StreakWidget />
                 </Animated.View>
             </View>
-
-
         </View>
     )
 }

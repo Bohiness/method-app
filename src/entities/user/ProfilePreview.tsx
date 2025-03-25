@@ -22,7 +22,7 @@ export function ProfilePreview({
                 <Avatar
                     size="xl"
                     shape="square"
-                    source={{ uri: user?.profile_photo || '' }}
+                    source={user?.profile_photo}
                     fallback={user?.first_name[0]}
                     className="rounded-2xl"
                 />

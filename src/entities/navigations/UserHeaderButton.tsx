@@ -24,7 +24,7 @@ export function UserHeaderButton() {
         >
             {user?.profile_photo ? (
                 <Avatar
-                    source={{ uri: user.profile_photo }}
+                    source={user.profile_photo}
                     size="xs"
                     shape="circle"
                 />

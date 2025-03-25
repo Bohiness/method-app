@@ -1,7 +1,9 @@
+import { apiClient } from '@shared/config/api-client';
 import { API_ROUTES } from '@shared/constants/api-routes';
 import { EveningReflectionStorageService } from '@shared/lib/diary/EveningReflectionStorageService';
-import { EveningReflection } from '@shared/types/diary/eveningreflection/EveningReflectionType';
+import { EveningReflectionType } from '@shared/types/diary/eveningreflection/EveningReflectionType';
 import axios from 'axios';
+
 export class EveningReflectionSyncService {
     private readonly API_URL = API_ROUTES.DIARY.EVENING_REFLECTION;
     private storageService: EveningReflectionStorageService;
@@ -43,10 +45,10 @@ export class EveningReflectionSyncService {
     }
 
     // Получить все рефлексии с сервера
-    async fetchAllReflections(): Promise<EveningReflection[]> {
+    async fetchAllReflections(): Promise<EveningReflectionType[]> {
         try {
-            const response = await axios.get<EveningReflection[]>(this.API_URL);
-            return response.data;
+            const response = await apiClient.get<EveningReflectionType[]>(this.API_URL);
+            return response;
         } catch (error) {
             console.error('Failed to fetch evening reflections:', error);
             throw error;
@@ -54,10 +56,10 @@ export class EveningReflectionSyncService {
     }
 
     // Получить конкретную рефлексию с сервера
-    async getReflection(id: string): Promise<EveningReflection | null> {
+    async getReflection(id: string): Promise<EveningReflectionType | null> {
         try {
-            const response = await axios.get<EveningReflection>(`${this.API_URL}${id}/`);
-            return response.data;
+            const response = await apiClient.get<EveningReflectionType>(`${this.API_URL}${id}/`);
+            return response;
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 404) {
                 return null;
@@ -68,11 +70,11 @@ export class EveningReflectionSyncService {
     }
 
     // Создать новую рефлексию на сервере
-    async createReflection(reflection: EveningReflection): Promise<EveningReflection> {
+    async createReflection(reflection: EveningReflectionType): Promise<EveningReflectionType> {
         try {
             const { id, created_at, is_synced, is_deleted, ...data } = reflection;
-            const response = await axios.post<EveningReflection>(this.API_URL, data);
-            return response.data;
+            const response = await apiClient.post<EveningReflectionType>(this.API_URL, data);
+            return response;
         } catch (error) {
             console.error('Failed to create evening reflection:', error);
             throw error;
@@ -80,11 +82,11 @@ export class EveningReflectionSyncService {
     }
 
     // Обновить существующую рефлексию на сервере
-    async updateReflection(reflection: EveningReflection): Promise<EveningReflection> {
+    async updateReflection(reflection: EveningReflectionType): Promise<EveningReflectionType> {
         try {
             const { id, is_synced, is_deleted, ...data } = reflection;
-            const response = await axios.put<EveningReflection>(`${this.API_URL}${id}/`, data);
-            return response.data;
+            const response = await apiClient.put<EveningReflectionType>(`${this.API_URL}${id}/`, data);
+            return response;
         } catch (error) {
             console.error(`Failed to update evening reflection ${reflection.id}:`, error);
             throw error;
@@ -94,7 +96,7 @@ export class EveningReflectionSyncService {
     // Удалить рефлексию на сервере
     async deleteReflection(id: string): Promise<void> {
         try {
-            await axios.delete(`${this.API_URL}${id}/`);
+            await apiClient.delete(`${this.API_URL}${id}/`);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 404) {
                 return; // Если рефлексия не найдена на сервере, считаем удаление успешным

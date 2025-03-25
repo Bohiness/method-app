@@ -11,7 +11,7 @@ export const queryClient = new QueryClient({
             gcTime: Infinity,
         },
         mutations: {
-            retry: 3,
+            retry: 1,
             retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
             networkMode: 'offlineFirst',
         },

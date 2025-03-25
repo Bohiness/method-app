@@ -1,6 +1,6 @@
 import { streakService } from '@shared/lib/gamification/streak.service'
+import { AnimatedCheck } from '@shared/ui/animated-icon/check'
 import { Button } from '@shared/ui/button'
-import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { StreakWidget } from '@widgets/gamification/streak/StreakWidget'
@@ -9,7 +9,6 @@ import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import Animated, {
     FadeIn,
-    FadeInDown,
     useAnimatedStyle,
     withSpring
 } from 'react-native-reanimated'
@@ -129,16 +128,12 @@ export function SuccessScreen({
             <View className="flex-1">
                 <View className="flex-1 px-4">
                     <View className="flex-1 items-center justify-center">
-                        <Animated.View entering={FadeInDown.delay(300)}>
-                            <Animated.View
-                                style={animatedIconStyle}
-                                className="p-6 rounded-full"
-                            >
-                                <Icon name="Check" size={60} />
-                            </Animated.View>
-                        </Animated.View>
 
-                        <Animated.View entering={FadeIn.delay(600)}>
+                        <AnimatedCheck
+                            size={100}
+                        />
+
+                        <Animated.View entering={FadeIn.delay(600)} className='pt-10'>
                             <Title className="text-center mb-4">
                                 {title}
                             </Title>

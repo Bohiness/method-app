@@ -474,45 +474,30 @@ export function LogViewer() {
 
                                 {/* Сообщение лога - показываем в сокращенном или полном виде */}
                                 <View className="flex-row justify-between items-center">
-                                    <Text className="font-mono text-xs mt-1" variant='defaultInverted' numberOfLines={isExpanded ? 0 : 2}>
+                                    <Text className="font-mono text-xs mt-1" variant='default' numberOfLines={isExpanded ? 0 : 2}>
                                         {log.message}
                                     </Text>
-
-                                    {/* Кнопка копирования для сокращенного вида */}
-                                    {!isExpanded && (
-                                        <TouchableOpacity
-                                            onPress={(e) => {
-                                                e.stopPropagation()
-                                                copyLogToClipboard(log)
-                                            }}
-                                            className="ml-2 p-2"
-                                        >
-                                            <Text className="text-xs text-tint">Копировать</Text>
-                                        </TouchableOpacity>
-                                    )}
                                 </View>
 
                                 {/* Расширенный вид лога */}
-                                {isExpanded && (
-                                    <View variant='stone' className="border-t">
-                                        <Text weight='bold' size='xs' className="pt-2 pb-2" variant='defaultInverted'>Полный лог:</Text>
-                                        <Text className="font-mono" size='xs' variant='defaultInverted'>{log.raw}</Text>
+                                <View variant='stone' className="border-t">
+                                    <Text weight='bold' size='xs' className="pt-2 pb-2" variant='default'>Полный лог:</Text>
+                                    <Text className="font-mono" size='xs' variant='default'>{log.raw}</Text>
 
-                                        <View className="flex-row justify-end">
-                                            <View className="px-3 py-2 rounded-md mr-2" >
-                                                <TouchableOpacity
-                                                    onPress={(e) => {
-                                                        e.stopPropagation()
-                                                        copyLogToClipboard(log)
-                                                    }}
-                                                >
-                                                    <Text className="text-xs text-tint">Копировать</Text>
-                                                </TouchableOpacity>
-                                            </View>
-
+                                    <View className="flex-row justify-end">
+                                        <View className="px-3 py-2 rounded-md mr-2" >
+                                            <TouchableOpacity
+                                                onPress={(e) => {
+                                                    e.stopPropagation()
+                                                    copyLogToClipboard(log)
+                                                }}
+                                            >
+                                                <Text className="text-xs text-tint">Копировать</Text>
+                                            </TouchableOpacity>
                                         </View>
+
                                     </View>
-                                )}
+                                </View>
                             </TouchableOpacity>
                         )
                     })

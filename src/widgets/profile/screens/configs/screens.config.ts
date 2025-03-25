@@ -7,6 +7,7 @@ import { FC } from 'react';
 import { DefaultScreen } from '../DefaultScreen';
 import { FullProfileScreen } from '../FullProfileScreen';
 import { DiaryScreen } from '../inner/DiaryScreen';
+import { JournalScreen } from '../inner/JournalScreen';
 import { LanguageScreen } from '../inner/LanguageScreen';
 import { LoggingScreen } from '../inner/LoggingScreen';
 import { NotificationSettingsScreen } from '../inner/NotificationScreen';
@@ -41,7 +42,8 @@ export type ScreenType =
     | 'diary'
     | 'storageValue'
     | 'revenuecat'
-    | 'sendErrorReport';
+    | 'sendErrorReport'
+    | 'journal';
 
 type ScreenConfig = {
     [K in ScreenType]: {
@@ -171,5 +173,9 @@ export const SCREEN_CONFIG: ScreenConfig = {
     sendErrorReport: {
         level: 2,
         component: SendErrorReportScreen,
+    },
+    journal: {
+        level: 2,
+        component: JournalScreen,
     },
 };

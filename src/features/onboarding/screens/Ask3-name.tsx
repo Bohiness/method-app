@@ -11,7 +11,7 @@ import { useOnboarding } from '../context/OnboardingContext'
 
 
 export const Ask3Screen = () => {
-    const { setNextScreen, updateOnboardingData } = useOnboarding()
+    const { setNextScreen, updateOnboardingData, loading } = useOnboarding()
     const { t } = useTranslation()
     const insets = useSafeAreaInsets()
     const { isKeyboardVisible, keyboardHeight, dismissKeyboard } = useKeyboard()
@@ -89,7 +89,7 @@ export const Ask3Screen = () => {
                             onPress={handleContinue}
                             className="w-fit self-center px-20"
                             size='lg'
-                            disabled={!isValid}
+                            disabled={!isValid || loading}
                         >
                             {t('common.continue')}
                         </Button>

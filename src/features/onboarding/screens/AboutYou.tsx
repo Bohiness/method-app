@@ -7,7 +7,7 @@ import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated'
 import { useOnboarding } from '../context/OnboardingContext'
 
 export const AboutYouScreen = () => {
-    const { setNextScreen } = useOnboarding()
+    const { setNextScreen, loading } = useOnboarding()
     const { t } = useTranslation()
 
     return (
@@ -49,6 +49,7 @@ export const AboutYouScreen = () => {
                     onPress={setNextScreen}
                     className="w-fit self-center px-20"
                     size='lg'
+                    disabled={loading}
                 >
                     {t('screens.onboarding.aboutyou.button')}
                 </Button>

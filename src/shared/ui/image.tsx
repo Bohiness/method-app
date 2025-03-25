@@ -1,17 +1,17 @@
 import { cn } from '@shared/lib/utils/cn'
-import { Image as ExpoImage, ImageSource } from 'expo-image'
-import React, { useEffect, useState } from 'react'
+import { Image as ExpoImage, ImageProps as ExpoImageProps, ImageSource } from 'expo-image'
+import { useEffect, useState } from 'react'
 import { Image as RNImage, StyleProp, View, ViewStyle } from 'react-native'
 
-
-interface ImageProps {
-    source: ImageSource | number
+interface ImageProps extends Omit<ExpoImageProps, 'source' | 'style' | 'priority'> {
+    source: ImageSource
     className?: string
     contentFit?: 'cover' | 'contain' | 'fill' | 'none'
     transition?: number
     resizeMode?: 'cover' | 'contain' | 'stretch' | 'center'
     style?: StyleProp<ViewStyle>
-
+    placeholder?: ImageSource
+    priority?: boolean
 }
 
 export const Image = ({
@@ -21,10 +21,13 @@ export const Image = ({
     transition = 200,
     resizeMode = 'cover',
     style,
+    placeholder,
+    priority = false,
     ...props
 }: ImageProps) => {
     const [aspectRatio, setAspectRatio] = useState<number>(1)
     const [isLoading, setIsLoading] = useState(true)
+    const [imageLoaded, setImageLoaded] = useState(false)
 
     const baseClassName = 'overflow-hidden'
 
@@ -57,21 +60,35 @@ export const Image = ({
         getImageSize()
     }, [source])
 
-    if (isLoading) {
-        return <View className={className} />
-    }
+    // Приоритетные изображения имеют более короткое время перехода
+    const actualTransition = priority ? 0 : transition
 
     return (
         <View className={cn(baseClassName, className)}>
+            {(isLoading || !imageLoaded) && placeholder && (
+                <ExpoImage
+                    source={placeholder}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        position: 'absolute',
+                    }}
+                    contentFit={contentFit}
+                />
+            )}
+
             <ExpoImage
                 source={source}
                 style={{
                     width: '100%',
                     height: '100%',
-                    aspectRatio
+                    aspectRatio: !isLoading ? aspectRatio : undefined,
                 }}
+                onLoad={() => setImageLoaded(true)}
                 contentFit={contentFit}
-                transition={transition}
+                transition={actualTransition}
+                cachePolicy={priority ? 'memory-disk' : 'disk'}
+                recyclingKey={typeof source === 'string' ? source : (source as any)?.uri}
                 {...props}
             />
         </View>
@@ -91,4 +108,15 @@ Image.getImageSize = async (uri: string): Promise<{ width: number; height: numbe
 
 Image.resolveAssetSource = (source: number) => {
     return RNImage.resolveAssetSource(source)
+}
+
+// Метод для предварительной загрузки изображений
+Image.prefetch = async (uri: string): Promise<boolean> => {
+    try {
+        await ExpoImage.prefetch(uri)
+        return true
+    } catch (error) {
+        console.error('Error prefetching image:', error)
+        return false
+    }
 }

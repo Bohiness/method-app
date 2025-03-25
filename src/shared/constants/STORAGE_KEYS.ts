@@ -1,5 +1,7 @@
 export const STORAGE_KEYS = {
     EVENING_REFLECTION: 'evening-reflections',
+    JOURNAL: 'journal',
+    JOURNAL_TEMPLATES: 'journal-templates',
     START_DAY: 'start-day',
     APP_TIMEZONE: 'app-timezone',
     APP_LOCALE: 'app-locale',
@@ -10,4 +12,5 @@ export const STORAGE_KEYS = {
     APP_SETTINGS: 'app-settings',
     SUBSCRIPTION_STATUS: 'subscription-status',
     SUBSCRIPTION_ACTIVE_BY_ADMIN: 'subscription-active-by-admin',
+    AI_TONE_OF_VOICE: 'ai-tone-of-voice',
 } as const;

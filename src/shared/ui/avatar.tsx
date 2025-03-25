@@ -1,9 +1,11 @@
 // src/shared/ui/avatar/avatar.tsx
 import { useColors } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
+import { Image } from '@shared/ui/image'
 import { Text } from '@shared/ui/text'
-import React, { useMemo } from 'react'
-import { Image, ImageProps, ImageSourcePropType, View } from 'react-native'
+import { View } from '@shared/ui/view'
+import React, { useEffect, useMemo, useState } from 'react'
+import { ImageProps as RNImageProps, StyleSheet } from 'react-native'
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 type AvatarShape = 'circle' | 'square'
@@ -15,11 +17,14 @@ interface AvatarGroupProps {
     className?: string
 }
 
+// Модифицируем тип для исключения проблемного свойства
+type ImageProps = Omit<RNImageProps, 'resizeMode'>
+
 interface AvatarProps extends Omit<ImageProps, 'source'> {
     /**
      * URL изображения или react-native image source
      */
-    source?: string | ImageSourcePropType
+    source?: string
     /**
      * Размер аватара
      * @default 'md'
@@ -44,6 +49,16 @@ interface AvatarProps extends Omit<ImageProps, 'source'> {
      * Дополнительные стили для контейнера
      */
     className?: string
+    /**
+     * Приоритет загрузки изображения
+     * @default false
+     */
+    priority?: boolean
+    /**
+     * Политика кеширования изображения
+     * @default 'memory-disk'
+     */
+    cachePolicy?: 'none' | 'memory' | 'disk' | 'memory-disk'
 }
 
 // Уточняем типы для размеров
@@ -73,6 +88,38 @@ const shapeMap: Record<AvatarShape, string> = {
     square: 'rounded-2xl'
 }
 
+// Тип для события загрузки изображения
+interface ImageLoadEvent {
+    source?: { uri?: string, width?: number, height?: number }
+    width?: number
+    height?: number
+    cacheType?: string
+}
+
+// Глобальный кеш для URL изображений
+const imageCache = new Map<string, boolean>()
+
+
+// Создаем дополнительные стили
+const styles = StyleSheet.create({
+    image: {
+        width: '100%',
+        height: '100%',
+        flex: 1,
+        minWidth: 8, // Минимальные размеры для гарантии отображения
+        minHeight: 8,
+    },
+    fullSize: {
+        width: '100%',
+        height: '100%',
+        flex: 1,
+    },
+    container: {
+        position: 'relative',
+        overflow: 'hidden',
+    }
+})
+
 const AvatarComponent = ({
     source,
     size = 'md',
@@ -80,82 +127,190 @@ const AvatarComponent = ({
     fallback,
     isOnline = false,
     className,
+    priority = false,
+    cachePolicy = 'memory-disk',
     ...props
 }: AvatarProps) => {
     const colors = useColors()
-    const [error, setError] = React.useState(false)
+    // Используем независимые состояния для лучшего контроля и отладки
+    const [error, setError] = useState(false)
+    const [isLoaded, setIsLoaded] = useState(false)
+    const [isVisible, setIsVisible] = useState(false)
+    const [renderCount, setRenderCount] = useState(0)
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
+
+    const sourceKey = typeof source === 'string' ? source : source ? JSON.stringify(source) : ''
+
+    // Получаем физические размеры для этого размера аватара
+    const getPhysicalSize = (size: AvatarSize): number => {
+        const sizeMap: Record<AvatarSize, number> = {
+            'xs': 32,
+            'sm': 40,
+            'md': 48,
+            'lg': 64,
+            'xl': 80,
+            '2xl': 96,
+        }
+        return sizeMap[size]
+    }
 
     // Мемоизируем преобразование URL в ImageSourcePropType
     const imageSource = useMemo(() => {
-        return typeof source === 'string' ? { uri: source } : source
+        if (!source) return undefined
+        const source_ = typeof source === 'string' ? { uri: source } : source
+        return source_
     }, [source])
+
+    // Логируем рендер и инициализируем из кеша если изображение есть
+    useEffect(() => {
+        setRenderCount(prev => prev + 1)
+
+        // Инициализация из кеша
+        if (sourceKey && imageCache.has(sourceKey)) {
+            setIsLoaded(true)
+            setIsVisible(true)
+        } else if (!sourceKey) {
+            // Нет source
+            setError(true)
+        } else {
+            // Сбрасываем состояния при новом source
+            setIsLoaded(false)
+            setIsVisible(false)
+            setError(false)
+        }
+    }, [sourceKey])
+
+    // Предварительная загрузка аватаров
+    useEffect(() => {
+        if (typeof source === 'string' && source) {
+
+            if (!imageCache.has(sourceKey)) {
+                Image.prefetch(source)
+                    .then(() => {
+                        imageCache.set(sourceKey, true)
+                        setIsLoaded(true)
+                        setIsVisible(true)
+                    })
+                    .catch(error => {
+                        console.error(error)
+                        setError(true)
+                    })
+            }
+        }
+    }, [source, sourceKey])
 
     // Мемоизируем стили для производительности
     const styleProps = useMemo(() => {
         const { container: containerSize, text: textSize } = sizeMap[size]
         const statusSize = statusSizeMap[size]
         const borderRadius = shapeMap[shape]
+        const physicalSize = getPhysicalSize(size)
 
         return {
             containerSize,
             textSize,
             statusSize,
-            borderRadius
+            borderRadius,
+            physicalSize
         }
     }, [size, shape])
 
-    // Мемоизируем рендер контента
-    const renderContent = useMemo(() => {
-        if (!error && imageSource) {
-            return (
+    // Рендер fallback контента
+    const fallbackContent = (
+        <View className={cn("w-full h-full bg-surface-paper dark:bg-surface-paper-dark items-center justify-center", styleProps.borderRadius)}>
+            <Text
+                size={styleProps.textSize}
+                className="text-text dark:text-text-dark"
+            >
+                {fallback ? fallback.charAt(0).toUpperCase() : '?'}
+            </Text>
+        </View>
+    )
+
+    // Индикатор загрузки
+    const loadingContent = (
+        <View className={cn("w-full h-full items-center justify-center", styleProps.borderRadius, "bg-surface-stone dark:bg-surface-stone-dark")}>
+            <Text
+                size="xs"
+                className="text-text dark:text-text-dark opacity-50"
+            >
+                ...
+            </Text>
+        </View>
+    )
+
+    // Конвертируем размер в конкретные пиксели для стилей
+    const sizeStyle = {
+        width: styleProps.physicalSize,
+        height: styleProps.physicalSize,
+    }
+
+    // Определяем, что показывать на экране
+    let content: React.ReactNode
+    if (error || !imageSource) {
+        content = fallbackContent
+    } else if (!isLoaded) {
+        content = loadingContent
+    } else {
+        content = (
+            <>
+                {/* Основное изображение */}
                 <Image
                     source={imageSource}
-                    className={cn("w-full h-full", styleProps.borderRadius)}
-                    onError={(e) => {
-                        console.warn('Avatar image loading error:', e.nativeEvent.error)
+                    style={[styles.image, sizeStyle]}
+                    className={styleProps.borderRadius}
+                    onError={(event) => {
+                        const errorMsg = (event as any).error || 'Unknown error'
+                        console.warn('Avatar image loading error:', errorMsg)
                         setError(true)
                     }}
-                    {...props}
+                    onLoad={(event: ImageLoadEvent) => {
+                        // Сохраняем размеры, даже если они нулевые
+                        const width = event?.width || styleProps.physicalSize
+                        const height = event?.height || styleProps.physicalSize
+
+                        // setDimensions({ width, height })
+
+                        setDimensions({ width, height })
+                        setIsLoaded(true)
+                        setIsVisible(true)
+
+                        if (sourceKey) {
+                            imageCache.set(sourceKey, true)
+                        }
+                    }}
+                    onContentLoaded={() => {
+                        setIsVisible(true)
+                    }}
+                    priority={priority}
+                    placeholder={fallback ? { uri: '' } : undefined}
+                    contentFit="cover"
+                    transition={0} // Отключаем переход для более быстрого отображения
+                    cachePolicy={cachePolicy}
+                    {...(props as any)}
                 />
-            )
-        }
 
-        if (fallback) {
-            return (
-                <View className={cn("w-full h-full bg-surface-paper dark:bg-surface-paper-dark items-center justify-center", styleProps.borderRadius)}>
-                    <Text
-                        size={styleProps.textSize}
-                        className="text-text dark:text-text-dark"
-                    >
-                        {fallback.charAt(0).toUpperCase()}
-                    </Text>
-                </View>
-            )
-        }
-
-        return (
-            <View className={cn("w-full h-full bg-surface-paper dark:bg-surface-paper-dark items-center justify-center", styleProps.borderRadius)}>
-                <Text
-                    size={styleProps.textSize}
-                    className="text-text dark:text-text-dark"
-                >
-                    ?
-                </Text>
-            </View>
+                {/* Невидимый fallback для гарантии отображения чего-то */}
+                {!isVisible && loadingContent}
+            </>
         )
-    }, [error, imageSource, fallback, styleProps, props])
+    }
+
+    // Определяем физические размеры контейнера
+    const containerClasses = cn(
+        styleProps.containerSize,
+        styleProps.borderRadius,
+        "overflow-hidden",
+        className
+    )
 
     return (
-        <View className={cn("relative", className)}>
+        <View className="relative">
             <View
-                className={cn(
-                    styleProps.containerSize,
-                    styleProps.borderRadius,
-                    "overflow-hidden",
-                    !imageSource && !error && "bg-surface-paper dark:bg-surface-paper-dark"
-                )}
+                className={containerClasses}
+                style={sizeStyle}
             >
-                {renderContent}
+                {content}
             </View>
 
             {isOnline && (
@@ -171,10 +326,10 @@ const AvatarComponent = ({
     )
 }
 
-// Оборачиваем компонент в React.memo для предотвращения ненужных перерисовок
-export const Avatar = React.memo(AvatarComponent)
+// Экспортируем без React.memo для лучшей отладки
+export const Avatar = AvatarComponent
 
-// AvatarGroup компонент теперь тоже поддерживает shape и обернут в React.memo
+// AvatarGroup компонент
 const AvatarGroupComponent = ({
     avatars,
     size = 'md',

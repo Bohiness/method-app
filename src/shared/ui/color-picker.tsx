@@ -4,6 +4,7 @@ import { ScrollView, TouchableOpacity } from 'react-native'
 import { Caption } from './text'
 
 const PROJECT_COLORS = [
+    '#FFFFFF', '#000000',
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD',
     '#D4A5A5', '#9B59B6', '#3498DB', '#E67E22', '#2ECC71',
     '#1ABC9C', '#F1C40F', '#E74C3C', '#34495E', '#95A5A6',
@@ -46,6 +47,8 @@ export function ColorPicker({
                                 width: 30,
                                 height: 30,
                                 borderRadius: 15,
+                                borderWidth: 1,
+                                borderColor: 'gray',
                                 backgroundColor: color,
                                 padding: 2,
                             }}

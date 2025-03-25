@@ -1,4 +1,5 @@
 import { apiClient } from '@shared/config/api-client';
+import { API_ROUTES } from '@shared/constants/api-routes';
 import { useLanguage } from '@shared/context/language-provider';
 import { initialEmotionsEN } from '@shared/data/initial/emotionsEN';
 import { initialEmotionsRU } from '@shared/data/initial/emotionsRU';
@@ -23,7 +24,7 @@ export const useEmotions = () => {
         queryKey: ['emotions'],
         queryFn: async () => {
             try {
-                const emotions = await apiClient.get<Emotion[]>('/api/emotions/');
+                const emotions = await apiClient.get<Emotion[]>(API_ROUTES.DIARY.EMOTIONS);
                 return emotions.sort((a, b) => a.name.localeCompare(b.name));
             } catch (error) {
                 console.error('Failed to fetch emotions:', error);

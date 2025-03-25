@@ -9,7 +9,7 @@ export type Theme = 'light' | 'dark' | 'system'
 // Интерфейс контекста темы
 interface ThemeContextType {
     theme: Theme
-    colorScheme: 'light' | 'dark'
+    colorScheme: 'light' | 'dark' | 'system'
     setTheme: (theme: Theme) => Promise<void>
     colors: typeof Colors.light | typeof Colors.dark
     isDark: boolean
@@ -44,6 +44,11 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
         }
         loadTheme()
     }, [])
+
+    // При изменении темы обновляем colorScheme
+    useEffect(() => {
+        setColorScheme(currentColorScheme)
+    }, [currentColorScheme, setColorScheme])
 
     // Функция изменения темы с сохранением
     const setTheme = async (newTheme: Theme) => {

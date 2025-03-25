@@ -15,7 +15,7 @@ export default function SettingsScreen() {
                     isLast
                     showSeparator
                     onPress={() => {
-                        router.replace('/(modals)/(plans)/settings/projects-list')
+                        router.replace('/(modals)/(plans)/settings/tasks-history')
                     }}
                     label={t('plans.settings.history.menuItem')}
                 />
@@ -24,7 +24,7 @@ export default function SettingsScreen() {
                     isLast
                     showSeparator
                     onPress={() => {
-                        router.replace('/(modals)/(plans)/settings/tasks-history')
+                        router.replace('/(modals)/(plans)/settings/projects-list')
                     }}
                     label={t('plans.settings.projects.menuItem')}
                 />

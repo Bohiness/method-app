@@ -1,22 +1,24 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { useLanguage } from '@shared/context/language-provider'
 import { useUser } from '@shared/context/user-provider'
+import { useToneOfVoice } from '@shared/hooks/ai/toneOfVoice.hook'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { useSubscription } from '@shared/hooks/subscription/useSubscription'
 import { logger } from '@shared/lib/logger/logger.service'
+import { Badge } from '@shared/ui/badge'
 import { Button } from '@shared/ui/button'
 import { MenuGroup, MenuItem } from '@shared/ui/modals/menu-item'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import React from 'react'
+import { router } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { Alert } from 'react-native'
-
 export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (screen: ScreenType) => void }) => {
     const { t } = useTranslation()
     const { currentLanguage } = useLanguage()
     const { user } = useUser()
     const { activatePlanByAdmin, deactivatePlanByAdmin } = useSubscription()
+    const { currentTone } = useToneOfVoice()
 
     const handleActivatePlanByAdmin = async () => {
         try {
@@ -63,6 +65,7 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
 
                     <MenuItem
                         label={t('settings.language.title')}
+                        leftIcon={'Languages'}
                         rightContent={
                             <Text variant="secondary">
                                 {currentLanguage.toUpperCase()}
@@ -74,16 +77,34 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                     />
                 </MenuGroup>
 
-                <MenuItem
-                    label={t('settings.sendErrorReport.title')}
-                    leftIcon={'Siren'}
-                    isFirst
-                    isLast
-                    showSeparator
-                    onPress={() => {
-                        onNavigate('sendErrorReport')
-                    }}
-                />
+                <MenuGroup label={t('settings.ai.title')}>
+                    <MenuItem
+                        label={t('settings.ai.aiToneOfVoice.title')}
+                        leftIcon={'ChartNoAxesGantt'}
+                        rightContent={
+                            <Badge size="sm" variant="outline" style={{ borderColor: currentTone?.gradient[0] }}>
+                                {currentTone?.name}
+                            </Badge>
+                        }
+                        onPress={() => {
+                            router.push('/(modals)/(profile)/ai-tone-of-voice')
+                        }}
+                    />
+                </MenuGroup>
+
+
+                <MenuGroup label={t('settings.debug.title')}>
+                    <MenuItem
+                        label={t('settings.sendErrorReport.title')}
+                        leftIcon={'Siren'}
+                        isFirst
+                        isLast
+                        showSeparator
+                        onPress={() => {
+                            onNavigate('sendErrorReport')
+                        }}
+                    />
+                </MenuGroup>
 
                 {(user?.email === 'bohiness@gmail.com' || __DEV__) && (
                     <>
@@ -120,6 +141,16 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                                 showSeparator
                                 onPress={() => {
                                     onNavigate('revenuecat')
+                                }}
+                            />
+                            <MenuItem
+                                label={t('settings.journal.title')}
+                                leftIcon={'Box'}
+                                isFirst
+                                isLast
+                                showSeparator
+                                onPress={() => {
+                                    onNavigate('journal')
                                 }}
                             />
                             <Button

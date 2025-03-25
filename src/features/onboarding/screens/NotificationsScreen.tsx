@@ -15,7 +15,7 @@ import { useOnboarding } from '../context/OnboardingContext'
 export const NotificationsScreen = () => {
     const { t } = useTranslation()
     const { locale, hour12 } = useLocale()
-    const { setNextScreen, updateOnboardingData } = useOnboarding()
+    const { setNextScreen, updateOnboardingData, loading: onboardingLoading } = useOnboarding()
     const {
         settings,
         updateSettings,
@@ -28,6 +28,7 @@ export const NotificationsScreen = () => {
     const [morningTime, setMorningTime] = useState(new Date().setHours(8, 0))
     const [eveningTime, setEveningTime] = useState(new Date().setHours(22, 0))
     const [morningEnabled, setMorningEnabled] = useState(true)
+    const [eveningEnabled, setEveningEnabled] = useState(true)
 
     const notifications = [
         {
@@ -167,7 +168,8 @@ export const NotificationsScreen = () => {
                     onPress={handleNotifications}
                     className="w-fit self-center px-20"
                     size='lg'
-                    loading={loading}
+                    loading={loading || onboardingLoading}
+                    disabled={loading || onboardingLoading}
                 >
                     {t('common.allow')}
                 </Button>

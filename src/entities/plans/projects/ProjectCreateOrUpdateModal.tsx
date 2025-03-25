@@ -85,8 +85,8 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
 
     return (
         <Pressable onPress={dismissKeyboard} className='flex-1'>
-            <View variant='default' className="flex-1 justify-between">
-                <View className="px-4 gap-y-4">
+            <View variant='transparent' className="flex-1 justify-between">
+                <View variant='transparent' className="px-4 gap-y-4">
                     <Title>
                         {isEditMode
                             ? t('plans.projects.editProject.title')

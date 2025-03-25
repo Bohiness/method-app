@@ -15,8 +15,10 @@ export type ViewVariant =
     | 'stone'    // Для выделенных элементов
     | 'inverse'  // Инвертированный цвет относительно темы
     | 'transparent' // Прозрачный цвет
+    | 'outline' // Для границ
+    | 'secondary' // Для вторичных элементов
 
-interface ViewProps extends RNViewProps {
+export interface ViewProps extends RNViewProps {
     variant?: ViewVariant
     className?: string
     children?: React.ReactNode
@@ -30,7 +32,9 @@ const getVariantClasses = (variant: ViewVariant) => {
         canvas: 'bg-surface-canvas dark:bg-surface-canvas-dark',
         stone: 'bg-surface-stone dark:bg-surface-stone-dark',
         inverse: 'bg-background-dark dark:bg-background',
-        transparent: 'bg-transparent dark:bg-transparent'
+        transparent: 'bg-transparent dark:bg-transparent',
+        outline: 'bg-transparent dark:bg-transparent border border-border dark:border-border-dark',
+        secondary: 'bg-surface-secondary dark:bg-surface-secondary-dark'
     }
     return variants[variant]
 }
@@ -137,15 +141,15 @@ export const ElevatedView = ({ className, style, ...props }: ViewProps) => (
 )
 
 // Компонент с границей
-export const BorderedView = ({ className, ...props }: ViewProps) => (
+export const OutlinedView = ({ className, ...props }: ViewProps) => (
     <View
-        variant="default"
+        variant="outline"
         className={cn('border border-border dark:border-border-dark rounded-lg', className)}
         {...props}
     />
 )
 
-export const ModalBottomContentView = ({ className, variant = 'default', showHeader = false, ...props }: ViewProps & { showHeader?: boolean }) => {
+export const ModalBottomContentView = ({ className, variant = 'default', showHeader = false, title, fullScreen = false, ...props }: ViewProps & { showHeader?: boolean, title?: string, fullScreen?: boolean }) => {
     const insets = useSafeAreaInsets()
     const { isKeyboardVisible, keyboardHeight } = useKeyboard()
     const [height, setHeight] = useState<number>(0)
@@ -163,7 +167,7 @@ export const ModalBottomContentView = ({ className, variant = 'default', showHea
 
     return (
         <View
-            className={cn('flex-1', className)}
+            className={cn('relative flex-1', className)}
             variant={variant}
             style={{ paddingBottom: isKeyboardVisible ? keyboardHeight : insets.bottom + marginBottom }}
             onLayout={(event) => {
@@ -172,13 +176,30 @@ export const ModalBottomContentView = ({ className, variant = 'default', showHea
             }}
             {...props}
         >
-            {showHeader && <ModalHeader />}
+            {showHeader && <ModalHeader title={title} showHeader={showHeader} />}
             {props.children}
             {(__DEV__) && (
                 <View className="absolute top-0 right-0 bg-surface-paper dark:bg-surface-paper-dark px-2 py-1 rounded-bl-md opacity-70">
                     <Text className="text-xs text-muted-foreground">{Math.round(height)}px</Text>
                 </View>
             )}
+        </View>
+    )
+}
+
+export const ModalFullScreenView = ({ className, variant = 'default', showHeader = false, title, fullScreen = false, ...props }: ViewProps & { showHeader?: boolean, title?: string, fullScreen?: boolean }) => {
+    const insets = useSafeAreaInsets()
+    const { isKeyboardVisible, keyboardHeight } = useKeyboard()
+
+    return (
+        <View
+            className={cn('flex-1', className)}
+            variant={variant}
+            style={{ paddingBottom: isKeyboardVisible ? keyboardHeight : insets.bottom }}
+            {...props}
+        >
+            {showHeader && <ModalHeader title={title} />}
+            {props.children}
         </View>
     )
 }

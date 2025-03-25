@@ -55,7 +55,7 @@ export const MenuItem = ({
                 <View
                     className={`
                     flex-row items-center justify-between
-                    py-4 px-4 
+                    py-6 px-6 
                     ${isDark ? 'bg-surface-paper-dark' : 'bg-surface-paper'}
                     ${isFirst ? 'rounded-t-xl' : ''}
                     ${isLast ? 'rounded-b-xl' : ''}
@@ -63,7 +63,7 @@ export const MenuItem = ({
                     ${className}
                 `}>
                     {/* Левая часть */}
-                    <View className="flex-row items-center flex-1 gap-x-2">
+                    <View className="flex-row items-center flex-1 gap-x-4">
                         {leftIcon && (
                             <Icon
                                 name={leftIcon}
@@ -82,13 +82,14 @@ export const MenuItem = ({
                     </View>
 
                     {/* Правая часть */}
-                    <View className="flex-row items-center">
-                        {rightContent}
+                    <View className="flex-row items-center gap-x-2">
+                        <View>
+                            {rightContent}
+                        </View>
                         {showChevron && (
                             <ChevronRight
                                 size={20}
                                 color={colors.inactive}
-                                className="m-2"
                             />
                         )}
                     </View>

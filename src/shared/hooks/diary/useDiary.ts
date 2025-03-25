@@ -2,20 +2,22 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useEveningReflectionHistory } from '@shared/hooks/diary/eveningreflection/useEveningReflection';
+import { useJournalHistory } from '@shared/hooks/diary/journal/useJournal';
 import { useMood } from '@shared/hooks/diary/mood/useMood';
 import { useMoodHistory } from '@shared/hooks/diary/mood/useMoodCheckin';
 import { useStartDayHistory } from '@shared/hooks/diary/startday/useStartDay';
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime';
 import { EveningReflectionType } from '@shared/types/diary/eveningreflection/EveningReflectionType';
+import { Journal, LocalJournal } from '@shared/types/diary/journal/JournalTypes';
 import { MoodCheckin } from '@shared/types/diary/mood/MoodType';
 import { StartDayType } from '@shared/types/diary/startday/StartDayType';
 
 // Тип для объединенных записей с указанием типа записи
 export type DiaryEntry = {
     id: number | string;
-    type: 'mood' | 'startDay' | 'eveningReflection';
+    type: 'mood' | 'startDay' | 'eveningReflection' | 'journal';
     created_at: string;
-    data: MoodCheckin | StartDayType | EveningReflectionType;
+    data: MoodCheckin | StartDayType | EveningReflectionType | Journal | LocalJournal;
 };
 
 // Расширенные вспомогательные методы для работы с настроением
@@ -84,6 +86,7 @@ export const useDiary = () => {
         isPending: isEveningReflectionPending,
         error: eveningReflectionError,
     } = useEveningReflectionHistory();
+    const { data: journalEntries, isPending: isJournalPending, error: journalError } = useJournalHistory();
     const { formateDataTimeWithTimezoneAndLocale } = useDateTime();
 
     // Обновляем diaryHelpers для использования в контексте этого хука
@@ -136,6 +139,19 @@ export const useDiary = () => {
             });
         }
 
+        // Добавляем записи Journal
+        if (journalEntries && Array.isArray(journalEntries)) {
+            journalEntries.forEach(entry => {
+                const journalId = entry.id || ('local_id' in entry ? (entry as LocalJournal).local_id : 0);
+                allEntries.push({
+                    id: journalId,
+                    type: 'journal',
+                    created_at: entry.created_at,
+                    data: entry,
+                });
+            });
+        }
+
         // Фильтруем записи за последнюю неделю
         const now = new Date();
         const weekAgo = new Date();
@@ -157,13 +173,13 @@ export const useDiary = () => {
         });
 
         return groupedByDay;
-    }, [moodCheckins, startDayEntries, eveningReflectionEntries, formateDataTimeWithTimezoneAndLocale]);
+    }, [moodCheckins, startDayEntries, eveningReflectionEntries, journalEntries, formateDataTimeWithTimezoneAndLocale]);
 
     // Возвращаем результат
     return {
         entriesByDay,
-        isPending: isMoodPending || isStartDayPending || isEveningReflectionPending,
-        error: moodError || startDayError || eveningReflectionError,
+        isPending: isMoodPending || isStartDayPending || isEveningReflectionPending || isJournalPending,
+        error: moodError || startDayError || eveningReflectionError || journalError,
         diaryHelpers: contextDiaryHelpers,
         moods,
     };

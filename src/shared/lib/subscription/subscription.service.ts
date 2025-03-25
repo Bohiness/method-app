@@ -4,6 +4,7 @@ import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { SubscriptionCacheData, SubscriptionCacheService } from '@shared/lib/subscription/subscription-cache.service';
 import { SubscriptionStatus, SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 // import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 
@@ -13,6 +14,7 @@ import { Platform } from 'react-native';
 class SubscriptionService {
     private isInitialized = false;
     private cacheService: SubscriptionCacheService;
+    private currentUserId: string | null = null;
 
     constructor() {
         logger.debug('SubscriptionService создан');
@@ -22,45 +24,82 @@ class SubscriptionService {
     /**
      * Инициализация RevenueCat SDK
      */
-    async initialize(): Promise<void> {
+    async initialize(): Promise<boolean> {
         try {
             if (this.isInitialized) {
-                logger.debug('RevenueCat уже инициализирован');
-                return;
+                logger.debug('RevenueCat уже инициализирован', 'initialize – SubscriptionService');
+                return true;
             }
 
-            logger.debug('Инициализация RevenueCat SDK');
+            logger.debug('Инициализация RevenueCat SDK', 'initialize – SubscriptionService');
 
             // Включаем отладочные логи в RevenueCat
             await Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
 
             // Получаем API ключи из переменных окружения
-            const iOSKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
-            const androidKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
-            const appId = process.env.EXPO_PUBLIC_REVENUECAT_ID;
+            const iOSKey = Constants.expoConfig?.extra?.revenuecatIosKey || process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
+            const appId = Constants.expoConfig?.extra?.revenuecatId || process.env.EXPO_PUBLIC_REVENUECAT_ID;
 
-            if (!iOSKey || !androidKey) {
-                throw new Error('API ключи RevenueCat не настроены');
-            }
+            logger.debug(`iOS Key: ${iOSKey ? 'настроен' : 'отсутствует'}`, 'initialize – SubscriptionService');
+            logger.debug(`App ID: ${appId ? appId : 'отсутствует'}`, 'initialize – SubscriptionService');
 
             // Настраиваем SDK в зависимости от платформы
             if (Platform.OS === 'ios') {
+                if (!iOSKey) {
+                    throw new Error(
+                        'API ключ для iOS не настроен. Проверьте переменную окружения EXPO_PUBLIC_REVENUECAT_IOS_KEY'
+                    );
+                }
+
+                logger.log(
+                    `Настройка RevenueCat для iOS с ключом: ${iOSKey.substring(0, 5)}...`,
+                    'initialize – SubscriptionService'
+                );
                 await Purchases.configure({ apiKey: iOSKey });
-                logger.debug('RevenueCat настроен для iOS');
-            } else if (Platform.OS === 'android') {
-                await Purchases.configure({ apiKey: androidKey });
-                logger.debug('RevenueCat настроен для Android');
+                logger.debug('RevenueCat настроен для iOS', 'initialize – SubscriptionService');
             } else {
-                logger.warn('RevenueCat не поддерживается на этой платформе');
-                return;
+                logger.warn(
+                    'RevenueCat поддерживается только для iOS в данной конфигурации',
+                    'initialize – SubscriptionService'
+                );
+                return false;
             }
 
-            this.isInitialized = true;
-            logger.debug('RevenueCat успешно инициализирован');
+            // Проверка инициализации
+            try {
+                // Проверяем, успешно ли инициализирован SDK, выполнив безопасный запрос
+                await Purchases.getCustomerInfo();
+                this.isInitialized = true;
+                logger.debug('RevenueCat успешно инициализирован и проверен', 'initialize – SubscriptionService');
+                return true;
+            } catch (checkError) {
+                logger.error(
+                    checkError,
+                    'initialize – SubscriptionService',
+                    'Ошибка при проверке инициализации RevenueCat'
+                );
+                this.isInitialized = false;
+                return false;
+            }
         } catch (error) {
             logger.error(error, 'SubscriptionService - initialize', 'Ошибка при инициализации RevenueCat');
-            throw error;
+            this.isInitialized = false;
+            return false;
         }
+    }
+
+    /**
+     * Безопасный вызов метода RevenueCat с проверкой инициализации
+     */
+    private async ensureInitialized(): Promise<boolean> {
+        if (!this.isInitialized) {
+            logger.debug(
+                'RevenueCat не инициализирован, пытаемся инициализировать...',
+                'ensureInitialized – SubscriptionService'
+            );
+            return await this.initialize();
+        }
+        return true;
     }
 
     /**
@@ -68,13 +107,32 @@ class SubscriptionService {
      */
     async setUserId(userId: string): Promise<void> {
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
+            logger.debug(`Попытка установить ID пользователя: ${userId}`, 'setUserId – SubscriptionService');
+
+            // Проверяем, не установлен ли уже этот ID
+            if (this.currentUserId === userId) {
+                logger.debug(
+                    `Пользователь с ID ${userId} уже установлен в RevenueCat`,
+                    'setUserId – SubscriptionService'
+                );
+                return;
             }
 
-            logger.debug(`Установка ID пользователя: ${userId}`);
+            if (!(await this.ensureInitialized())) {
+                logger.error(
+                    'Не удалось инициализировать RevenueCat для установки ID пользователя',
+                    'setUserId – SubscriptionService'
+                );
+                throw new Error('Не удалось инициализировать RevenueCat для установки ID пользователя');
+            }
+
+            logger.debug(`Вызов Purchases.logIn с ID: ${userId}`, 'setUserId – SubscriptionService');
             await Purchases.logIn(userId);
-            logger.debug('ID пользователя успешно установлен');
+
+            // Сохраняем ID пользователя после успешной установки
+            this.currentUserId = userId;
+
+            logger.debug('ID пользователя успешно установлен', 'setUserId – SubscriptionService');
         } catch (error) {
             logger.error(error, 'SubscriptionService - setUserId', 'Ошибка при установке ID пользователя');
             throw error;
@@ -82,23 +140,72 @@ class SubscriptionService {
     }
 
     /**
+     * Проверяет, нужно ли устанавливать ID пользователя, и устанавливает его если нужно
+     * @param userId ID пользователя для проверки и установки
+     * @returns true если ID был установлен или уже был установлен ранее, false если произошла ошибка
+     */
+    async ensureUserIdSet(userId: string): Promise<boolean> {
+        logger.debug(`Проверка и установка ID пользователя: ${userId}`, 'ensureUserIdSet – SubscriptionService');
+        try {
+            // Проверяем, нужно ли устанавливать ID
+            if (this.currentUserId === userId) {
+                logger.debug(
+                    `Пользователь с ID ${userId} уже установлен в RevenueCat`,
+                    'ensureUserIdSet – SubscriptionService'
+                );
+                return true;
+            }
+
+            // Устанавливаем ID пользователя
+            await this.setUserId(userId);
+            logger.debug(`ID пользователя ${userId} успешно установлен`, 'ensureUserIdSet – SubscriptionService');
+            return true;
+        } catch (error) {
+            logger.error(error, 'ensureUserIdSet – SubscriptionService', 'Ошибка при установке ID пользователя');
+            return false;
+        }
+    }
+
+    /**
+     * Получает текущий ID пользователя, установленный в RevenueCat
+     */
+    getCurrentUserId(): string | null {
+        return this.currentUserId;
+    }
+
+    /**
      * Получает список доступных пакетов подписок
      */
     async getOfferings(): Promise<PurchasesPackage[]> {
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
+            logger.debug('Получение списка доступных подписок', 'getOfferings – SubscriptionService');
+
+            if (!(await this.ensureInitialized())) {
+                throw new Error('Не удалось инициализировать RevenueCat для получения подписок');
             }
 
-            logger.debug('Получение списка доступных подписок');
             const offerings = await Purchases.getOfferings();
 
-            if (!offerings.current || !offerings.current.availablePackages) {
-                logger.warn('Нет доступных пакетов подписок');
+            if (!offerings || !offerings.current) {
+                logger.warn(
+                    'Результат запроса offerings получен, но current отсутствует',
+                    'getOfferings – SubscriptionService'
+                );
+                return [];
+            }
+
+            if (!offerings.current.availablePackages) {
+                logger.warn('Нет доступных пакетов подписок в offerings.current', 'getOfferings – SubscriptionService');
                 return [];
             }
 
             logger.debug(`Получено ${offerings.current.availablePackages.length} пакетов подписок`);
+
+            logger.json(offerings.current.availablePackages, {
+                title: 'Список доступных пакетов подписок',
+                context: 'getOfferings – SubscriptionService',
+            });
+
             return offerings.current.availablePackages;
         } catch (error) {
             logger.error(error, 'SubscriptionService - getOfferings', 'Ошибка при получении списка подписок');
@@ -115,13 +222,13 @@ class SubscriptionService {
                 await this.initialize();
             }
 
-            logger.debug(`Покупка пакета: ${pkg.identifier}`);
+            logger.debug(`Покупка пакета: ${pkg.identifier}`, 'purchasePackage – SubscriptionService');
             const { customerInfo } = await Purchases.purchasePackage(pkg);
 
             // Обновляем статус подписки в хранилище
             await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
 
-            logger.debug('Пакет успешно куплен');
+            logger.debug('Пакет успешно куплен', 'purchasePackage – SubscriptionService');
             return customerInfo;
         } catch (error) {
             logger.error(error, 'SubscriptionService - purchasePackage', 'Ошибка при покупке пакета');
@@ -138,13 +245,13 @@ class SubscriptionService {
                 await this.initialize();
             }
 
-            logger.debug('Восстановление покупок');
+            logger.debug('Восстановление покупок', 'restorePurchases – SubscriptionService');
             const customerInfo = await Purchases.restorePurchases();
 
             // Обновляем статус подписки в хранилище
             await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
 
-            logger.debug('Покупки успешно восстановлены');
+            logger.debug('Покупки успешно восстановлены', 'restorePurchases – SubscriptionService');
             return customerInfo;
         } catch (error) {
             logger.error(error, 'SubscriptionService - restorePurchases', 'Ошибка при восстановлении покупок');
@@ -161,11 +268,14 @@ class SubscriptionService {
                 await this.initialize();
             }
 
-            logger.debug('Проверка статуса подписки');
+            logger.debug('Проверка статуса подписки', 'checkSubscriptionStatus – SubscriptionService');
             // Сначала проверяем кеш
             const cachedSubscription = await this.cacheService.getCachedSubscription();
             if (cachedSubscription) {
-                logger.debug('Использование кешированного статуса подписки');
+                logger.debug(
+                    'Использование кешированного статуса подписки',
+                    'checkSubscriptionStatus – SubscriptionService'
+                );
                 return this.mapCacheDataToSubscriptionStatus(cachedSubscription);
             }
 
@@ -191,7 +301,10 @@ class SubscriptionService {
                 await this.initialize();
             }
 
-            logger.debug('Принудительное обновление статуса подписки');
+            logger.debug(
+                'Принудительное обновление статуса подписки',
+                'forceRefreshSubscriptionStatus – SubscriptionService'
+            );
             await Purchases.syncPurchases();
             // Исправляем вызов метода, не используя параметр fetchPolicy
             const customerInfo = await Purchases.getCustomerInfo();
@@ -214,16 +327,16 @@ class SubscriptionService {
     async logout(): Promise<void> {
         try {
             if (!this.isInitialized) {
-                logger.debug('RevenueCat не инициализирован, выход не требуется');
+                logger.debug('RevenueCat не инициализирован, выход не требуется', 'logout – SubscriptionService');
                 return;
             }
 
-            logger.debug('Выход пользователя из RevenueCat');
+            logger.debug('Выход пользователя из RevenueCat', 'logout – SubscriptionService');
             await Purchases.logOut();
             await storage.remove(STORAGE_KEYS.SUBSCRIPTION_STATUS);
             // Очищаем кеш при выходе
             await this.cacheService.clearCache();
-            logger.debug('Пользователь успешно вышел из RevenueCat');
+            logger.debug('Пользователь успешно вышел из RevenueCat', 'logout – SubscriptionService');
         } catch (error) {
             logger.error(error, 'SubscriptionService - logout', 'Ошибка при выходе пользователя');
             throw error;
@@ -239,7 +352,7 @@ class SubscriptionService {
                 await this.initialize();
             }
 
-            logger.debug('Проверка подписки на сервере');
+            logger.debug('Проверка подписки на сервере', 'verifySubscriptionWithServer – SubscriptionService');
 
             // Получаем текущую информацию о клиенте
             // Исправляем вызов метода, не используя параметр fetchPolicy
@@ -252,7 +365,10 @@ class SubscriptionService {
             // Обновляем локальный статус подписки
             await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
 
-            logger.debug(`Проверка на сервере завершена. Результат: ${hasActiveSubscriptions}`);
+            logger.debug(
+                `Проверка на сервере завершена. Результат: ${hasActiveSubscriptions}`,
+                'verifySubscriptionWithServer – SubscriptionService'
+            );
             return hasActiveSubscriptions;
         } catch (error) {
             logger.error(
@@ -426,7 +542,7 @@ class SubscriptionService {
      */
     async deactivatePremiumPlanForAdmin(): Promise<boolean> {
         try {
-            logger.debug('Деактивация админ-плана');
+            logger.debug('Деактивация админ-плана', 'deactivatePremiumPlanForAdmin – SubscriptionService');
 
             // Очищаем кеш
             await this.cacheService.clearCache();
@@ -443,7 +559,7 @@ class SubscriptionService {
             // Обновляем локальное хранилище
             await storage.set(STORAGE_KEYS.SUBSCRIPTION_STATUS, freeSubscriptionStatus, true);
 
-            logger.debug('Админ-план успешно деактивирован');
+            logger.debug('Админ-план успешно деактивирован', 'deactivatePremiumPlanForAdmin – SubscriptionService');
             return true;
         } catch (error) {
             logger.error(
@@ -460,7 +576,7 @@ class SubscriptionService {
      */
     async clearSubscriptionCache(): Promise<boolean> {
         try {
-            logger.debug('Очистка всех кешей подписки');
+            logger.debug('Очистка всех кешей подписки', 'clearSubscriptionCache – SubscriptionService');
 
             // Очищаем кеш в сервисе кеширования
             await this.cacheService.clearCache();
@@ -468,7 +584,7 @@ class SubscriptionService {
             // Очищаем локальное хранилище
             await storage.remove(STORAGE_KEYS.SUBSCRIPTION_STATUS);
 
-            logger.debug('Кеш подписки успешно очищен');
+            logger.debug('Кеш подписки успешно очищен', 'clearSubscriptionCache – SubscriptionService');
             return true;
         } catch (error) {
             logger.error(error, 'SubscriptionService - clearSubscriptionCache', 'Ошибка при очистке кеша подписки');

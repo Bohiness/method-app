@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOnboarding } from '../context/OnboardingContext'
 
 export const Ask2Screen = () => {
-    const { setNextScreen, updateOnboardingData } = useOnboarding()
+    const { setNextScreen, updateOnboardingData, loading } = useOnboarding()
     const { t } = useTranslation()
     const insets = useSafeAreaInsets()
     const [selectedGender, setSelectedGender] = useState<string>('')
@@ -64,6 +64,7 @@ export const Ask2Screen = () => {
                     containerClassName="bg-background dark:bg-background-dark"
                     radioClassName="px-6 py-6"
                     textSize="lg"
+                    disabled={loading}
                 />
             </Animated.View>
         </View>

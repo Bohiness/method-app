@@ -1,5 +1,5 @@
 import { useKeyboard } from '@shared/hooks/systems/keyboard/useKeyboard'
-import { HighlightedText } from '@shared/lib/utils/HighlightedText'
+import { HighlightedText } from '@shared/lib/utils/parsers/HighlightedText'
 import { Emotion, Factor } from '@shared/types/diary/mood/MoodType'
 import { Title } from '@shared/ui/text'
 import { MultilineTextInput } from '@shared/ui/text-input'

@@ -1,19 +1,15 @@
 // src/widgets/diary/mood/steps/SuccessStep.tsx
 import { EveningReflectionStackParamList } from '@app/(modals)/(diary)/evening-reflection/StepNavigator'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { AnimatedCheck } from '@shared/ui/animated-icon/check'
 import { Button } from '@shared/ui/button'
-import { Icon } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { StreakWidget } from '@widgets/gamification/streak/StreakWidget'
 import { router } from 'expo-router'
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    useAnimatedStyle,
-    withSpring
+    FadeIn
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -23,16 +19,6 @@ export function SuccessStepEveningReflection({ route, navigation }: SuccessStepE
     const { t } = useTranslation()
     const insets = useSafeAreaInsets()
 
-    // Анимация для иконки
-    const animatedIconStyle = useAnimatedStyle(() => ({
-        transform: [{
-            scale: withSpring(1.2, {
-                damping: 10,
-                stiffness: 100,
-            })
-        }],
-    }))
-
     const handleDone = async () => {
         router.dismissTo('/(tabs)')
     }
@@ -40,15 +26,11 @@ export function SuccessStepEveningReflection({ route, navigation }: SuccessStepE
     return (
         <View className="flex-1 px-4" variant='default'>
             <View className="flex-1 items-center justify-center">
-                <Animated.View
-                    entering={FadeInDown.delay(300)}
-                    style={animatedIconStyle}
-                    className="p-6 rounded-full"
-                >
-                    <Icon name="Check" size={60} />
-                </Animated.View>
+                <AnimatedCheck
+                    size={100}
+                />
 
-                <Animated.View entering={FadeIn.delay(600)}>
+                <Animated.View entering={FadeIn.delay(600)} className='pt-10'>
                     <Title className="text-center mb-4">
                         {t('diary.eveningreflection.success.title')}
                     </Title>
@@ -70,7 +52,8 @@ export function SuccessStepEveningReflection({ route, navigation }: SuccessStepE
 
             <Button
                 variant="default"
-                fullWidth
+                className="w-fit self-center px-20"
+                size='lg'
                 onPress={handleDone}
                 style={{ marginBottom: insets.bottom }}
             >

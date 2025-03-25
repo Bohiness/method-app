@@ -5,7 +5,6 @@ import { View } from '@shared/ui/view'
 import { router } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable } from 'react-native'
 import Animated, {
     FadeInDown,
     useAnimatedStyle,
@@ -55,26 +54,21 @@ export function ProjectChoice({ selectedProjectId, onChangeSelectedProject }: Pr
     }, [isVisible])
 
     return (
-        <View className='flex-1'>
-            <Pressable
+        <>
+
+            <Button
+                size='sm'
+                variant='outline'
                 onPress={handleToggleMenu}
-                className="p-2 relative"
+                leftIcon={selectedProject?.color ? 'Circle' : undefined}
+                iconSize={10}
+                iconProps={{
+                    color: selectedProject?.color,
+                    fill: selectedProject?.color
+                }}
             >
-                <Button
-                    size='sm'
-                    variant='outline'
-                    className="w-32"
-                    onPress={handleToggleMenu}
-                    leftIcon={selectedProject?.color ? 'Circle' : undefined}
-                    iconSize={10}
-                    iconProps={{
-                        color: selectedProject?.color,
-                        fill: selectedProject?.color
-                    }}
-                >
-                    {selectedProject ? selectedProject.name : t('plans.projects.allProjects')}
-                </Button>
-            </Pressable>
+                {selectedProject ? selectedProject.name : t('plans.projects.allProjects')}
+            </Button>
 
             {isVisible && (
                 <Animated.View
@@ -83,11 +77,9 @@ export function ProjectChoice({ selectedProjectId, onChangeSelectedProject }: Pr
                         menuAnimatedStyle,
                         {
                             zIndex: 45,
-                            minWidth: '100%'
                         }
                     ]}
                 >
-
                     <Animated.View entering={FadeInDown.delay(50 + (projects?.length || 0 + 1) * 50).springify()} >
                         <Button
                             onPress={() => {
@@ -142,7 +134,7 @@ export function ProjectChoice({ selectedProjectId, onChangeSelectedProject }: Pr
 
                 </Animated.View>
             )}
-        </View>
+        </>
 
     )
 }

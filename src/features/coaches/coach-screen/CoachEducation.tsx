@@ -112,7 +112,7 @@ export const CoachEducation: React.FC<Props> = ({ education_data = [] }) => {
                         education.certificate_images[0]?.image && (
                             <View className="w-20 mr-3">
                                 <Avatar
-                                    source={{ uri: education.certificate_images[0].image }}
+                                    source={education.certificate_images[0].image}
                                     size="2xl"
                                     shape="square"
                                     className="rounded-lg"

@@ -1,7 +1,6 @@
-import { HighlightedText } from '@shared/lib/utils/HighlightedText'
+import { HighlightedText } from '@shared/lib/utils/parsers/HighlightedText'
 import { Factor } from '@shared/types/diary/mood/MoodType'
 import { Badge } from '@shared/ui/badge'
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Text, View } from 'react-native'
 import Animated, { FadeIn, FadeOut, Layout } from 'react-native-reanimated'

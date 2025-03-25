@@ -16,7 +16,7 @@ import { useOnboarding } from '../context/OnboardingContext'
 export const NotificationsScreen2 = () => {
     const { t } = useTranslation()
     const { locale, hour12 } = useLocale()
-    const { setNextScreen, setPreviousScreen, updateOnboardingData } = useOnboarding()
+    const { setNextScreen, setPreviousScreen, updateOnboardingData, loading: onboardingLoading } = useOnboarding()
     const {
         settings,
         updateSettings,
@@ -311,7 +311,8 @@ export const NotificationsScreen2 = () => {
                     onPress={handleNotifications}
                     className="w-fit self-center px-20"
                     size="lg"
-                    loading={loading}
+                    loading={loading || onboardingLoading}
+                    disabled={loading || onboardingLoading}
                 >
                     {t('common.continue')}
                 </Button>

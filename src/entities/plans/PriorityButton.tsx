@@ -55,12 +55,12 @@ export const PriorityButton = memo(({
             onPress={handlePress}
             size='sm'
             variant='ghost'
-            className="relative"
+            className="relative p-0"
         >
             <View className="relative">
                 <Icon
                     name="Triangle"
-                    size={26}
+                    size={28}
                     color={getPriorityColor()}
                 />
                 {priority && (

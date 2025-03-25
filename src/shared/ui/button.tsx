@@ -33,6 +33,7 @@ interface ButtonProps extends PressableProps {
     children?: React.ReactNode
     haptic?: boolean
     bgColor?: string
+    textColor?: string
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
@@ -45,18 +46,29 @@ export const Button: React.FC<ButtonProps> = ({
     fullWidth = false,
     leftIcon,
     rightIcon,
-    iconSize = 24,
+    iconSize,
     className = '',
     children,
     haptic = true,
     onPress,
     iconProps,
     bgColor,
+    textColor,
     ...props
 }) => {
     const { isDark } = useTheme()
     const colors = useColors()
     const pressed = useSharedValue(0)
+
+    // Определяем размер иконки на основе размера кнопки
+    const sizeBasedIconSize = {
+        sm: 16,
+        md: 20,
+        lg: 24,
+    }[size]
+
+    // Приоритет: iconProps?.size > iconSize > sizeBasedIconSize
+    const currentIconSize = iconProps?.size || iconSize || sizeBasedIconSize
 
     const getColors = (variant: ButtonVariant) => {
         const variantColors = {
@@ -96,19 +108,19 @@ export const Button: React.FC<ButtonProps> = ({
 
     const variantColors = getColors(variant)
 
-    // Размеры кнопки
-    const sizeClasses = {
-        sm: 'py-2 px-3',
-        md: 'py-4 px-10',
-        lg: 'py-6 px-12',
+    // Фиксированная высота для каждого размера кнопки
+    const buttonHeights = {
+        sm: 'h-10',
+        md: 'h-14',
+        lg: 'h-16',
     }[size]
 
-    const sizeClassesButtonIcon = {
-        sm: 'py-2 px-2',
-        md: 'py-2 px-4',
-        lg: 'py-2 px-6',
+    // Горизонтальные отступы
+    const horizontalPadding = {
+        sm: children ? 'px-3' : 'px-4',
+        md: children ? 'px-10' : 'px-6',
+        lg: children ? 'px-12' : 'px-8',
     }[size]
-
 
     // Варианты стилей
     const getVariantClasses = () => {
@@ -148,27 +160,47 @@ export const Button: React.FC<ButtonProps> = ({
         onPress?.(e)
     }
 
+    // Общий класс для всех кнопок
+    const baseButtonClasses = cn(
+        'rounded-full active:opacity-90 flex-row items-center justify-center',
+        buttonHeights,
+        horizontalPadding,
+        getVariantClasses(),
+        disabledClasses,
+        widthClasses,
+        className,
+    )
+
     if (!children && leftIcon) {
+        // Создаем круглую кнопку с равными шириной и высотой
+        const buttonSize = {
+            sm: 'w-10',
+            md: 'w-14',
+            lg: 'w-16',
+        }[size]
+
+        const iconOnlyButtonClasses = cn(
+            'rounded-full active:opacity-90 flex-row items-center justify-center',
+            buttonHeights,
+            buttonSize, // Используем одинаковую ширину и высоту
+            getVariantClasses(),
+            disabledClasses,
+            className,
+        )
+
         return (
             <AnimatedPressable
                 disabled={disabled || loading}
                 onPressIn={() => { pressed.value = 1 }}
                 onPressOut={() => { pressed.value = 0 }}
                 onPress={handlePress}
-                style={animatedStyle}
-                className={cn(
-                    'relative rounded-full active:opacity-90 flex-row items-center justify-center',
-                    getVariantClasses(),
-                    sizeClassesButtonIcon,
-                    disabledClasses,
-                    widthClasses,
-                    className,
-                )}
+                style={[animatedStyle, bgColor && { backgroundColor: bgColor }]}
+                className={iconOnlyButtonClasses}
                 {...props}
             >
                 <Icon
                     name={leftIcon}
-                    size={iconSize}
+                    size={currentIconSize}
                     color={iconProps?.color || variantColors.icon}
                     fill={iconProps?.fill}
                 />
@@ -183,14 +215,7 @@ export const Button: React.FC<ButtonProps> = ({
             onPressOut={() => { pressed.value = 0 }}
             onPress={handlePress}
             style={[animatedStyle, bgColor && { backgroundColor: bgColor }]}
-            className={cn(
-                'rounded-full active:opacity-90',
-                getVariantClasses(),
-                sizeClasses,
-                disabledClasses,
-                widthClasses,
-                className,
-            )}
+            className={baseButtonClasses}
             {...props}
         >
             <View className="flex-row items-center justify-center space-x-2">
@@ -205,7 +230,7 @@ export const Button: React.FC<ButtonProps> = ({
                             <View className={'mr-2 -ml-2'}>
                                 <Icon
                                     name={leftIcon}
-                                    size={iconProps?.size || iconSize}
+                                    size={currentIconSize}
                                     color={iconProps?.color || variantColors.icon}
                                     fill={iconProps?.fill}
                                 />
@@ -215,7 +240,7 @@ export const Button: React.FC<ButtonProps> = ({
                             <Text
                                 className="text-inherit truncate"
                                 style={{
-                                    color: variantColors.text,
+                                    color: textColor || variantColors.text,
                                     maxWidth: '100%'
                                 }}
                                 numberOfLines={1}
@@ -229,7 +254,7 @@ export const Button: React.FC<ButtonProps> = ({
                             <View className="ml-2">
                                 <Icon
                                     name={rightIcon}
-                                    size={iconProps?.size || iconSize}
+                                    size={currentIconSize}
                                     color={iconProps?.color || variantColors.icon}
                                     fill={iconProps?.fill}
                                 />

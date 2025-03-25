@@ -2,12 +2,13 @@ import { getSubscriptionPlans, SubscriptionPlan } from '@shared/constants/plans'
 import { API_URLS } from '@shared/constants/URLS'
 import { useSubscription } from '@shared/hooks/subscription/useSubscription'
 import { useLocale } from '@shared/hooks/systems/locale/useLocale'
+import { logger } from '@shared/lib/logger/logger.service'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Button } from '@shared/ui/button'
 import { Icon, IconName } from '@shared/ui/icon'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Linking, ScrollView } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
@@ -60,6 +61,14 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
     isPremium,
     isPremiumAI
   } = useSubscription()
+
+  useEffect(() => {
+    logger.log(packages, 'useEffect – SubscriptionScreen')
+  }, [packages])
+
+  useEffect(() => {
+    logger.log(subscription, 'useEffect – SubscriptionScreen')
+  }, [subscription])
 
   // Используем pаckages из RevenueCat для получения актуальных цен
   const subscriptionPlans = getSubscriptionPlans(t, packages || [])
@@ -163,7 +172,7 @@ export const SubscriptionScreen = ({ selectedPlan, setSelectedPlan, text }: Subs
         <View className="px-6 pb-6 bg-surface-paper dark:bg-surface-paper-dark">
           <View className="mb-6 mt-4">
             {/* Показываем текущую подписку, если она есть */}
-            {subscription && (
+            {subscription && subscription.isActive && (
               <View className="mb-3">
                 <Text className="text-center text-success">
                   {t('screens.subscription.active', {

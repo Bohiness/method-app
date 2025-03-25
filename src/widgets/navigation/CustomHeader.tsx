@@ -51,52 +51,45 @@ export const CustomHeader = ({
         </HapticTab>
     )
 
-
     return (
         <View
             variant='default'
-            className="px-4 py-1"
+            className="px-4"
             style={{ paddingTop: insets.top }}
         >
-            {titleAlign === 'center' ? (
-                // Центрированный вариант
-                <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center z-10">
-                        {backButton}
-                        {leftElement}
-                    </View>
-
-                    <View className="absolute inset-0 items-center justify-center flex flex-row gap-x-2">
-                        {title && <Title>{t(title)}</Title>}
-                        {showNetStatus && <NotOnline />}
-                    </View>
-
-                    <View className="z-10">
-                        {rightElement}
-                    </View>
+            <View className="flex-row items-center justify-between relative">
+                {/* Левая часть */}
+                <View className="flex-row items-center z-10">
+                    {backButton}
+                    {leftElement}
                 </View>
-            ) : (
-                // Обычный вариант с выравниванием влево или вправо
-                <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center flex-1">
-                        {backButton}
-                        {leftElement}
-                        {title && (
-                            <Title className={cn(
-                                titleAlign === 'right' ? 'ml-auto' : ''
-                            )}>
-                                {t(title)}
-                            </Title>
+
+                {/* Центральная часть */}
+                {title && (
+                    <View
+                        className={cn(
+                            "absolute left-0 right-0 items-center",
+                            titleAlign !== 'center' && "items-start pl-10"
                         )}
+                    >
+                        <Title
+                            align={titleAlign}
+                            className="max-w-[70%]"
+                        >
+                            {t(title)}
+                        </Title>
+                        {showNetStatus && titleAlign === 'center' && <NotOnline />}
                     </View>
+                )}
 
-                    {rightElement && (
-                        <View className="z-10">
-                            {rightElement}
-                        </View>
-                    )}
+                {/* Правая часть */}
+                <View className="z-10">
+                    {rightElement}
                 </View>
-            )}
+            </View>
+
+            {/* NotOnline для варианта с выравниванием не по центру */}
+            {showNetStatus && titleAlign !== 'center' && <NotOnline />}
         </View>
     )
 }

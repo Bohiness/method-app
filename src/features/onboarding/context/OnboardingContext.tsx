@@ -19,6 +19,7 @@ interface OnboardingContextType {
     screens: string[]
     onboardingData: OnboardingData
     updateOnboardingData: (data: Partial<OnboardingData>) => void
+    loading: boolean
 }
 
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined)
@@ -40,6 +41,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     const { showSubscriptionModal } = useSubscriptionModal()
     const [currentIndex, setCurrentIndex] = useState(0)
     const [onboardingData, setOnboardingData] = useState<OnboardingData>({})
+    const [loading, setLoading] = useState(false)
 
     const currentScreen = screenKeys[currentIndex]
     const isLastScreen = currentIndex === screenKeys.length - 1
@@ -47,22 +49,28 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     const { updateUser } = useUser()
 
     const setNextScreen = () => {
+        setLoading(true)
         if (currentIndex < screenKeys.length - 1) {
             setCurrentIndex(prev => prev + 1)
         }
+        setLoading(false)
     }
 
     const setPreviousScreen = () => {
+        setLoading(true)
         if (currentIndex > 0) {
             setCurrentIndex(prev => prev - 1)
         }
+        setLoading(false)
     }
 
     const goToScreen = (screenId: string) => {
+        setLoading(true)
         const index = screenKeys.indexOf(screenId)
         if (index !== -1) {
             setCurrentIndex(index)
         }
+        setLoading(false)
     }
 
     // Добавляем функцию обновления данных
@@ -71,6 +79,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     }
 
     const completeOnboarding = async () => {
+        setLoading(true)
         try {
             // Сохраняем собранные данные
             await storage.set('onboarding-data', onboardingData)
@@ -94,6 +103,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
         } catch (error) {
             console.error('Failed to complete onboarding:', error)
             throw error
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -109,7 +120,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
                 isLastScreen,
                 screens: screenKeys,
                 onboardingData,
-                updateOnboardingData
+                updateOnboardingData,
+                loading
             }}
         >
             {children}

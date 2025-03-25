@@ -1,4 +1,5 @@
 import { Button } from '@shared/ui/button'
+import { Icon } from '@shared/ui/icon'
 import { router } from 'expo-router'
 
 export const PlansSettingsHeaderButton = () => {
@@ -13,8 +14,13 @@ export const PlansSettingsHeaderButton = () => {
         <Button
             variant="ghost"
             onPress={handlePress}
-            leftIcon="Settings"
+            size='sm'
         >
+            <Icon
+                name="Settings"
+                size={24}
+                variant="secondary"
+            />
         </Button>
     )
 }

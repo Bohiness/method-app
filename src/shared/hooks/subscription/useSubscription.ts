@@ -6,7 +6,6 @@ import { SUBSCRIPTION_TIERS } from '@shared/constants/substrations/tiers';
 import { useUser } from '@shared/context/user-provider';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
-import { createMockPackages } from '@shared/lib/subscription/mock-offerings';
 import { SubscriptionCacheService } from '@shared/lib/subscription/subscription-cache.service';
 import { subscriptionService } from '@shared/lib/subscription/subscription.service';
 import { SubscriptionStatus, SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
@@ -69,6 +68,10 @@ export const useSubscription = () => {
                 if (hasInitializedRef.current) {
                     const savedStatus = await storage.get<SubscriptionStatus>(STORAGE_KEYS.SUBSCRIPTION_STATUS, true);
                     if (savedStatus) {
+                        logger.log(
+                            `Кэшированная подписка: ${JSON.stringify(savedStatus)}`,
+                            'useSubscription - queryFn'
+                        );
                         return savedStatus;
                     }
                 }
@@ -86,9 +89,13 @@ export const useSubscription = () => {
                         isCheckingRef.current = false;
 
                         if (freshStatus) {
+                            logger.log(
+                                `Новый статус подписки: ${JSON.stringify(freshStatus)}`,
+                                'useSubscription - queryFn'
+                            );
                             return {
                                 tier: freshStatus.tier,
-                                isActive: freshStatus.isPremium,
+                                isActive: freshStatus.isActive,
                             };
                         }
                     } catch (checkErr) {
@@ -104,14 +111,19 @@ export const useSubscription = () => {
                 // Если не удалось получить с сервера - ищем в хранилище
                 const savedStatus = await storage.get<SubscriptionStatus>(STORAGE_KEYS.SUBSCRIPTION_STATUS, true);
                 if (savedStatus) {
+                    logger.log(`Кэшированная подписка: ${JSON.stringify(savedStatus)}`, 'useSubscription - queryFn');
                     return savedStatus;
                 }
 
                 // Если вообще ничего не нашли - возвращаем дефолтный бесплатный статус
+                logger.log(
+                    `Дефолтный статус подписки: ${JSON.stringify({ tier: SUBSCRIPTION_TIERS.FREE, isActive: false })}`,
+                    'useSubscription - queryFn'
+                );
                 return { tier: SUBSCRIPTION_TIERS.FREE, isActive: false };
             } catch (err) {
                 isCheckingRef.current = false;
-                return handleSubscriptionError(err, 'queryFn', setError);
+                return handleSubscriptionError(err, 'queryFn', setError, t);
             }
         },
         staleTime: SUBSCRIPTION_CACHE_STALE_TIME,
@@ -156,21 +168,12 @@ export const useSubscription = () => {
 
                 if (!offerings || offerings.length === 0) {
                     logger.warn('No offerings returned from RevenueCat', 'useSubscription – getOfferings');
-                    // Возвращаем фейковые данные для тестирования
-                    if (__DEV__) {
-                        logger.debug('Using mock packages for development', 'useSubscription – getOfferings');
-                        return createMockPackages();
-                    }
                 }
 
                 logger.log(offerings, 'useSubscription – getOfferings', 'Successfully received offerings');
                 return offerings;
             } catch (err) {
                 logger.error(err, 'useSubscription – getOfferings', 'Failed in getOfferings:');
-                if (__DEV__) {
-                    // В режиме разработки возвращаем моковые данные, чтобы UI работал
-                    return createMockPackages();
-                }
                 return [];
             }
         },
@@ -179,19 +182,30 @@ export const useSubscription = () => {
         enabled: !!user?.id,
     });
 
-    // Инициализация RevenueCat
-    useEffect(() => {
-        subscriptionService.initialize().catch(err => {
-            logger.error(err, 'useSubscription – initialize', 'Failed to initialize RevenueCat');
-        });
-    }, []);
-
-    // Привязка пользователя к RevenueCat при первой загрузке
+    // Привязка пользователя к RevenueCat при первой загрузке или изменении ID
     useEffect(() => {
         if (user?.id) {
-            subscriptionService.setUserId(user.id.toString()).catch(err => {
-                logger.error(err, 'useSubscription – setUserId', 'Failed in setUserId:');
-            });
+            const currentUserId = user.id.toString();
+
+            // Используем новый метод из сервиса подписки
+            subscriptionService
+                .ensureUserIdSet(currentUserId)
+                .then(success => {
+                    if (success) {
+                        logger.debug(
+                            `Пользователь с ID ${currentUserId} успешно привязан к RevenueCat`,
+                            'useSubscription – ensureUserIdSet'
+                        );
+                    } else {
+                        logger.warn(
+                            `Не удалось привязать пользователя с ID ${currentUserId} к RevenueCat`,
+                            'useSubscription – ensureUserIdSet'
+                        );
+                    }
+                })
+                .catch(err => {
+                    logger.error(err, 'useSubscription – ensureUserIdSet', 'Ошибка при привязке пользователя');
+                });
         }
     }, [user?.id]);
 
@@ -233,7 +247,7 @@ export const useSubscription = () => {
             return result;
         } catch (err) {
             isCheckingRef.current = false;
-            return handleSubscriptionError(err, 'forceRefreshSubscription', setError);
+            return handleSubscriptionError(err, 'forceRefreshSubscription', setError, t);
         }
     }, [queryClient, handleSubscriptionError, setError, quickCheckSubscription]);
 

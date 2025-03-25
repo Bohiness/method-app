@@ -1,6 +1,5 @@
 import { dailyNotificationsService } from '@shared/lib/notifications/daily-notifications.service'
-import { checkAndRequestNotificationPermissions } from '@shared/lib/notifications/notification-handler'
-import { notificationsService } from '@shared/lib/notifications/notifications.service'
+import { checkAndRequestNotificationPermissions, notificationsService } from '@shared/lib/notifications/notifications.service'
 import { Button } from '@shared/ui/button'
 import { Switch } from '@shared/ui/switch'
 import { Text } from '@shared/ui/text'

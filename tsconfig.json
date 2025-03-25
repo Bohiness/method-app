@@ -5,6 +5,7 @@
         "types": ["nativewind/types"],
         "baseUrl": ".",
         "moduleResolution": "node",
+        "jsx": "react-jsx",
         "paths": {
             "@app/*": ["./app/*"],
             "@assets/*": ["./assets/*"],

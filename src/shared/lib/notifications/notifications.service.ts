@@ -194,4 +194,16 @@ class NotificationsService {
     }
 }
 
+// Функция для проверки и запроса разрешений на уведомления
+export const checkAndRequestNotificationPermissions = async (): Promise<boolean> => {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+
+    if (existingStatus === 'granted') {
+        return true;
+    }
+
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status === 'granted';
+};
+
 export const notificationsService = new NotificationsService();

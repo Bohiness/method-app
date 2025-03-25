@@ -1,3 +1,4 @@
+import { authApiService } from '@shared/api/auth/auth-api.service'
 import { useTheme } from '@shared/context/theme-provider'
 import { useUser } from '@shared/context/user-provider'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
@@ -67,6 +68,9 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
     const initialize = async () => {
         // Главная обертка try-catch для всего процесса инициализации
         try {
+            // получаем CSRF токен
+            await authApiService.getCsrfToken()
+
             // Сначала проверяем обновления через OTA
             try {
                 await checkForUpdates().catch(err => {

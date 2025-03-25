@@ -4,4 +4,8 @@ export const QUERY_KEYS = {
     APP_TIMEZONE: 'app-timezone',
     SUBSCRIPTION: 'subscription',
     USER: 'user',
+    JOURNAL: 'journal',
+    JOURNAL_TEMPLATES: 'journal-templates',
+    JOURNAL_STATISTICS: 'journal-statistics',
+    PSY_PROFILE: 'psy-profile',
 } as const;

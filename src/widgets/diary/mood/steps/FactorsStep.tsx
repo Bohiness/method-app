@@ -1,4 +1,4 @@
-import { HighlightedText } from '@shared/lib/utils/HighlightedText'
+import { HighlightedText } from '@shared/lib/utils/parsers/HighlightedText'
 import { Emotion } from '@shared/types/diary/mood/MoodType'
 import { Text, Title } from '@shared/ui/text'
 import { MultilineTextInput } from '@shared/ui/text-input'

@@ -55,6 +55,7 @@ export const API_ROUTES = {
     AI: {
         CHAT: '/api/v1/ai/chat/',
         VOICE: '/api/v1/ai/voice/',
+        GENERATE_TEXT: '/api/v1/ai/text/',
     },
     FILES: {
         UPLOAD: '/api/file/upload/',
@@ -65,8 +66,10 @@ export const API_ROUTES = {
         complete: (id: number) => `${API_ROUTES.HABITS.BASE}${id}/complete/`,
     },
     DIARY: {
-        EVENING_REFLECTION: '/api/diary/evening-reflections/',
-        START_DAY: '/api/diary/start-day/',
+        EVENING_REFLECTION: '/api/evening-reflections/',
+        START_DAY: '/api/start-day/',
+        JOURNAL: '/api/journal/',
+        EMOTIONS: '/api/emotions/',
     },
     ERROR_REPORT: '/api/mobile/error-report/',
 } as const;

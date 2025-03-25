@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOnboarding } from '../context/OnboardingContext'
 
 export const Ask1Screen = () => {
-    const { setNextScreen, updateOnboardingData } = useOnboarding()
+    const { setNextScreen, updateOnboardingData, loading } = useOnboarding()
     const { t } = useTranslation()
     const insets = useSafeAreaInsets()
     const [selectedAge, setSelectedAge] = useState<string>('')

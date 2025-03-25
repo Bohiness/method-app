@@ -3,7 +3,6 @@ import { Button } from '@shared/ui/button'
 import { View } from '@shared/ui/view'
 import { SuccessStep } from '@widgets/diary/mood/steps/SuccessStep'
 import { router } from 'expo-router'
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MoodStackParamList } from '../StepNavigator'
@@ -26,9 +25,10 @@ export function SuccessScreen({ route }: Props) {
             <View className="px-4 items-center">
                 <Button
                     variant="default"
-                    fullWidth
+                    className="w-fit self-center px-20"
+                    size='lg'
                     onPress={handleClose}
-                    style={{ marginBottom: insets.bottom }}
+                    style={{ marginBottom: insets.bottom + 20 }}
                 >
                     {t('common.done')}
                 </Button>

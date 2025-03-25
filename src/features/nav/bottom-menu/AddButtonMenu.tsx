@@ -4,7 +4,6 @@ import { useMoodCheckin } from '@shared/hooks/diary/mood/useMoodCheckin'
 import { Button } from '@shared/ui/button'
 import { IconName } from '@shared/ui/icon'
 import { router } from 'expo-router'
-import React from 'react'
 import { Dimensions, Pressable } from 'react-native'
 import Animated, {
     Easing,
@@ -36,6 +35,10 @@ export const AddButtonMenu = () => {
         router.push('/(modals)/(plans)/new-habit')
     }
 
+    const handleOpenDiaryNote = () => {
+        router.push('/(modals)/(diary)/journal-editor')
+    }
+
     const menuItems: Array<{
         id: string
         icon: IconName
@@ -57,6 +60,13 @@ export const AddButtonMenu = () => {
                 title: 'New Task',
                 type: 'modal',
                 onPress: handleOpenNewTask,
+            },
+            {
+                id: 'diary',
+                icon: 'Plus',
+                title: 'New Diary Note',
+                type: 'modal',
+                onPress: handleOpenDiaryNote,
             },
             // {
             //     id: 'habit',

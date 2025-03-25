@@ -1,5 +1,6 @@
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { useVoiceInput } from '@shared/hooks/voice/useVoiceInput'
+import { logger } from '@shared/lib/logger/logger.service'
 import { cn } from '@shared/lib/utils/cn'
 import * as Haptics from 'expo-haptics'
 import React, { useState } from 'react'
@@ -64,20 +65,21 @@ export const VoiceInputButton = ({
             try {
                 const result = await stopRecording()
 
-                console.log('result', result)
+                logger.log(result, 'VoiceInputButton – handlePress', 'result')
+
                 if (result) {
                     onTranscribe(result)
                 }
                 await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
             } catch (error) {
-                console.error('[VoiceInputButton] Ошибка при остановке записи:', error)
+                logger.error(error, 'VoiceInputButton – handlePress', 'Ошибка при остановке записи:')
             }
         } else {
             try {
                 await startRecording()
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
             } catch (error) {
-                console.error('[VoiceInputButton] Ошибка при начале новой записи:', error)
+                logger.error(error, 'VoiceInputButton – handlePress', 'Ошибка при начале новой записи:')
             }
         }
     }

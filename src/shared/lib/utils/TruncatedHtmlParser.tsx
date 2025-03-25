@@ -3,7 +3,7 @@ import { Text } from '@shared/ui/text'
 import React, { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LayoutChangeEvent, View } from 'react-native'
-import { HtmlParser } from './html-parser'
+import { HtmlParser } from './parsers/html-parser'
 
 interface TruncatedHtmlParserProps {
     html: string

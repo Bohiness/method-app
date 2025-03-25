@@ -7,7 +7,7 @@ import {
     useContext,
     useState
 } from 'react'
-import { Modal, StyleSheet, View } from 'react-native'
+import { Modal, Platform, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../context/theme-provider'
 
@@ -83,6 +83,8 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                 transparent={true}
                 onRequestClose={hideModal}
                 statusBarTranslucent={true}
+                presentationStyle="overFullScreen"
+                hardwareAccelerated={Platform.OS === 'android'}
             >
                 {activeModal && (
                     <View style={[
@@ -124,11 +126,14 @@ const styles = StyleSheet.create({
     modalContainer: {
         flex: 1,
         width: '100%',
-        height: '100%'
+        height: '100%',
+        zIndex: 9999,
+        elevation: 10,
     },
     contentContainer: {
         flex: 1,
-        width: '100%'
+        width: '100%',
+        zIndex: 9999
     }
 })
 

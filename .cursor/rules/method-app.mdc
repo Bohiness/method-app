@@ -4,8 +4,130 @@ globs:
 alwaysApply: true
 ---
 
-# Your rule content
-Для стилизации используй классы tailwind
-Чем короче код, тем лучше
-Действуй как старший индженер разрабочик с дизайнером
-Не останавливайся, пока не реализуешь функцию полностью до конца.
+– Ты пишешь код для приложения на react native с Expo
+– Так, если ты вставляешь какой-то текст внутрь кода,  то не вставляй текст, а вставляй ключи, с {t('key')}  чтобы я потом мог переводить этот текст на разные языки.
+– Все доступные цвета есть в tailwind.config.js. Используй только их. Никаких других.
+– Чем короче код, тем лучше
+– Действуй как старший индженер разрабочик с дизайнером
+– Не останавливайся, пока не реализуешь функцию полностью до конца.
+– Не удаляй комментарии
+– Не используй тип any, а старайся найти необходимый тип в проекте, а если не можешь найти, то создай его
+
+*** Правила использования компонентов ***
+Используй кастомные компоненты Text, View, Button, Image, Icon, TextInput и другие
+Они находятся в @shared/ui
+
+** Компонент Text **
+
+type Variant = 'default' | 'defaultInverted' | 'secondary' | 'accent' | 'success' | 'error' | 'warning' | 'tint'
+type Size = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl'
+type Weight = 'normal' | 'medium' | 'semibold' | 'bold'
+
+interface StyledTextProps extends TextProps {
+    variant?: Variant
+    size?: Size
+    weight?: Weight
+    italic?: boolean
+    className?: string
+    align?: 'left' | 'center' | 'right'
+}
+
+
+** Компонент View **
+
+export type ViewVariant =
+    | 'default'
+    | 'paper'    // Для карточек и возвышенных элементов
+    | 'canvas'   // Для фоновых элементов
+    | 'stone'    // Для выделенных элементов
+    | 'inverse'  // Инвертированный цвет относительно темы
+    | 'transparent' // Прозрачный цвет
+
+ViewProps extends RNViewProps {
+    variant?: ViewVariant
+    className?: string
+    children?: React.ReactNode
+    style?: StyleProp<ViewStyle>
+}
+
+** Компонент Botton **
+
+type ButtonVariant = 'default' | 'outline' | 'ghost' | 'tint' | 'destructive' | 'secondary'
+type ButtonSize = 'sm' | 'md' | 'lg'
+
+interface ButtonProps extends PressableProps {
+    variant?: ButtonVariant
+    size?: ButtonSize
+    loading?: boolean
+    disabled?: boolean
+    fullWidth?: boolean
+    leftIcon?: IconName
+    iconSize?: number
+    iconProps?: {
+        color?: string
+        size?: number
+        fill?: string
+    }
+    rightIcon?: IconName
+    className?: string
+    children?: React.ReactNode
+    haptic?: boolean
+    bgColor?: string
+}
+
+
+** Компонент Icon ** 
+
+export type IconName = keyof typeof icons
+
+export type IconVariant =
+    | 'default'
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'error'
+    | 'warning'
+    | 'tint'
+    | 'muted'
+
+interface IconProps {
+    name: IconName // только названия react lucide icons
+    size?: number
+    color?: string
+    className?: string
+    style?: StyleProp<ViewStyle>
+    strokeWidth?: number
+    variant?: IconVariant
+    invertInDark?: boolean
+    disabled?: boolean
+    disabledOpacity?: number
+    fill?: string
+}
+
+
+*** Для стилилизайции используй только мои классы tailwind ***
+Исходя из указанного конфига tailwind.config.js, доступны следующие классы для цветов:
+
+* Основные цвета * 
+bg-background / dark:bg-background-dark
+text-text / dark:text-text-dark
+
+* Дополнительные цвета (secondary) *
+bg-secondary-light / dark:bg-secondary-light-dark
+bg-secondary-dark / dark:bg-secondary-dark-dark
+Цвета поверхности (surface)
+bg-surface-paper / dark:bg-surface-paper-dark
+bg-surface-canvas / dark:bg-surface-canvas-dark
+bg-surface-stone / dark:bg-surface-stone-dark
+
+* Цвета для UI-состояний *
+bg-error / dark:bg-error-dark
+bg-success / dark:bg-success-dark
+bg-warning / dark:bg-warning-dark
+bg-tint / dark:bg-tint-dark
+bg-inactive / dark:bg-inactive-dark
+bg-border / dark:bg-border-dark
+
+* Прозрачный цвет *
+bg-transparent
+Также эти цвета можно использовать для text-, border-, shadow- и других классов Tailwind.

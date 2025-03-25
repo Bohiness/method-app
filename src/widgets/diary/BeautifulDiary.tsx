@@ -10,13 +10,16 @@ import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 
 import { EveningReflectionCard } from '@entities/diary/beautifulDiary/EveningReflectionCard'
+import { JournalCard } from '@entities/diary/beautifulDiary/JournalCard'
 import { MoodEntryCard } from '@entities/diary/beautifulDiary/MoodEntryCard'
 import { StartDayCard } from '@entities/diary/beautifulDiary/StartDayCard'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
+import { Journal } from '@shared/types/diary/journal/JournalTypes'
 import {
     CardSkeleton,
     TextSkeleton
 } from '@shared/ui/skeleton'
+import { router } from 'expo-router'
 import { ScrollView } from 'react-native'
 import { DiaryEntry, useDiary } from '../../shared/hooks/diary/useDiary'
 
@@ -55,6 +58,20 @@ const UniversalDiaryEntry: React.FC<UniversalDiaryEntryProps> = ({ diaryEntry, e
                 return (
                     <EveningReflectionCard
                         entry={diaryEntry.data as EveningReflectionType}
+                    />
+                )
+
+            case 'journal':
+                return (
+                    <JournalCard
+                        entry={diaryEntry.data as Journal}
+                        onPress={() => {
+                            console.log('journalEntry id', diaryEntry.id)
+                            router.push({
+                                pathname: '/(modals)/(diary)/journal/journal-entry',
+                                params: { journalId: diaryEntry.id }
+                            })
+                        }}
                     />
                 )
             default:

@@ -1,4 +1,5 @@
 import { useAI } from '@shared/hooks/ai/useAI';
+import { logger } from '@shared/lib/logger/logger.service';
 import { Audio } from 'expo-av';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -95,7 +96,9 @@ export const useVoiceInput = ({ enabled = true, url }: UseVoiceInputProps = {}) 
             } as any;
 
             const response = await sendVoice(audioFile);
-            console.log('response from useVoiceInput', response);
+
+            logger.log(response, 'useVoiceInput – stopRecording', 'response');
+
             return response;
         } catch (err) {
             setError('Ошибка при остановке записи');

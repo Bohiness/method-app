@@ -1965,7 +1965,7 @@ PODS:
     - RCTTypeSafety
     - React-Core
     - ReactCommon/turbomodule/core
-  - RNPurchases (8.9.0):
+  - RNPurchases (8.9.1):
     - PurchasesHybridCommon (= 13.26.0)
     - React-Core
   - RNReanimated (3.16.7):
@@ -2664,7 +2664,7 @@ SPEC CHECKSUMS:
   RNDateTimePicker: 32b56bd881bf89fefd075363f15453d2c2e7ba42
   RNGestureHandler: 3723d599b0a4efb4460631dcaf12ac6f055800f0
   RNIap: d73cedfb73b396cad75f90f4ed7d64352d6381cf
-  RNPurchases: 1972640d882be27a1cc1f05a408876902f706bfb
+  RNPurchases: 1afc4f036744aa0591d05d7ebc2c99c2048ac477
   RNReanimated: 3bd56723e3efdd523b0088d2b137060989108a97
   RNScreens: 42d6b4950cda8fb99dab11c9d74e8e8e44237b7a
   RNSVG: 451b77de43316b99119bdbb431f2021df75f4471

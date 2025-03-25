@@ -4,6 +4,7 @@ import { ProjectChoice } from '@entities/plans/projects/ProjectChoise'
 import { useTheme } from '@shared/context/theme-provider'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
+import { useKeyboard } from '@shared/hooks/systems/keyboard/useKeyboard'
 import { CreateTaskDtoType, SubTaskType, TaskPriority, TaskType } from '@shared/types/plans/TasksTypes'
 import { Button } from '@shared/ui/button'
 import { DatePickerModal } from '@shared/ui/datetime/DatePickerModal'
@@ -12,10 +13,10 @@ import { Text, Title } from '@shared/ui/text'
 import { TextInput } from '@shared/ui/text-input'
 import { View } from '@shared/ui/view'
 import { router } from 'expo-router'
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Keyboard, Pressable, TextInput as RNTextInput, ScrollView } from 'react-native'
-
+import { Pressable, TextInput as RNTextInput, ScrollView } from 'react-native'
+import Animated, { Layout } from 'react-native-reanimated'
 
 interface NewTaskProps {
     mode?: 'create' | 'edit'
@@ -28,6 +29,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
     const { createTask, updateTask, isOnline, deleteTask } = useOfflineTasks()
     const { colors } = useTheme()
     const { convertToTimeZoneAndLocale } = useDateTime()
+    const { hideKeyboard } = useKeyboard()
 
     // Инициализируем состояния в зависимости от режима
     const inputRef = useRef<RNTextInput>(null)
@@ -46,9 +48,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
     // Добавляем эффект для автофокуса
     useEffect(() => {
         if (mode === 'create') {
-            setTimeout(() => {
-                inputRef.current?.focus()
-            }, 100)
+            inputRef.current?.focus()
         }
     }, [mode])
 
@@ -107,7 +107,6 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
         }
     }
 
-
     const handleSubmit = async () => {
         try {
             const taskData: CreateTaskDtoType = {
@@ -141,21 +140,23 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
         setPriority(newPriority)
     }
 
-    const handleDateSelect = (date: Date) => {
+    const handleDateSelect = async (date: Date) => {
         setSelectedDate(convertToTimeZoneAndLocale(date))
         setIsDatePickerVisible(false)
     }
 
-    const handleDateButtonPress = () => {
-        Keyboard.dismiss()
+    const handleDateButtonPress = async () => {
+        setTimeout(async () => {
+            await hideKeyboard()
+        }, 100)
         setIsDatePickerVisible(true)
     }
 
     return (
         <>
-            <View variant='default' className="flex-1 px-4">
+            <View variant='default' className="flex-1">
                 {/* Header */}
-                <View className="flex-row justify-between items-center mb-4">
+                <View className="flex-row justify-between items-center mb-4 px-4">
                     <Title>{t(mode === 'edit' ? 'common.edit' : 'plans.tasks.new.title')}</Title>
                     {!isOnline && (
                         <View className="flex-row items-center">
@@ -181,7 +182,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
 
                 {/* Прокручиваемая часть контента */}
                 <ScrollView
-                    className="flex-1"
+                    className="flex-1 px-4"
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingBottom: 16 }}
                 >
@@ -228,24 +229,17 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
 
                 {/* Нижний блок */}
                 <View className="pt-2">
-                    {/* Блок выбора проекта */}
-                    <View
-                        className='absolute'
-                        style={{
-                            bottom: 84,
-                        }}
-                    >
-                        <ProjectChoice
-                            selectedProjectId={selectedProjectId}
-                            onChangeSelectedProject={setSelectedProjectId}
-                        />
-                    </View>
 
                     {/* Нижняя панель с иконками */}
-                    <View
-                        className="flex-row justify-between items-center pt-4 pb-2 px-2 border-t border-border dark:border-border-dark"
+                    <Animated.View
+                        className="absolute bottom-4 left-4"
+                        layout={Layout.duration(100)}
                     >
-                        <View className="flex-row justify-between items-center gap-x-4">
+                        <View className="flex-row justify-start items-center gap-x-4">
+                            <ProjectChoice
+                                selectedProjectId={selectedProjectId}
+                                onChangeSelectedProject={setSelectedProjectId}
+                            />
                             <CalendarButton
                                 date={selectedDate}
                                 isActive={true}
@@ -257,14 +251,20 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                                 onPriorityChange={changePriority}
                             />
                         </View>
+                    </Animated.View>
 
+                    <Animated.View
+                        className=" absolute bottom-4 right-4"
+                        layout={Layout.duration(100)}
+                    >
                         <Button
                             onPress={handleSubmit}
                             disabled={!title.trim() || createTask.isPending || updateTask.isPending}
-                            leftIcon={mode === 'edit' ? 'Save' : 'Send'}
+                            leftIcon={mode === 'edit' ? 'Save' : 'Check'}
                             variant='outline'
                         />
-                    </View>
+                    </Animated.View>
+
                 </View>
             </View>
             <DatePickerModal

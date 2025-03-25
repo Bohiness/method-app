@@ -8,7 +8,7 @@ import { TaskType } from '@shared/types/plans/TasksTypes'
 import { View } from '@shared/ui/view'
 import { VoiceInputButton } from '@shared/ui/voice/VoiceInputButton'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, Pressable } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -160,27 +160,23 @@ export const TaskManager = () => {
                 </Animated.View>
             </GestureDetector>
 
-            <View className='absolute bottom-4 left-0'>
+            <View className='absolute flex-row items-center justify-between gap-x-4 bottom-6 right-4 left-4'>
                 <ProjectChoice
                     selectedProjectId={selectedProjectId}
                     onChangeSelectedProject={onChangeSelectedProject}
                 />
-            </View>
 
-            <View className='absolute bottom-6 right-4'>
                 <VoiceInputButton
                     url={API_ROUTES.PLANS.CREATE_VOICE_TASKS}
                     onTranscribe={(response) => {
                         console.log('response', response)
                         const tasksData = Array.isArray(response) ? response : (response?.tasks || [])
-
                         if (tasksData.length > 0) {
                             syncTasks()
                         }
                     }}
                 />
             </View>
-
         </View>
     )
 }

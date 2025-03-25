@@ -1,7 +1,7 @@
 {
   "name": "RNPurchases",
   "summary": "Cross-platform subscriptions framework for ReactNative",
-  "version": "8.9.0",
+  "version": "8.9.1",
   "authors": "RevenueCat, Inc.",
   "homepage": "https://github.com/RevenueCat/react-native-purchases",
   "license": "MIT",

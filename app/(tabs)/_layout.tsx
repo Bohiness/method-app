@@ -3,27 +3,25 @@ import { PlansSettingsHeaderButton } from '@entities/navigations/PlansSettingsHe
 import { UserHeaderButton } from '@entities/navigations/UserHeaderButton'
 import { AddButton } from '@features/nav/bottom-menu/AddButton'
 import { AddButtonMenu } from '@features/nav/bottom-menu/AddButtonMenu'
-import { Colors } from '@shared/constants/colors'
 import { AddMenuProvider, useAddMenu } from '@shared/context/add-menu-context'
-import { useColorScheme } from '@shared/context/theme-provider'
+import { useTheme } from '@shared/context/theme-provider'
 import { getDateText } from '@shared/lib/calendar/getDateText'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { CustomHeader } from '@widgets/navigation/CustomHeader'
 import { Tabs, usePathname } from 'expo-router'
 import { t } from 'i18next'
 import { BarChart2, Compass, Home, ListChecks } from 'lucide-react-native'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 function TabNavigator() {
-  const colorScheme = useColorScheme()
-  const theme = colorScheme ?? 'light'
+  const { colors } = useTheme()
   const insets = useSafeAreaInsets()
   const { setCurrentTab } = useAddMenu()
   const pathname = usePathname()
 
-  const TAB_BAR_HEIGHT = 45
+  const TAB_BAR_HEIGHT = 50
 
   useEffect(() => {
     // Извлекаем имя текущей вкладки из пути
@@ -37,21 +35,28 @@ function TabNavigator() {
         screenOptions={{
           headerShown: false,
           tabBarButton: HapticTab,
-          tabBarShowLabel: false,
           tabBarStyle: {
             height: TAB_BAR_HEIGHT + insets.bottom,
-            backgroundColor: Colors[theme].background,
+            backgroundColor: colors.background,
             borderTopWidth: 0,
             paddingHorizontal: 10,
             paddingBottom: insets.bottom,
+            marginBottom: 0,
+            elevation: 10,
+            position: 'relative',
+            zIndex: 10,
           },
           tabBarItemStyle: {
             height: TAB_BAR_HEIGHT,
             alignItems: 'center',
             justifyContent: 'center',
+            paddingTop: 5,
           },
-          tabBarActiveTintColor: Colors[theme].text,
-          tabBarInactiveTintColor: Colors[theme].inactive,
+          tabBarActiveTintColor: colors.text,
+          tabBarInactiveTintColor: colors.inactive,
+          tabBarLabelStyle: {
+            marginTop: 3,
+          },
         }}>
         <Tabs.Screen
           name="index"
@@ -59,7 +64,7 @@ function TabNavigator() {
             const currentDate = route.params?.selectedDate || new Date()
             return {
               title: 'Today',
-              tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+              tabBarIcon: ({ color }) => <Home size={28} color={color} />,
               headerShown: true,
               header: () => (
                 <CustomHeader
@@ -75,7 +80,7 @@ function TabNavigator() {
           name="plans"
           options={{
             title: 'Plans',
-            tabBarIcon: ({ color }) => <ListChecks size={24} color={color} />,
+            tabBarIcon: ({ color }) => <ListChecks size={28} color={color} />,
             headerShown: true,
             header: () => (
               <CustomHeader
@@ -102,7 +107,7 @@ function TabNavigator() {
           name="explore"
           options={{
             title: 'Explore',
-            tabBarIcon: ({ color }) => <Compass size={24} color={color} />,
+            tabBarIcon: ({ color }) => <Compass size={28} color={color} />,
             headerShown: true,
             header: () => (
               <CustomHeader
@@ -117,7 +122,7 @@ function TabNavigator() {
           name="threads"
           options={{
             title: 'Threads',
-            tabBarIcon: ({ color }) => <BarChart2 size={24} color={color} />,
+            tabBarIcon: ({ color }) => <BarChart2 size={28} color={color} />,
             headerShown: true,
             header: () => (
               <CustomHeader

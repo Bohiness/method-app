@@ -30,6 +30,7 @@
         "no": "No",
         "at": "at",
         "ok": "OK",
+        "choose": "Choose",
         "date": {
             "today": "today",
             "tomorrow": "tomorrow",
@@ -53,7 +54,8 @@
             "photoRequired": "Photo is required"
         },
         "later": "Later",
-        "update": "Update"
+        "update": "Update",
+        "nextTime": "Next time"
     },
     "components": {
         "iconPicker": {
@@ -84,6 +86,21 @@
                 "sat": "Sat",
                 "sun": "Sun"
             }
+        },
+        "textEditor": {
+            "title": "Text Editor",
+            "title1": "Title",
+            "heading": "Heading",
+            "subheading": "Subheading",
+            "body": "Body",
+            "format": "Format",
+            "textColor": "Text Color",
+            "backgroundColor": "Background Color",
+            "keyboard": "Keyboard",
+            "goDeeper": "Go Deeper",
+            "loading": "Thinking",
+            "resetColor": "Reset Color",
+            "emptyContent": "Write your thoughts here..."
         }
     },
     "auth": {
@@ -166,6 +183,9 @@
         "dayInfo": "Information about the selected day..."
     },
     "diary": {
+        "note": {
+            "NotePlaceholder": "Write your thoughts here..."
+        },
         "moodcheckin": {
             "title": "Mood check-in",
             "description": "Check in with your mood",
@@ -237,7 +257,7 @@
                 "placeholder": "Write your thoughts here..."
             },
             "success": {
-                "title": "Success",
+                "title": "You have successfully started your day!",
                 "description": "Your day is planned and organized. You can use it for creating tasks.",
                 "createTasks": "Would you like to create tasks based on your plan?",
                 "no": "No",
@@ -288,6 +308,9 @@
             "emotionNote": "Emotion Note",
             "mood": {
                 "title": "Mood Check-in"
+            },
+            "journal": {
+                "entry": "Journal Entry"
             },
             "startDay": {
                 "title": "Start Day",
@@ -524,6 +547,18 @@
             "activatePlanByAdminSuccess": "Premium plan activated",
             "deactivatePlanByAdmin": "Deactivate Premium Plan",
             "deactivatePlanByAdminSuccess": "Premium plan deactivated"
+        },
+        "ai": {
+            "title": "AI settings",
+            "aiToneOfVoice": {
+                "selectTone": "Select tone {{number}}",
+                "title": "AI Tone of Voice",
+                "description": "Choose a tone of voice for your AI assistant",
+                "talkAs": "Talk with {{name}}"
+            }
+        },
+        "debug": {
+            "title": "Debug"
         },
         "sendErrorReport": {
             "title": "Send error report",
@@ -870,5 +905,38 @@
         "morning_body": "Time to prepare for a productive day",
         "evening_title": "Time for Reflection",
         "evening_body": "How was your day? Take time for evening reflection"
+    },
+    "update": {
+        "updateAvailable": "Update Available",
+        "updateAvailableMessage": "A new version of the app is available. Please update to the latest version to continue using the app.",
+        "storeUpdateAvailable": "New version available",
+        "storeUpdateAvailableMessage": "A new version {{version}} of the app is available in the {{store}}. Please update to the latest version to continue using the app."
+    },
+    "ai": {
+        "mentor": {
+            "canHelpYou": "can help you",
+            "options": {
+                "nextStep": {
+                    "title": "What's next?",
+                    "description": "Let's figure out what you can do right now. Even if it's a small step, it'll help you move forward. I'll suggest a few options, and you can choose the one that resonates with you."
+                },
+                "support": {
+                    "title": "Support",
+                    "description": "Let me support you"
+                },
+                "changeView": {
+                    "title": "Shift Perspective",
+                    "description": "Sometimes we get stuck in one way of seeing things. Let's try to look at it differently. I'll offer you some alternative viewpoints — this might unlock new possibilities you haven't considered."
+                },
+                "adviceFromFuture": {
+                    "title": "Advice From Future You",
+                    "description": "Imagine you've already overcome this and you're looking back. What would you advise yourself? I'll help you hear the voice of your future self who has already found the solution."
+                },
+                "challenge": {
+                    "title": "Challenge Your Thoughts",
+                    "description": "Let's check how much your thoughts align with reality. There might be beliefs holding you back. I'll ask you questions and help you see the situation more objectively."
+                }
+            }
+        }
     }
 }

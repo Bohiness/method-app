@@ -28,7 +28,6 @@ export default function IndexScreen() {
       const onboardingCompleted = await storage.get('onboarding-completed')
 
       if (onboardingCompleted) {
-        // router.replace('/subscription')
         router.replace('/(tabs)')
       } else {
         router.replace('/onboarding')

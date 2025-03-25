@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOnboarding } from '../context/OnboardingContext'
 
 export const Ask4Screen = () => {
-    const { setNextScreen, updateOnboardingData } = useOnboarding()
+    const { setNextScreen, updateOnboardingData, loading } = useOnboarding()
     const { t } = useTranslation()
     const insets = useSafeAreaInsets()
     const [selectedFocuses, setSelectedFocuses] = useState<string[]>([])
@@ -90,7 +90,7 @@ export const Ask4Screen = () => {
                     onPress={handleContinue}
                     className="w-fit self-center px-20"
                     size='lg'
-                    disabled={selectedFocuses.length === 0}
+                    disabled={selectedFocuses.length === 0 || loading}
                 >
                     {t('common.continue')}
                 </Button>

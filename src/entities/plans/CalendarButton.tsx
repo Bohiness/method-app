@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
-import { Badge } from '@shared/ui/badge'
-import { Pressable } from 'react-native'
+import { Button } from '@shared/ui/button'
+
 
 export const CalendarButton = ({ date, isActive, onPress, isTimeEnabled }: {
     date?: Date,
@@ -14,12 +14,8 @@ export const CalendarButton = ({ date, isActive, onPress, isTimeEnabled }: {
     const { formatDateTime } = useDateTime()
 
     return (
-        <Pressable
-            onPress={onPress}
-        >
-            <Badge size='lg'>
-                {date && formatDateTime(date, 'dd MMMM')}{isTimeEnabled && ' ' + t('common.date.at')} {isTimeEnabled && date && formatDateTime(date, 'HH:mm')}
-            </Badge>
-        </Pressable>
+        <Button size='sm' variant='outline' onPress={onPress}>
+            {date && formatDateTime(date, 'dd MMMM')}{isTimeEnabled && ' ' + t('common.date.at')} {isTimeEnabled && date && formatDateTime(date, 'HH:mm')}
+        </Button>
     )
 }
