@@ -76,25 +76,26 @@ class TokenService {
     /**
      * Получение текущей сессии
      */
-    async getSession(): Promise<AuthTokensType> {
+    async getSession(): Promise<AuthTokensType | null> {
         try {
             logger.debug('TokenService: Getting session...', 'token service – getSession');
             const session = await storage.get<AuthTokensType>(this.SESSION_KEY, true);
 
             if (!session) {
-                logger.debug('TokenService: No session found', 'token service – getSession');
-                throw new Error('No session found');
+                logger.debug('TokenService: No session found in storage', 'token service – getSession');
+                return null;
             }
 
             if (!this.isValidSession(session)) {
-                logger.debug('TokenService: No session found', 'token service – getSession');
-                throw new Error('No session found');
+                logger.warn('TokenService: Session found but invalid (e.g., expired)', 'token service – getSession');
+                await this.clearSession();
+                return null;
             }
 
             return session;
         } catch (error) {
             logger.error(error, 'token service – getSession', 'Error getting session:');
-            throw error;
+            return null;
         }
     }
 
@@ -105,14 +106,17 @@ class TokenService {
         try {
             logger.debug('TokenService: Setting new session...', 'token service – setSession');
 
+            const accessTokenExpiresInMs = 24 * 60 * 60 * 1000 * 30; // Example: 30 days - NEEDS REVIEW
+            const expiresAt = Date.now() + accessTokenExpiresInMs;
+
             const tokens: AuthTokensType = {
                 access: newTokens.access,
                 refresh: newTokens.refresh,
-                expiresAt: Date.now() + 24 * 60 * 60 * 1000 * 30, // 30 дней
+                expiresAt: expiresAt,
             };
 
             if (!tokens.access || !tokens.refresh) {
-                logger.error('TokenService: Invalid token data', 'token service – setSession');
+                logger.error('TokenService: Invalid token data provided', 'token service – setSession');
                 throw new Error('Invalid token data');
             }
 
@@ -130,13 +134,25 @@ class TokenService {
     async shouldRefreshToken(): Promise<boolean> {
         try {
             const session = await this.getSession();
-            if (!session) return true;
+            if (!session) {
+                logger.debug('No valid session, refresh needed (or login)', 'token service – shouldRefreshToken');
+                return true;
+            }
 
-            // Добавляем 1 минуту буфера
             const bufferTime = 60 * 1000;
-            return !session.access || (session.expiresAt ? Date.now() + bufferTime >= session.expiresAt : false);
+            const needsRefresh =
+                !session.access || (session.expiresAt ? Date.now() + bufferTime >= session.expiresAt : true);
+
+            if (needsRefresh) {
+                logger.debug(
+                    `Refresh needed. ExpiresAt: ${session.expiresAt}, Now: ${Date.now()}`,
+                    'token service – shouldRefreshToken'
+                );
+            }
+
+            return needsRefresh;
         } catch (error) {
-            logger.error(error, 'token service – shouldRefreshToken', 'Error checking refresh:');
+            logger.error(error, 'token service – shouldRefreshToken', 'Unexpected error checking refresh:');
             return true;
         }
     }
@@ -149,7 +165,7 @@ class TokenService {
             const session = await this.getSession();
             return session?.refresh || null;
         } catch (error) {
-            logger.error(error, 'token service – getRefreshToken', 'Error getting refresh token:');
+            logger.error(error, 'token service – getRefreshToken', 'Unexpected error getting refresh token:');
             return null;
         }
     }
@@ -172,10 +188,12 @@ class TokenService {
      * Проверка валидности сессии
      */
     private isValidSession(session: AuthTokensType | null): boolean {
-        if (!session?.access || !session?.refresh) return false;
+        if (!session || !session.access || !session.refresh) {
+            return false;
+        }
 
-        // Проверяем срок действия, если он установлен
         if (session.expiresAt && Date.now() >= session.expiresAt) {
+            logger.debug(`Session invalid: expired at ${session.expiresAt}`, 'token service - isValidSession');
             return false;
         }
 

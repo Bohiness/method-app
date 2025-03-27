@@ -4,6 +4,7 @@ import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { tokenService } from '@shared/lib/user/token/token.service';
+import { AuthTokensType } from '@shared/types/user/AuthTokensType';
 import axios, {
     AxiosError,
     AxiosInstance,
@@ -66,7 +67,7 @@ class ApiClient {
         this.API_URL = API_URL;
         this.instance = axios.create({
             baseURL: this.API_URL,
-            timeout: 15000,
+            timeout: 60000,
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
@@ -270,33 +271,29 @@ class ApiClient {
 
     private async getRequestHeaders(): Promise<Record<string, string>> {
         const headers: Record<string, string> = {};
-        let session: Awaited<ReturnType<typeof tokenService.getSession>> | null = null; // Explicitly allow null
+        let session: AuthTokensType | null = null; // Теперь тип известен
 
         try {
-            // --- Step 1: Get session and handle potential absence gracefully ---
+            // --- Step 1: Get session ---
             try {
+                // Now expects null if no session or invalid, instead of throwing specific error
                 session = await tokenService.getSession();
-                // If getSession resolves with null/undefined, it's handled below.
-            } catch (sessionError: any) {
-                // Log only if it's an unexpected error during session retrieval,
-                // not just "No session found" if that's how tokenService signals absence.
-                // Assuming "No session found" might be thrown, we check the message.
-                if (sessionError?.message !== 'No session found') {
-                    logger.error(
-                        sessionError,
-                        'api-client – getRequestHeaders',
-                        'ApiClient: Unexpected error retrieving session:'
-                    );
-                } else {
-                    // It's expected that there might be no session, log as debug or warn
+                if (!session) {
                     logger.debug('No active session found.', 'api-client – getRequestHeaders');
                 }
+            } catch (sessionError: any) {
+                // Catch unexpected errors from getSession (e.g., storage access issues)
+                logger.error(
+                    sessionError,
+                    'api-client – getRequestHeaders',
+                    'ApiClient: Unexpected error retrieving session:'
+                );
                 // Continue without a session
             }
 
             // --- Step 2: Get other necessary info ---
             const language = (await storage.get<string>(STORAGE_KEYS.APP.APP_LOCALE)) || 'en';
-            const csrfToken = await storage.get<string>(STORAGE_KEYS.USER.CSRF_TOKEN);
+            let csrfToken = await storage.get<string>(STORAGE_KEYS.USER.CSRF_TOKEN); // Get current CSRF
 
             // --- Step 3: Set base headers ---
             headers['Accept-Language'] = language;
@@ -307,40 +304,25 @@ class ApiClient {
             // --- Step 4: Handle CSRF token ---
             if (csrfToken) {
                 headers['X-CSRFToken'] = csrfToken;
-            } else if (this.authApiService) {
-                // If CSRF token is missing, try to fetch it
-                try {
-                    logger.debug('CSRF token missing, attempting to fetch.', 'api-client – getRequestHeaders');
-                    await Promise.race([
-                        this.authApiService.getCsrfToken(),
-                        new Promise((_, reject) =>
-                            setTimeout(() => reject(new Error('CSRF token fetch timeout')), this.CSRF_RETRY_TIMEOUT_MS)
-                        ),
-                    ]);
-                    const newCsrfToken = await storage.get<string>(STORAGE_KEYS.USER.CSRF_TOKEN);
-                    if (newCsrfToken) {
-                        headers['X-CSRFToken'] = newCsrfToken;
-                        logger.debug('New CSRF token fetched and set.', 'api-client – getRequestHeaders');
-                    } else {
-                        logger.warn(
-                            'CSRF token fetch attempt did not yield a token.',
-                            'api-client – getRequestHeaders'
-                        );
-                    }
-                } catch (error) {
-                    logger.error(error, 'api-client – getRequestHeaders', 'Failed to get CSRF token:');
-                    // Continue without CSRF token if fetching failed
-                }
             } else {
+                // Removed proactive fetch. If CSRF is missing, the request might fail with 403/400,
+                // and the response interceptor will handle fetching a new one and retrying.
                 logger.warn(
-                    'CSRF token missing and no authApiService available to fetch it.',
+                    'CSRF token missing from storage. Request will proceed without it.',
                     'api-client – getRequestHeaders'
                 );
+                // We could potentially trigger an async fetch here *without* awaiting it,
+                // but let's rely on the reactive approach via interceptor first.
+                // if (this.authApiService) {
+                //     this.authApiService.getCsrfToken().catch(err => logger.error(err, 'Background CSRF fetch failed'));
+                // }
             }
 
             // --- Step 5: Handle Authorization header only if session and access token exist ---
+            // Use the 'session' variable directly, which is null if no valid session found
             if (session?.access) {
                 try {
+                    // Check if refresh is needed (uses the updated tokenService.shouldRefreshToken)
                     if ((await tokenService.shouldRefreshToken()) && this.authApiService) {
                         logger.debug(
                             'Access token needs refresh, attempting refresh.',
@@ -352,8 +334,10 @@ class ApiClient {
                             'Access token refreshed and Authorization header set.',
                             'api-client – getRequestHeaders'
                         );
+                        // Update session variable in case it's used later in this scope, though it's not currently
+                        // session = await tokenService.getSession(); // Re-fetch session if needed after refresh
                     } else {
-                        // Use existing access token
+                        // Use existing access token from the session variable
                         headers['Authorization'] = `Bearer ${session.access}`;
                     }
                 } catch (tokenError) {
@@ -362,23 +346,23 @@ class ApiClient {
                         'api-client – getRequestHeaders',
                         'ApiClient: Error handling token refresh or setting Authorization header:'
                     );
-                    // Decide how to handle token errors, e.g., clear session?
-                    // For now, just log and proceed without Authorization header if refresh failed.
-                    delete headers['Authorization']; // Ensure header is not set if refresh fails
-                    await tokenService.clearSession(); // Consider clearing session on refresh failure
+                    delete headers['Authorization'];
+                    // Consider clearing session only if refresh explicitly fails, not on other errors
+                    if ((tokenError as any)?.message?.includes('refresh failed')) {
+                        // Example check
+                        await tokenService.clearSession();
+                    }
                 }
             } else {
                 logger.debug(
-                    'No access token found in session, skipping Authorization header.',
+                    'No valid session or access token found, skipping Authorization header.',
                     'api-client – getRequestHeaders'
                 );
             }
 
             return headers;
         } catch (error) {
-            // Catch any other unexpected errors during the overall header preparation
-            logger.error(error, 'api-client – getRequestHeaders', 'ApiClient: Unexpected error getting headers:');
-            // Return headers collected so far, or empty object, or rethrow based on strategy
+            logger.error(error, 'api-client – getRequestHeaders', 'ApiClient: Unexpected error preparing headers:');
             return headers; // Return potentially incomplete headers
         }
     }
