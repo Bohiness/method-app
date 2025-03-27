@@ -4,7 +4,7 @@ import { useTheme } from '@shared/context/theme-provider'
 import { HapticTab } from '@shared/lib/utils/HapticTab'
 import { Icon } from '@shared/ui/icon'
 import { View } from '@shared/ui/view'
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Animated } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -46,23 +46,24 @@ export const AddButton = () => {
 
     return (
         <View variant='inverse' className={`
-            absolute 
-            self-center 
-            w-16 h-16 
-            rounded-full 
-            justify-center 
-            items-center 
+            absolute
+            self-center
+            w-16 h-16
+            rounded-full
+            justify-center
+            items-center
             shadow-lg
-            z-50
+            z-[1001]
         `}
+            style={{ bottom: insets.bottom }}
         >
             <HapticTab
                 onPress={handlePress}
                 hapticStyle="medium"
                 className="
-                    w-full 
-                    h-full 
-                    justify-center 
+                    w-full
+                    h-full
+                    justify-center
                     items-center
                 "
             >

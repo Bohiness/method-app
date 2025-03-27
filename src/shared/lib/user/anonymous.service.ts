@@ -1,6 +1,6 @@
 // src/shared/lib/user/anonymous.service.ts
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { storage } from '@shared/lib/storage/storage.service';
 import { tokenService } from '@shared/lib/user/token/token.service';
 import { AuthTokensType } from '@shared/types/user/AuthTokensType';

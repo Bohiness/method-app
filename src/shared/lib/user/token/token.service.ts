@@ -1,4 +1,7 @@
 // src/shared/lib/user/token/token.service.ts
+import { apiClient } from '@shared/config/api-client';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { AuthTokensType } from '@shared/types/user/AuthTokensType';
@@ -9,24 +12,89 @@ interface ServerResponse {
 }
 
 class TokenService {
-    private readonly SESSION_KEY = 'user-session';
+    private readonly SESSION_KEY = STORAGE_KEYS.USER.USER_SESSION;
+    private readonly CSRF_TOKEN_KEY = STORAGE_KEYS.USER.CSRF_TOKEN;
+
+    async getCsrfToken(): Promise<string | null> {
+        try {
+            const csrfToken = await this.getCsrfTokenFromStorage();
+
+            if (!csrfToken) {
+                return await this.getCsrfTokenFromServerAndSaveToStorage();
+            }
+
+            return csrfToken;
+        } catch (error) {
+            logger.error(error, 'token service – getCsrfToken', 'Error getting CSRF token:');
+            return null;
+        }
+    }
+
+    async getCsrfTokenFromStorage(): Promise<string> {
+        try {
+            const csrfToken = await storage.get<string>(this.CSRF_TOKEN_KEY, true);
+            if (!csrfToken) {
+                throw new Error('No CSRF token found');
+            }
+            return csrfToken;
+        } catch (error) {
+            logger.error(error, 'token service – getCsrfToken', 'Error getting CSRF token:');
+            throw error;
+        }
+    }
+
+    async setCsrfTokenToStorage(csrfToken: string): Promise<void> {
+        try {
+            await storage.set(this.CSRF_TOKEN_KEY, csrfToken);
+        } catch (error) {
+            logger.error(error, 'token service – setCsrfToken', 'Error setting CSRF token:');
+        }
+    }
+
+    async getCsrfTokenFromServerAndSaveToStorage(): Promise<string | null> {
+        try {
+            logger.start('Getting CSRF token...', 'token service – getCsrfToken');
+
+            const csrfTokenResponse = await apiClient.get<{ csrfToken: string }>(API_ROUTES.AUTH.CSRF_TOKEN);
+
+            if (!csrfTokenResponse?.csrfToken) {
+                logger.error('No CSRF token in response', 'token service – getCsrfToken');
+                return null;
+            }
+
+            await this.setCsrfTokenToStorage(csrfTokenResponse.csrfToken);
+
+            logger.finish('CSRF token saved successfully', 'token service – getCsrfToken');
+
+            return csrfTokenResponse.csrfToken;
+        } catch (error) {
+            logger.error(error, 'auth-api service – getCsrfToken', 'Error getting CSRF token:');
+            return null;
+        }
+    }
+
     /**
      * Получение текущей сессии
      */
-    async getSession(): Promise<AuthTokensType | null> {
+    async getSession(): Promise<AuthTokensType> {
         try {
             logger.debug('TokenService: Getting session...', 'token service – getSession');
             const session = await storage.get<AuthTokensType>(this.SESSION_KEY, true);
 
+            if (!session) {
+                logger.debug('TokenService: No session found', 'token service – getSession');
+                throw new Error('No session found');
+            }
+
             if (!this.isValidSession(session)) {
                 logger.debug('TokenService: No session found', 'token service – getSession');
-                return null;
+                throw new Error('No session found');
             }
 
             return session;
         } catch (error) {
             logger.error(error, 'token service – getSession', 'Error getting session:');
-            return null;
+            throw error;
         }
     }
 

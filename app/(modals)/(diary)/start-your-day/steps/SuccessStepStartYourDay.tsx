@@ -1,7 +1,7 @@
 import SuccessScreen from '@features/screens/SuccessScreen'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { apiClient } from '@shared/config/api-client'
-import { API_ROUTES } from '@shared/constants/api-routes'
+import { API_ROUTES } from '@shared/constants/system/api-routes'
 import { useUpdateStartDay } from '@shared/hooks/diary/startday/useStartDay'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'

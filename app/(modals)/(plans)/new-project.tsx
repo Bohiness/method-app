@@ -1,7 +1,7 @@
+import { ModalBottomScreenContent } from '@entities/modals/modal-bottom-screen-content'
 import { ProjectCreateOrUpdateModal } from '@entities/plans/projects/ProjectCreateOrUpdateModal'
 import { useProject } from '@shared/hooks/plans/useProjects'
 import { ProjectType } from '@shared/types/plans/ProjectTypes'
-import { ModalBottomContentView } from '@shared/ui/view'
 import { router, useLocalSearchParams } from 'expo-router'
 
 export default function NewProjectModal() {
@@ -9,7 +9,7 @@ export default function NewProjectModal() {
     const { project } = useProject(Number(projectID))
 
     return (
-        <ModalBottomContentView>
+        <ModalBottomScreenContent>
             <ProjectCreateOrUpdateModal
                 project={project}
                 isVisible={true}
@@ -18,7 +18,7 @@ export default function NewProjectModal() {
                     router.back()
                 }}
             />
-        </ModalBottomContentView>
+        </ModalBottomScreenContent>
     )
 }
 

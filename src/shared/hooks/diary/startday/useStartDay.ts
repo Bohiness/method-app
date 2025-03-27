@@ -1,5 +1,6 @@
 import { StartDaySyncService } from '@shared/api/diary/StartDaySyncService';
-import { QUERY_KEYS } from '@shared/constants/QUERY_KEYS';
+import { APP_ROUTES } from '@shared/constants/system/app-routes';
+import { QUERY_KEYS } from '@shared/constants/system/QUERY_KEYS';
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal';
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { StartDayStorageService } from '@shared/lib/diary/StartData.storage-service';
@@ -41,7 +42,7 @@ export const useStartDay = () => {
         }
 
         // Если есть премиум или количество записей меньше лимита, открываем модальное окно создания записи
-        router.push('/(modals)/(diary)/start-your-day');
+        router.push(`/${APP_ROUTES.MODALS.DIARY.START_YOUR_DAY}`);
     };
 
     // Общая функция для дебаунсированной синхронизации

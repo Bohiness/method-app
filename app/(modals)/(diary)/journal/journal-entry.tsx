@@ -1,15 +1,18 @@
+import { ModalBottomScreenContent } from '@entities/modals/modal-bottom-screen-content'
+import { BeautifulEntryStats } from '@features/diary/BeautifulEntryStats'
 import { useJournal } from '@shared/hooks/diary/journal/useJournal'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
+import HTMLView from '@shared/lib/utils/parsers/HTMLView'
 import { Text } from '@shared/ui/text'
-import TextEditor from '@shared/ui/text-editor'
-import { Container, ModalBottomContentView, View } from '@shared/ui/view'
+import { Tooltip } from '@shared/ui/tooltip'
 import { useLocalSearchParams } from 'expo-router'
 import { useTranslation } from 'react-i18next'
+import { ScrollView } from 'react-native'
 
 export default function JournalEntry() {
     const { journalId } = useLocalSearchParams()
     const { getDetails } = useJournal()
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+    const { formatDateTimeWithTimezoneAndLocale } = useDateTime()
     const { t } = useTranslation()
 
     if (!journalId) {
@@ -18,25 +21,16 @@ export default function JournalEntry() {
 
     const { data: journal, isPending } = getDetails(Number(journalId))
 
-    if (isPending) {
-        return <Text>{t('common.loading')}</Text>
-    }
-
-    if (!journal) {
-        return <Text>{t('common.error.no_journal_found')}</Text>
-    }
+    const title = journal?.created_at ? formatDateTimeWithTimezoneAndLocale(journal?.created_at, 'dd MMMM yyyy') + ' ' + t('common.date.at') + ' ' + formatDateTimeWithTimezoneAndLocale(journal?.created_at, 'HH:mm') : ''
 
     return (
-        <ModalBottomContentView showHeader>
-            <Container className='flex-1'>
-                <Text>{formateDataTimeWithTimezoneAndLocale(journal.created_at, 'dd MMMM yyyy')} {t('common.date.at')} {formateDataTimeWithTimezoneAndLocale(journal.created_at, 'HH:mm')}</Text>
-                <View className='flex-1'>
-                    <TextEditor
-                        initialContent={journal.content}
-                        disabled
-                    />
-                </View>
-            </Container>
-        </ModalBottomContentView>
+        <ModalBottomScreenContent title={title}>
+            <ScrollView className="mb-5" showsVerticalScrollIndicator={false}>
+                <BeautifulEntryStats data={journal} />
+                <Tooltip textKey="diary.journal.entry.tooltip" placement="top">
+                    <HTMLView html={journal?.content || ''} />
+                </Tooltip>
+            </ScrollView>
+        </ModalBottomScreenContent>
     )
 }   

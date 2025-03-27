@@ -1,5 +1,5 @@
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { useLanguage } from '@shared/context/language-provider';
 import { initialEmotionsEN } from '@shared/data/initial/emotionsEN';
 import { initialEmotionsRU } from '@shared/data/initial/emotionsRU';

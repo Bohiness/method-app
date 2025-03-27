@@ -61,10 +61,16 @@ export const SCREEN_CONFIG: ScreenConfig = {
     settings: {
         level: 1,
         component: SettingsScreen,
+        props: {
+            title: t('profile.title'),
+        },
     },
     profile: {
         level: 1,
         component: FullProfileScreen,
+        props: {
+            title: t('profile.title'),
+        },
     },
     notifications: {
         level: 2,

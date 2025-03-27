@@ -253,7 +253,7 @@ export const DailyNotificationsSettings: React.FC = () => {
     return (
         <View>
             {/* Утренние уведомления */}
-            <View className="mb-8 rounded-xl overflow-hidden bg-surface-paper dark:bg-surface-paper-dark">
+            <View variant="default" className="mb-8 rounded-2xl overflow-hidden">
                 <Text
                     variant="secondary"
                     size="sm"
@@ -279,7 +279,7 @@ export const DailyNotificationsSettings: React.FC = () => {
             </View>
 
             {/* Вечерние уведомления */}
-            <View className="mb-8 rounded-xl overflow-hidden bg-surface-paper dark:bg-surface-paper-dark">
+            <View variant="default" className="mb-8 rounded-2xl overflow-hidden">
                 <Text
                     variant="secondary"
                     size="sm"

@@ -87,7 +87,7 @@ export const useDiary = () => {
         error: eveningReflectionError,
     } = useEveningReflectionHistory();
     const { data: journalEntries, isPending: isJournalPending, error: journalError } = useJournalHistory();
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime();
+    const { formatDateTimeWithTimezoneAndLocale } = useDateTime();
 
     // Обновляем diaryHelpers для использования в контексте этого хука
     const contextDiaryHelpers = useMemo(() => {
@@ -161,7 +161,7 @@ export const useDiary = () => {
 
         // Группируем по дням
         const groupedByDay = filtered.reduce((acc, entry) => {
-            const day = formateDataTimeWithTimezoneAndLocale(entry.created_at, 'dd MMMM');
+            const day = formatDateTimeWithTimezoneAndLocale(entry.created_at, 'dd MMMM');
             if (!acc[day]) acc[day] = [];
             acc[day].push(entry);
             return acc;
@@ -173,7 +173,7 @@ export const useDiary = () => {
         });
 
         return groupedByDay;
-    }, [moodCheckins, startDayEntries, eveningReflectionEntries, journalEntries, formateDataTimeWithTimezoneAndLocale]);
+    }, [moodCheckins, startDayEntries, eveningReflectionEntries, journalEntries, formatDateTimeWithTimezoneAndLocale]);
 
     // Возвращаем результат
     return {

@@ -2,6 +2,7 @@
 import { UserProvider } from '@context/user-provider'
 import i18n from '@shared/config/i18n'
 import { queryClient } from '@shared/config/query-client'
+import { AppSettingsProvider } from '@shared/context/app-settings-context'
 import { LanguageProvider } from '@shared/context/language-provider'
 import { NotificationProvider } from '@shared/context/notification-provider'
 import { ThemeProvider } from '@shared/context/theme-provider'
@@ -26,14 +27,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
                     <UserProvider>
                         <LanguageProvider>
                             <ThemeProvider>
-                                <SafeAreaProvider>
-                                    <SyncManager />
-                                    <ContainerScreen>
-                                        <NotificationProvider>
-                                            {children}
-                                        </NotificationProvider>
-                                    </ContainerScreen>
-                                </SafeAreaProvider>
+                                <AppSettingsProvider>
+                                    <SafeAreaProvider>
+                                        <SyncManager />
+                                        <ContainerScreen>
+                                            <NotificationProvider>
+                                                {children}
+                                            </NotificationProvider>
+                                        </ContainerScreen>
+                                    </SafeAreaProvider>
+                                </AppSettingsProvider>
                             </ThemeProvider>
                         </LanguageProvider>
                     </UserProvider>

@@ -1,3 +1,4 @@
+import { APP_ROUTES } from '@shared/constants/system/app-routes'
 import { useToneOfVoice } from '@shared/hooks/ai/toneOfVoice.hook'
 import { useJournal } from '@shared/hooks/diary/journal/useJournal'
 import { useShowModal } from '@shared/hooks/modal/useShowModal'
@@ -20,16 +21,17 @@ export const journalEditorState = {
     isTemplate: false // Флаг, указывающий, что это шаблон
 }
 
-export const JournalEditor: React.FC = () => {
+export const JournalEditor: React.FC<{ onSaveDraft: (showSavedMessage: boolean) => void }> = ({ onSaveDraft }) => {
     const { t } = useTranslation()
     const editorRef = useRef<TextEditorRef>(null)
     const { currentTone, goDeeper } = useToneOfVoice()
     const [content, setContent] = useState('')
     const { create, update } = useJournal() // Используем хук для создания/обновления журнала
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null) // Референс для таймера автосохранения
 
     // Определяем loading indicator здесь для доступа в разных частях компонента
     const loadingIndicator = `
-        <div style="margin-top: 12px; margin-bottom: 12px;">
+        <div contenteditable="false" style="margin-top: 12px; margin-bottom: 12px;">
             <p style="font-style: italic; color: #666;">
                 ${t('components.textEditor.loading')}...
             </p>
@@ -123,6 +125,18 @@ export const JournalEditor: React.FC = () => {
         )
     }
 
+    // Сохраняем функцию в глобальном объекте вместо route.params
+    useEffect(() => {
+        journalEditorState.saveHandler = handleSaveLocaleTemplateForClose
+
+        // Очищаем при размонтировании
+        return () => {
+            journalEditorState.saveHandler = null
+            journalEditorState.journalId = null
+            journalEditorState.isTemplate = false
+        }
+    }, [content])
+
     // Эффект для отслеживания изменений в currentTone
     useEffect(() => {
         // Проверяем что модальное окно видимо и currentTone определен
@@ -144,7 +158,7 @@ export const JournalEditor: React.FC = () => {
                     <Badge
                         variant="outline"
                         size="sm"
-                        onPress={() => router.push('/(modals)/(profile)/ai-tone-of-voice')}
+                        onPress={() => router.push(`/${APP_ROUTES.MODALS.SETTINGS.AI_TONE_OF_VOICE}`)}
                         style={{ borderColor: currentTone?.gradient[0] }}
                     >
                         {currentTone?.name}
@@ -159,7 +173,29 @@ export const JournalEditor: React.FC = () => {
 
     const handleChange = (html: string) => {
         setContent(html)
+
+        // Сбрасываем существующий таймер при каждом изменении контента
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current)
+        }
+
+        // Устанавливаем новый таймер на 5 секунд
+        saveTimeoutRef.current = setTimeout(() => {
+            // Проверяем, что контент не пустой и имеет достаточно символов
+            if (html.trim() && html.trim().length >= 10) {
+                handleSaveLocaleTemplate()
+            }
+        }, 5000)
     }
+
+    // Очищаем таймер при размонтировании компонента
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current)
+            }
+        }
+    }, [])
 
     // Функция для обработки загруженных изображений
     const handleImageUpload = async (uri: string) => {
@@ -181,7 +217,7 @@ export const JournalEditor: React.FC = () => {
             // Добавляем индикатор загрузки в конец текста
             const contentWithLoading = content + loadingIndicator
             setContent(contentWithLoading)
-            editorRef.current?.setContent(contentWithLoading)
+            editorRef.current?.setHtmlContent(contentWithLoading)
 
             const bgColor = currentTone?.gradient[0]
 
@@ -195,27 +231,31 @@ export const JournalEditor: React.FC = () => {
                             <blockquote style="background-color: ${bgColor}30; border-left: 4px solid ${bgColor}; margin-left: 0; margin-right: 0; padding: 16px; border-radius: 4px; font-style: italic; cursor: not-allowed; user-select: text;">
                                 ${partialResponse}
                             </blockquote>
-                            <div style="position: absolute; top: 4px; right: 4px; font-size: 10px; color: #666; background-color: ${bgColor}20; padding: 2px 6px; border-radius: 10px;">
-                                ${currentTone?.name}
-                            </div>
                         </div>
                     </div>
                     <p><br></p>
                 `
 
                 // Обновляем редактор с новым частичным ответом
-                const newContent = content + formattedPartialResponse
+                // Удаляем индикатор загрузки перед добавлением нового контента
+                const contentWithoutLoading = content.replace(loadingIndicator, '')
+                const newContent = contentWithoutLoading + formattedPartialResponse
                 setContent(newContent)
-                editorRef.current?.setContent(newContent)
 
-                // Упрощаем логику - сначала устанавливаем курсор
-                editorRef.current?.setCursorPosition(newContent.length)
+                // Используем правильные методы для QuillEditor
+                try {
+                    // Используем метод для вставки HTML контента
+                    editorRef.current?.setHtmlContent(newContent)
 
-                // Затем с задержкой прокручиваем
-                // setTimeout(() => {
-                //     console.log('Вызываем прокрутку после частичного ответа')
-                //     editorRef.current?.scrollToEnd()
-                // }, 200)
+                    // Затем пытаемся установить курсор в конец
+                    setTimeout(() => {
+                        const length = newContent.length
+                        // Метод setCursorPosition от TextEditorRef
+                        editorRef.current?.setCursorPosition(length)
+                    }, 100)
+                } catch (error) {
+                    logger.error(error, 'handlePartialResponse', 'Error updating editor content')
+                }
             }
 
             // Вызываем goDeeper с колбэком для обработки частичных ответов
@@ -225,8 +265,9 @@ export const JournalEditor: React.FC = () => {
 
             if (!aiResponse) {
                 // Если ответ пустой, удаляем индикатор загрузки
-                setContent(content)
-                editorRef.current?.setContent(content)
+                const cleanContent = content.replace(loadingIndicator, '')
+                setContent(cleanContent)
+                editorRef.current?.setHtmlContent(cleanContent)
                 return
             }
 
@@ -247,9 +288,6 @@ export const JournalEditor: React.FC = () => {
                         <blockquote style="background-color: ${bgColor}30; border-left: 4px solid ${bgColor}; margin-left: 0; margin-right: 0; padding: 16px; border-radius: 4px; font-style: italic; cursor: not-allowed; user-select: text;">
                             ${aiResponse}
                         </blockquote>
-                        <div style="position: absolute; top: 4px; right: 4px; font-size: 10px; color: #666; background-color: ${bgColor}20; padding: 2px 6px; border-radius: 10px;">
-                            ${currentTone?.name}
-                        </div>
                     </div>
                 </div>
                 <p><br></p>
@@ -257,22 +295,24 @@ export const JournalEditor: React.FC = () => {
 
             const newContent = contentWithoutLoading + formattedResponse
             setContent(newContent)
-            editorRef.current?.setContent(newContent)
 
-            // Упрощаем логику - сначала устанавливаем курсор, затем с задержкой прокручиваем
-            editorRef.current?.setCursorPosition(newContent.length)
+            try {
+                // Используем метод для вставки HTML контента
+                editorRef.current?.setHtmlContent(newContent)
 
-            // Явно вызываем прокрутку через 200мс, чтобы дать время DOM на обновление
-            // setTimeout(() => {
-            //     console.log('Вызываем прокрутку после ответа ИИ')
-            //     editorRef.current?.scrollToEnd()
-            // }, 200)
+                // Устанавливаем курсор в конец с небольшой задержкой
+                setTimeout(() => {
+                    editorRef.current?.setCursorPosition(newContent.length)
+                }, 100)
+            } catch (error) {
+                logger.error(error, 'handleGoDeeper', 'Error updating final content')
+            }
 
         } catch (error) {
             logger.error(error, 'handleGoDeeper', 'error')
             // Восстанавливаем исходное содержимое в случае ошибки
             setContent(content)
-            editorRef.current?.setContent(content)
+            editorRef.current?.setHtmlContent(content)
 
         }
     }
@@ -300,13 +340,77 @@ export const JournalEditor: React.FC = () => {
                 <Badge
                     variant="outline"
                     size="sm"
-                    onPress={() => router.push('/(modals)/(profile)/ai-tone-of-voice')}
+                    onPress={() => router.push(`/${APP_ROUTES.MODALS.SETTINGS.AI_TONE_OF_VOICE}`)}
                     style={{ borderColor: currentTone?.gradient[0] }}
                 >
                     {currentTone?.name}
                 </Badge>
             )
         })
+    }
+
+    // Сохранение шаблона (локальный черновик без синхронизации)
+    const handleSaveLocaleTemplateForClose = async () => {
+        try {
+            const currentContent = editorRef.current?.getContent() || content
+
+            if (!currentContent.trim() || currentContent.trim().length < 10) {
+                return
+            }
+
+            // Заменяем прямой Alert на Alert с выбором
+            return new Promise((resolve) => {
+                Alert.alert(
+                    t('diary.journal.saveDraftTitle'),
+                    t('diary.journal.saveDraftMessage'),
+                    [
+                        {
+                            text: t('common.no'),
+                            style: 'cancel',
+                            onPress: () => resolve(false)
+                        },
+                        {
+                            text: t('common.yes'),
+                            onPress: async () => {
+                                try {
+                                    // Сохраняем как шаблон (черновик)
+                                    const data = { content: currentContent }
+
+                                    if (journalEditorState.journalId && journalEditorState.isTemplate) {
+                                        // Обновляем существующий шаблон
+                                        await update.mutateAsync({
+                                            id: journalEditorState.journalId,
+                                            data,
+                                            isTemplate: true
+                                        })
+                                    } else {
+                                        // Создаем новый шаблон
+                                        const result = await create.mutateAsync({
+                                            ...data,
+                                            isTemplate: true
+                                        })
+
+                                        // Обновляем ID в состоянии после создания
+                                        journalEditorState.journalId = result.id
+                                        journalEditorState.isTemplate = true
+                                    }
+                                    resolve(true)
+                                } catch (error) {
+                                    logger.error(error, 'handleSaveLocaleTemplate', 'error')
+                                    Alert.alert(t('common.error'), t('diary.journal.errorSavingTemplate'))
+                                    resolve(false)
+                                }
+                            }
+                        }
+                    ]
+                )
+            })
+
+        } catch (error) {
+            logger.error(error, 'handleSaveLocaleTemplate', 'error')
+            Alert.alert(t('common.error'), t('diary.journal.errorSavingTemplate'))
+            return Promise.resolve(false)
+        }
     }
 
     // Сохранение шаблона (локальный черновик без синхронизации)
@@ -317,7 +421,6 @@ export const JournalEditor: React.FC = () => {
             if (!currentContent.trim() || currentContent.trim().length < 10) {
                 return
             }
-
             logger.log(currentContent, 'handleSaveLocaleTemplate')
 
             // Сохраняем как шаблон (черновик)
@@ -330,7 +433,6 @@ export const JournalEditor: React.FC = () => {
                     data,
                     isTemplate: true
                 })
-                Alert.alert(t('diary.journal.templateUpdated'))
             } else {
                 // Создаем новый шаблон
                 const result = await create.mutateAsync({
@@ -341,11 +443,16 @@ export const JournalEditor: React.FC = () => {
                 // Обновляем ID в состоянии после создания
                 journalEditorState.journalId = result.id
                 journalEditorState.isTemplate = true
-
-                Alert.alert(t('diary.journal.templateSaved'))
             }
 
-            router.back()
+            // Показываем сообщение о сохранении
+            onSaveDraft(true)
+
+            // Скрываем сообщение через 2 секунды
+            setTimeout(() => {
+                onSaveDraft(false)
+            }, 2000)
+
         } catch (error) {
             logger.error(error, 'handleSaveLocaleTemplate', 'error')
             Alert.alert(t('common.error'), t('diary.journal.errorSavingTemplate'))
@@ -372,7 +479,7 @@ export const JournalEditor: React.FC = () => {
                     id: journalEditorState.journalId,
                     data
                 })
-                Alert.alert(t('diary.journal.journalUpdated'))
+
             } else {
                 // Создаем новую запись
                 const result = await create.mutateAsync(data)
@@ -381,39 +488,24 @@ export const JournalEditor: React.FC = () => {
                 journalEditorState.journalId = result.id
                 journalEditorState.isTemplate = false
 
-                Alert.alert(t('diary.journal.journalSaved'))
             }
 
-            router.back()
+            router.dismissTo('/(tabs)')
+
         } catch (error) {
             logger.error(error, 'handleSave', 'error')
             Alert.alert(t('common.error'), t('diary.journal.errorSavingJournal'))
         }
     }
 
-    // Сохраняем функцию в глобальном объекте вместо route.params
-    useEffect(() => {
-        journalEditorState.saveHandler = handleSaveLocaleTemplate
-
-        // Очищаем при размонтировании
-        return () => {
-            journalEditorState.saveHandler = null
-            journalEditorState.journalId = null
-            journalEditorState.isTemplate = false
-        }
-    }, [content])
-
     return (
-        <View className="flex-1">
+        <View className="flex-1 relative">
             <TextEditor
                 ref={editorRef}
-                initialContent={''}
                 onChange={handleChange}
                 onSave={handleSave}
-                placeholder={t('diary.note.NotePlaceholder')}
+                placeholder={t('diary.journal.NotePlaceholder')}
                 onAttachImage={handleImageUpload}
-                className="flex-1"
-                editorClassName="flex-1"
                 buttonDown={
                     <View className="flex-row gap-x-4">
                         <Button

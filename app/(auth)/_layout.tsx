@@ -1,7 +1,6 @@
-import { ModalHeader } from '@shared/ui/modals/ModalHeader'
+import { BottomModalHeader } from '@shared/ui/modals/BottomModalHeader'
 import { CustomHeader } from '@widgets/navigation/CustomHeader'
 import { Stack } from 'expo-router'
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 
 
@@ -15,7 +14,10 @@ export default function AuthLayout() {
                 options={{
                     presentation: 'modal',
                     animation: 'slide_from_bottom',
-                    header: () => (<ModalHeader />),
+                    contentStyle: {
+                        backgroundColor: 'transparent',
+                    },
+                    header: () => (<BottomModalHeader />),
                 }}
             />
             <Stack.Screen
@@ -23,12 +25,19 @@ export default function AuthLayout() {
                 options={{
                     presentation: 'modal',
                     animation: 'slide_from_bottom',
-                    header: () => (<ModalHeader />),
+                    contentStyle: {
+                        backgroundColor: 'transparent',
+                    },
+                    header: () => (<BottomModalHeader />),
                 }}
             />
             <Stack.Screen
                 name="forgot"
+
                 options={{
+                    contentStyle: {
+                        backgroundColor: 'transparent',
+                    },
                     header: () => (
                         <CustomHeader
                             showBackButton
@@ -39,3 +48,4 @@ export default function AuthLayout() {
         </Stack>
     )
 }
+

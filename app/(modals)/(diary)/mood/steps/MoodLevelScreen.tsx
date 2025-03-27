@@ -4,7 +4,7 @@ import { View } from '@shared/ui/view'
 import { MoodLevelStep } from '@widgets/diary/mood/steps/MoodLevelStep'
 import { Audio } from 'expo-av'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MoodStackParamList } from '../StepNavigator'
 
 type Props = NativeStackScreenProps<MoodStackParamList, 'MoodLevel'>

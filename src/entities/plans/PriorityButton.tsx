@@ -81,3 +81,5 @@ export const PriorityButton = memo(({
         </Button>
     )
 })
+
+PriorityButton.displayName = 'PriorityButton'

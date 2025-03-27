@@ -2,7 +2,7 @@
 import { getStoredLanguage, setStoredLanguage } from '@shared/config/i18n'
 import { useLocale } from '@shared/hooks/systems/locale/useLocale'
 import { SupportedLocale } from '@shared/types/locale/types'
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 export type SupportedLanguage = 'ru' | 'en'
@@ -30,7 +30,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     const isSyncingLanguage = useRef(false)
 
     // Инициализация языка при первом рендере
-    useEffect(() => {
+    useLayoutEffect(() => {
         const initLanguage = async () => {
             try {
                 setIsLoading(true)
@@ -49,7 +49,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
         }
 
         initLanguage()
-    }, [i18n]) // Добавляем i18n в зависимости
+    }, [i18n])
 
     // Синхронизация с useLocale только при изменении locale
     // и только если это не результат нашего собственного обновления

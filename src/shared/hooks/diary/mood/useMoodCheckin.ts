@@ -1,5 +1,6 @@
 // src/shared/hooks/mood/useMoodCheckin.ts
 import { MoodSyncService } from '@shared/api/diary/MoodSyncService';
+import { APP_ROUTES } from '@shared/constants/system/app-routes';
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { MoodStorageService } from '@shared/lib/diary/MoodStorageService';
 import { logger } from '@shared/lib/logger/logger.service';
@@ -14,7 +15,7 @@ const moodSyncService = new MoodSyncService(moodStorageService);
 
 export const useMoodCheckin = () => {
     const openMoodCheckinModal = () => {
-        router.push('/(modals)/(diary)/mood');
+        router.push(`/${APP_ROUTES.MODALS.DIARY.MOOD}`);
     };
 
     return {

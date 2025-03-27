@@ -1,11 +1,10 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { useKeyboard } from '@shared/hooks/systems/keyboard/useKeyboard'
 import { logger } from '@shared/lib/logger/logger.service'
-import * as ImagePicker from 'expo-image-picker'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, TouchableOpacity } from 'react-native'
-import { RichEditor, actions } from 'react-native-pell-rich-editor'
+import QuillEditor from 'react-native-cn-quill'
 import Animated, {
     Layout,
     SlideInDown,
@@ -14,7 +13,6 @@ import Animated, {
 import { Button } from './button'
 import { ColorPicker } from './color-picker'
 import { Icon } from './icon'
-import { KeyboardWrapper } from './keyboard-wrapper'
 import { Text } from './text'
 import { View } from './view'
 import { VoiceInputButton } from './voice/VoiceInputButton'
@@ -22,6 +20,8 @@ import { VoiceInputButton } from './voice/VoiceInputButton'
 export interface TextEditorRef {
     getContent: () => string
     setContent: (html: string) => void
+    setHtmlContent: (html: string) => void
+    setTextContent: (text: string) => void
     focusEditor: () => void
     setCursorPosition: (position: number) => void
     safeHideKeyboard: () => Promise<void>
@@ -56,14 +56,12 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
         buttonDown,
         disabled = false
     } = props
-    const { showKeyboard, hideKeyboard, isKeyboardVisible, contentHeight } = useKeyboard()
+    const { showKeyboard, hideKeyboard, isKeyboardVisible } = useKeyboard()
     const { t } = useTranslation()
     const { isDark, colors } = useTheme()
-    const richText = useRef<RichEditor>(null)
+    const richText = useRef<QuillEditor>(null)
     const [content, setContent] = useState(initialContent)
     const [showTextStyles, setShowTextStyles] = useState(false)
-    const [height, setHeight] = useState(contentHeight)
-    const [editorHeight, setEditorHeight] = useState(contentHeight)
     const [showColorPicker, setShowColorPicker] = useState(false)
     const [colorPickerMode, setColorPickerMode] = useState<'text' | 'background' | 'none'>('none')
     const [activeTextStyle, setActiveTextStyle] = useState<string>('body')
@@ -75,14 +73,6 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
     const [preventKeyboardShow, setPreventKeyboardShow] = useState(false)
     const [autoCorrect, setAutoCorrect] = useState(true)
 
-    useEffect(() => {
-        logger.log(contentHeight, 'useEffect –– contentHeight', 'contentHeight changed')
-        setHeight(contentHeight)
-    }, [contentHeight])
-
-    useEffect(() => {
-        logger.log(editorHeight, 'useEffect –– editorHeight', 'editorHeight changed')
-    }, [editorHeight])
 
     useEffect(() => {
         setShowBottomBarButton(isKeyboardVisible)
@@ -105,188 +95,88 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
         getContent: () => content,
         setContent: (html: string) => {
             setContent(html)
-            richText.current?.setContentHTML(html)
+            if (richText.current) {
+                richText.current.insertText(0, html)
+            }
         },
-        focusEditor: () => richText.current?.focusContentEditor(),
+        setHtmlContent: (html: string) => {
+            setContent(html)
+            if (richText.current) {
+                try {
+                    richText.current.setText('')
+                    if (typeof richText.current.dangerouslyPasteHTML === 'function') {
+                        richText.current.dangerouslyPasteHTML(0, html)
+                    }
+                } catch (e) {
+                    console.error('Error setting HTML content:', e)
+                }
+            }
+        },
+        setTextContent: (text: string) => {
+            if (richText.current) {
+                try {
+                    richText.current.setText('')
+                    if (typeof richText.current.insertText === 'function') {
+                        richText.current.insertText(0, text)
+                    }
+                } catch (e) {
+                    console.error('Error setting text content:', e)
+                }
+            }
+            setContent(text)
+        },
+        focusEditor: () => {
+            if (richText.current) {
+                try {
+                    if (typeof richText.current.focus === 'function') {
+                        richText.current.focus()
+                    }
+                } catch (e) {
+                    console.error('Error focusing editor:', e)
+                }
+            }
+        },
         setCursorPosition: (position: number) => {
             if (richText.current) {
-                richText.current.focusContentEditor()
-                richText.current.commandDOM(`
-                    try {
-                        const selection = window.getSelection();
-                        if (selection) {
-                            // Попробуем найти последний параграф
-                            const paragraphs = document.querySelectorAll('p');
-                            const lastParagraph = paragraphs[paragraphs.length - 1];
-                            
-                            if (lastParagraph) {
-                                // Если последний параграф существует, ставим курсор в его начало
-                                const range = document.createRange();
-                                range.setStart(lastParagraph, 0);
-                                range.collapse(true);
-                                
-                                selection.removeAllRanges();
-                                selection.addRange(range);
-                                
-                                console.log('Cursor position set to the beginning of the last paragraph');
-                            } else {
-                                // Запасной вариант - ищем последний элемент и добавляем новый параграф после него
-                                const contentDivs = document.querySelectorAll('[data-source="ai"]');
-                                if (contentDivs.length > 0) {
-                                    const lastContentDiv = contentDivs[contentDivs.length - 1];
-                                    
-                                    // Создаем новый параграф
-                                    const newParagraph = document.createElement('p');
-                                    newParagraph.innerHTML = '<br>';
-                                    
-                                    // Вставляем новый параграф после последнего AI-блока
-                                    if (lastContentDiv.nextSibling) {
-                                        lastContentDiv.parentNode.insertBefore(newParagraph, lastContentDiv.nextSibling);
-                                    } else {
-                                        lastContentDiv.parentNode.appendChild(newParagraph);
-                                    }
-                                    
-                                    // Устанавливаем курсор в начало нового параграфа
-                                    const range = document.createRange();
-                                    range.setStart(newParagraph, 0);
-                                    range.collapse(true);
-                                    
-                                    selection.removeAllRanges();
-                                    selection.addRange(range);
-                                    
-                                    console.log('Created new paragraph and set cursor position');
-                                } else {
-                                    // Если не нашли AI-блоки, используем запасной вариант с последним элементом
-                                    const allNodes = document.body.getElementsByTagName('*');
-                                    if (allNodes.length > 0) {
-                                        const lastElement = allNodes[allNodes.length - 1];
-                                        
-                                        const range = document.createRange();
-                                        range.selectNodeContents(lastElement);
-                                        range.collapse(false);
-                                        
-                                        selection.removeAllRanges();
-                                        selection.addRange(range);
-                                        
-                                        console.log('Cursor position set to end of the last element (fallback)');
-                                    }
-                                }
-                            }
-                        }
-                    } catch(e) {
-                        console.error('Error setting cursor position:', e);
+                try {
+                    if (typeof richText.current.focus === 'function') {
+                        richText.current.focus()
                     }
-                `)
+
+                    if (typeof richText.current.dangerouslyPasteHTML === 'function') {
+                        richText.current.dangerouslyPasteHTML(position, '')
+                    }
+                } catch (e) {
+                    console.error('Error setting cursor position:', e)
+                }
             }
         },
         safeHideKeyboard,
         scrollToEnd: () => {
             if (richText.current) {
-                richText.current.commandDOM(`
-                    try {
-                        console.log('Scrolling to end with multiple methods');
-                        
-                        // Метод 1: стандартная прокрутка окна
-                        window.scrollTo(0, document.body.scrollHeight);
-                        
-                        // Метод 2: через scrollIntoView
-                        const elements = document.querySelectorAll('p, div, blockquote');
-                        if (elements.length > 0) {
-                            const lastElement = elements[elements.length - 1];
-                            lastElement.scrollIntoView({ block: 'end' });
-                            console.log('Scrolled to last element via scrollIntoView');
-                        }
-                        
-                        // Метод 3: через parentElement и scrollTop
-                        document.body.parentElement.scrollTop = document.body.parentElement.scrollHeight;
-                        
-                        // Метод 4: через таймаут (иногда нужно дать время на рендеринг)
-                        setTimeout(function() {
-                            window.scrollTo(0, document.body.scrollHeight);
-                            document.body.parentElement.scrollTop = document.body.parentElement.scrollHeight;
-                            
-                            const elements = document.querySelectorAll('p, div, blockquote');
-                            if (elements.length > 0) {
-                                elements[elements.length - 1].scrollIntoView({ block: 'end' });
-                            }
-                            
-                            console.log('Executed delayed scroll');
-                        }, 50);
-                    } catch(e) {
-                        console.error('Error scrolling to end:', e);
+                try {
+                    if (typeof (richText.current as any).scrollToBottom === 'function') {
+                        (richText.current as any).scrollToBottom()
+                    } else if (typeof richText.current.dangerouslyPasteHTML === 'function') {
+                        const tempId = 'scroll-to-end-' + Date.now()
+                        richText.current.dangerouslyPasteHTML(99999, `<div id="${tempId}"></div>`)
                     }
-                `)
+                } catch (e) {
+                    console.error('Error scrolling to end:', e)
+                }
             }
         }
     }))
 
-    // Регистрируем обработчик для нередактируемых блоков
+    // Регистрируем обработчик для редактора
     const registerContentEditableFeature = useCallback(() => {
+        // Инициализация функций редактора после загрузки
         if (richText.current) {
-            richText.current.commandDOM(`
-                // Вспомогательная функция для обработки contenteditable=false
-                function handleNonEditableContent() {
-                    // Находим все элементы с contenteditable="false"
-                    const nonEditableElements = document.querySelectorAll('[contenteditable=false]');
-                    
-                    // Добавляем обработчики событий
-                    nonEditableElements.forEach(function(element) {
-                        // Устанавливаем стиль курсора
-                        element.style.cursor = 'not-allowed';
-                        
-                        // Предотвращаем стандартное поведение при клике
-                        element.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                        });
-                        
-                        // Предотвращаем редактирование при нажатии клавиш
-                        element.addEventListener('keydown', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                        });
-                    });
-                }
-                
-                // Запускаем функцию при загрузке страницы
-                handleNonEditableContent();
-                
-                // Создаем MutationObserver для отслеживания изменений DOM
-                const observer = new MutationObserver(function(mutations) {
-                    handleNonEditableContent();
-                });
-                
-                // Начинаем наблюдать за изменениями в DOM
-                observer.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
-                
-                // Функция для проверки применения форматирования
-                window.checkFormatting = function() {
-                    try {
-                        const selection = window.getSelection();
-                        if (selection && selection.rangeCount > 0) {
-                            const range = selection.getRangeAt(0);
-                            const ancestor = range.commonAncestorContainer;
-                            
-                            // Проверяем ближайший span для нахождения стилей
-                            let spanElement = ancestor;
-                            if (ancestor.nodeType === 3) { // Текстовый узел
-                                spanElement = ancestor.parentNode;
-                            }
-                            
-                            // Логируем примененные стили
-                            console.log('Selected element styles:', 
-                                spanElement.style ? {
-                                    color: spanElement.style.color,
-                                    backgroundColor: spanElement.style.backgroundColor
-                                } : 'No styles found');
-                        }
-                    } catch (e) {
-                        console.error('Error checking formatting:', e);
-                    }
-                }
-            `)
+            try {
+                console.log('Editor ready')
+            } catch (e) {
+                console.error('Error in editor initialization:', e)
+            }
         }
     }, [])
 
@@ -299,17 +189,25 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
         }
     }, [registerContentEditableFeature])
 
-    const handleChange = (html: string) => {
+    const handleChange = (html: any) => {
         if (disabled) return
-        setContent(html)
-        onChange?.(html)
+        // Обрабатываем как строку, так и объект с html
+        const htmlContent = typeof html === 'string' ? html : html?.html || ''
+        setContent(htmlContent)
+        onChange?.(htmlContent)
     }
 
     // Метод для безопасного скрытия клавиатуры
     const safeHideKeyboard = () => {
         // Сначала убираем фокус с редактора
         if (richText.current) {
-            richText.current.blurContentEditor()
+            try {
+                if (typeof richText.current.blur === 'function') {
+                    richText.current.blur()
+                }
+            } catch (e) {
+                console.error('Error blurring editor:', e)
+            }
         }
 
         // Затем вызываем методы скрытия клавиатуры
@@ -321,81 +219,41 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
         })
     }
 
-    const safeShowKeyboard = () => {
-        if (preventKeyboardShow) return Promise.resolve()
-
-        // Сначала устанавливаем фокус на редактор
-        if (richText.current) {
-            // Даем небольшую задержку перед фокусировкой
-            setTimeout(() => {
-                richText.current?.focusContentEditor()
-                // Явно вызываем показ клавиатуры
-                showKeyboard()
-            }, 100)
-        }
-
-        return new Promise<void>((resolve) => {
-            // Даем время для появления клавиатуры
-            setTimeout(resolve, 250)
-        })
-    }
-
-
     const toggleTextStyles = async () => {
         if (showTextStyles) {
             setShowTextStyles(false)
-            setShowBottomBar(true)
-            setShowBottomBarButton(false)
+            setShowBottomBarButton(true)
         } else {
             setShowTextStyles(true)
-            setShowBottomBar(false)
             setShowBottomBarButton(false)
         }
     }
 
-    const pickImage = async () => {
-        try {
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                quality: 0.8,
-            })
-
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                const uri = result.assets[0].uri
-                let imageUrl = uri
-
-                // If custom image handling is provided, use it
-                if (onAttachImage) {
-                    imageUrl = await onAttachImage(uri)
-                }
-
-                // Insert the image into the editor
-                richText.current?.insertImage(imageUrl)
-            }
-        } catch (error) {
-            console.error('Error picking image:', error)
-        }
-    }
 
     // Функции форматирования
     const applyTextStyle = (style: string) => {
         if (richText.current) {
             setActiveTextStyle(style)
 
-            switch (style) {
-                case 'title':
-                    richText.current.sendAction(actions.heading1, 'result')
-                    break
-                case 'heading':
-                    richText.current.sendAction(actions.heading2, 'result')
-                    break
-                case 'subheading':
-                    richText.current.sendAction(actions.heading3, 'result')
-                    break
-                case 'body':
-                    richText.current.sendAction(actions.setParagraph, 'result')
-                    break
+            try {
+                if (typeof richText.current.format === 'function') {
+                    switch (style) {
+                        case 'title':
+                            richText.current.format('header', 1)
+                            break
+                        case 'heading':
+                            richText.current.format('header', 2)
+                            break
+                        case 'subheading':
+                            richText.current.format('header', 3)
+                            break
+                        case 'body':
+                            richText.current.format('header', false)
+                            break
+                    }
+                }
+            } catch (e) {
+                console.error('Error applying text style:', e)
             }
         }
     }
@@ -412,19 +270,25 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
             setActiveFormat(newFormats)
 
             // Применяем форматирование к тексту
-            switch (format) {
-                case 'bold':
-                    richText.current.sendAction(actions.setBold, 'result')
-                    break
-                case 'italic':
-                    richText.current.sendAction(actions.setItalic, 'result')
-                    break
-                case 'underline':
-                    richText.current.sendAction(actions.setUnderline, 'result')
-                    break
-                case 'strikethrough':
-                    richText.current.sendAction(actions.setStrikethrough, 'result')
-                    break
+            try {
+                if (typeof richText.current.format === 'function') {
+                    switch (format) {
+                        case 'bold':
+                            richText.current.format('bold', !newFormats.has('bold'))
+                            break
+                        case 'italic':
+                            richText.current.format('italic', !newFormats.has('italic'))
+                            break
+                        case 'underline':
+                            richText.current.format('underline', !newFormats.has('underline'))
+                            break
+                        case 'strikethrough':
+                            richText.current.format('strike', !newFormats.has('strikethrough'))
+                            break
+                    }
+                }
+            } catch (e) {
+                console.error('Error toggling format:', e)
             }
         }
     }
@@ -465,171 +329,50 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
     const applyColor = (color: string) => {
         if (!richText.current) return
 
-        // Дополнительно выполняем специальную команду для включения режима styleWithCSS
-        richText.current.commandDOM(`
-            document.execCommand('styleWithCSS', false, true);
-        `)
-
-        // Сначала убедимся, что редактор в фокусе для установки курсора
-        richText.current.focusContentEditor()
+        // Фокусируемся на редакторе перед применением цвета
+        try {
+            if (typeof richText.current.focus === 'function') {
+                richText.current.focus()
+            }
+        } catch (e) {
+            console.error('Error focusing editor:', e)
+        }
 
         // Короткая задержка перед применением форматирования
         setTimeout(() => {
-            if (colorPickerMode === 'text') {
-                // Сохраняем выбранный цвет
-                setSelectedTextColor(color)
+            if (!richText.current) return
+            try {
+                if (typeof richText.current.format === 'function') {
+                    if (colorPickerMode === 'text') {
+                        // Сохраняем выбранный цвет
+                        setSelectedTextColor(color)
 
-                // Устанавливаем стили для текущего и будущего ввода
-                richText.current?.commandDOM(`
-                    try {
-                        // Убедимся, что режим CSS включен
-                        document.execCommand('styleWithCSS', false, true);
-                        
-                        // Если нет выделения, создаём виртуальное выделение в текущей позиции курсора
-                        const selection = window.getSelection();
-                        if (selection && selection.isCollapsed) {
-                            // Создаём маркер в текущей позиции, чтобы сохранить позицию курсора
-                            const markerNode = document.createElement('span');
-                            markerNode.id = 'temp-marker';
-                            markerNode.textContent = '​'; // Невидимый пробел Zero Width Space
-                            
-                            // Вставляем маркер в текущую позицию
-                            const range = selection.getRangeAt(0);
-                            range.insertNode(markerNode);
-                            
-                            // Выделяем маркер для применения стиля
-                            range.selectNode(markerNode);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Применяем цвет
-                            document.execCommand('foreColor', false, '${color}');
-                            
-                            // Восстанавливаем позицию курсора
-                            range.collapse(false);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Добавляем обработчик, который сохраняет форматирование при вводе текста
-                            if (!window.colorFormatHandlerAdded) {
-                                document.execCommand('defaultParagraphSeparator', false, 'p');
-                                document.addEventListener('keydown', function(e) {
-                                    const sel = window.getSelection();
-                                    if (sel && sel.isCollapsed && !e.ctrlKey && !e.metaKey) {
-                                        const currentNode = sel.focusNode;
-                                        if (currentNode) {
-                                            // Автоматически добавляем span с цветом при необходимости
-                                            if (currentNode.nodeType === 3) { // Текстовый узел
-                                                const parentNode = currentNode.parentNode;
-                                                if (parentNode && !parentNode.style?.color) {
-                                                    document.execCommand('foreColor', false, '${color}');
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                                window.colorFormatHandlerAdded = true;
-                            }
-                            
-                            // Удаляем маркер, но сохраняем стили
-                            const marker = document.getElementById('temp-marker');
-                            if (marker) {
-                                marker.removeAttribute('id');
-                            }
-                        } else {
-                            // Если есть выделение - просто применяем цвет
-                            document.execCommand('foreColor', false, '${color}');
-                        }
-                    } catch(e) {
-                        console.error('Error applying text color:', e);
+                        // Применяем цвет текста
+                        richText.current.format('color', color)
+
+                        // Добавляем формат в активные
+                        const newFormats = new Set(activeFormat)
+                        newFormats.add('textColor')
+                        setActiveFormat(newFormats)
+                    } else if (colorPickerMode === 'background') {
+                        // Сохраняем выбранный цвет фона
+                        setSelectedBgColor(color)
+
+                        // Применяем цвет фона
+                        richText.current.format('background', color)
+
+                        // Добавляем формат в активные
+                        const newFormats = new Set(activeFormat)
+                        newFormats.add('bgColor')
+                        setActiveFormat(newFormats)
                     }
-                `)
-
-                // Добавляем формат в активные
-                const newFormats = new Set(activeFormat)
-                newFormats.add('textColor')
-                setActiveFormat(newFormats)
-            } else if (colorPickerMode === 'background') {
-                // Сохраняем выбранный цвет фона
-                setSelectedBgColor(color)
-
-                // Аналогичный подход для фона
-                richText.current?.commandDOM(`
-                    try {
-                        // Убедимся, что режим CSS включен
-                        document.execCommand('styleWithCSS', false, true);
-                        
-                        // Если нет выделения, создаём виртуальное выделение в текущей позиции курсора
-                        const selection = window.getSelection();
-                        if (selection && selection.isCollapsed) {
-                            // Создаём маркер в текущей позиции
-                            const markerNode = document.createElement('span');
-                            markerNode.id = 'temp-bg-marker';
-                            markerNode.textContent = '​'; // Невидимый пробел
-                            
-                            // Вставляем маркер в текущую позицию
-                            const range = selection.getRangeAt(0);
-                            range.insertNode(markerNode);
-                            
-                            // Выделяем маркер для применения стиля
-                            range.selectNode(markerNode);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Применяем цвет фона
-                            document.execCommand('hiliteColor', false, '${color}');
-                            
-                            // Восстанавливаем позицию курсора
-                            range.collapse(false);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Добавляем обработчик, который сохраняет форматирование при вводе текста
-                            if (!window.bgColorFormatHandlerAdded) {
-                                document.addEventListener('keydown', function(e) {
-                                    const sel = window.getSelection();
-                                    if (sel && sel.isCollapsed && !e.ctrlKey && !e.metaKey) {
-                                        const currentNode = sel.focusNode;
-                                        if (currentNode) {
-                                            // Автоматически добавляем span с цветом фона при необходимости
-                                            if (currentNode.nodeType === 3) { // Текстовый узел
-                                                const parentNode = currentNode.parentNode;
-                                                if (parentNode && !parentNode.style?.backgroundColor) {
-                                                    document.execCommand('hiliteColor', false, '${color}');
-                                                }
-                                            }
-                                        }
-                                    }
-                                });
-                                window.bgColorFormatHandlerAdded = true;
-                            }
-                            
-                            // Удаляем маркер, но сохраняем стили
-                            const marker = document.getElementById('temp-bg-marker');
-                            if (marker) {
-                                marker.removeAttribute('id');
-                            }
-                        } else {
-                            // Если есть выделение - просто применяем цвет фона
-                            document.execCommand('hiliteColor', false, '${color}');
-                        }
-                        console.log('Applied background color: ${color}');
-                    } catch(e) {
-                        console.error('Error applying background color:', e);
-                    }
-                `)
-
-                // Добавляем формат в активные
-                const newFormats = new Set(activeFormat)
-                newFormats.add('bgColor')
-                setActiveFormat(newFormats)
+                }
+            } catch (e) {
+                console.error('Error applying color:', e)
             }
 
-            // Проверяем примененные стили с задержкой
+            // Закрываем панель с задержкой
             setTimeout(() => {
-                richText.current?.commandDOM(`window.checkFormatting();`)
-
-                // Закрываем панель с задержкой
                 setShowColorPicker(false)
             }, 300)
         }, 50)
@@ -637,42 +380,56 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
 
     const applyListStyle = (listType: string) => {
         if (richText.current) {
-            switch (listType) {
-                case 'bullet':
-                    richText.current.sendAction(actions.insertBulletsList, 'result')
-                    break
-                case 'numbered':
-                    richText.current.sendAction(actions.insertOrderedList, 'result')
-                    break
-                case 'checklist':
-                    richText.current.sendAction(actions.checkboxList, 'result')
-                    break
-                case 'indent':
-                    richText.current.sendAction(actions.indent, 'result')
-                    break
-                case 'outdent':
-                    richText.current.sendAction(actions.outdent, 'result')
-                    break
+            try {
+                if (typeof richText.current.format === 'function') {
+                    switch (listType) {
+                        case 'bullet':
+                            richText.current.format('list', 'bullet')
+                            break
+                        case 'numbered':
+                            richText.current.format('list', 'ordered')
+                            break
+                        case 'checklist':
+                            richText.current.format('list', 'check')
+                            break
+                        case 'indent':
+                            richText.current.format('indent', '+1')
+                            break
+                        case 'outdent':
+                            richText.current.format('indent', '-1')
+                            break
+                    }
+                }
+            } catch (e) {
+                console.error('Error applying list style:', e)
             }
         }
     }
 
     const applyAlignment = (alignment: string) => {
         if (richText.current) {
-            switch (alignment) {
-                case 'left':
-                    richText.current.sendAction(actions.alignLeft, 'result')
-                    break
-                case 'center':
-                    richText.current.sendAction(actions.alignCenter, 'result')
-                    break
-                case 'right':
-                    richText.current.sendAction(actions.alignRight, 'result')
-                    break
-            }
+            try {
+                if (typeof richText.current.format === 'function') {
+                    switch (alignment) {
+                        case 'left':
+                            richText.current.format('align', 'left')
+                            break
+                        case 'center':
+                            richText.current.format('align', 'center')
+                            break
+                        case 'right':
+                            richText.current.format('align', 'right')
+                            break
+                    }
+                }
 
-            // Убираем фокус из редактора и предотвращаем показ клавиатуры
-            richText.current.blurContentEditor()
+                // Убираем фокус из редактора и предотвращаем показ клавиатуры
+                if (typeof richText.current.blur === 'function') {
+                    richText.current.blur()
+                }
+            } catch (e) {
+                console.error('Error applying alignment:', e)
+            }
         }
     }
 
@@ -680,150 +437,45 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
     const resetColor = () => {
         if (!richText.current) return
 
-        richText.current.focusContentEditor()
+        try {
+            if (typeof richText.current.focus === 'function') {
+                richText.current.focus()
+            }
+        } catch (e) {
+            console.error('Error focusing editor:', e)
+        }
 
         setTimeout(() => {
-            if (colorPickerMode === 'text') {
-                // Сбрасываем цвет текста на значение по умолчанию
-                const defaultColor = isDark ? '#FFFFFF' : '#000000'
-                setSelectedTextColor(defaultColor)
+            if (!richText.current) return
+            try {
+                if (typeof richText.current.format === 'function') {
+                    if (colorPickerMode === 'text') {
+                        // Сбрасываем цвет текста на значение по умолчанию
+                        const defaultColor = isDark ? '#FFFFFF' : '#000000'
+                        setSelectedTextColor(defaultColor)
 
-                richText.current?.commandDOM(`
-                    try {
-                        // Убедимся, что режим CSS включен
-                        document.execCommand('styleWithCSS', false, true);
-                        
-                        // Удаляем обработчик, который сохраняет форматирование при вводе текста
-                        if (window.colorFormatHandlerAdded) {
-                            const oldHandler = document.onkeydown;
-                            document.removeEventListener('keydown', oldHandler);
-                            window.colorFormatHandlerAdded = false;
-                            console.log('Removed text color format handler');
-                        }
-                        
-                        // Если нет выделения, создаём виртуальное выделение в текущей позиции курсора
-                        const selection = window.getSelection();
-                        if (selection && selection.isCollapsed) {
-                            // Создаём маркер в текущей позиции для сброса стилей
-                            const markerNode = document.createElement('span');
-                            markerNode.id = 'temp-reset-marker';
-                            markerNode.textContent = '​'; // Невидимый пробел
-                            
-                            // Вставляем маркер в текущую позицию
-                            const range = selection.getRangeAt(0);
-                            range.insertNode(markerNode);
-                            
-                            // Выделяем маркер для применения стиля
-                            range.selectNode(markerNode);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Применяем сброс форматирования
-                            document.execCommand('removeFormat', false, null);
-                            document.execCommand('foreColor', false, '${defaultColor}');
-                            
-                            // Восстанавливаем позицию курсора
-                            range.collapse(false);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Удаляем маркер, но сохраняем сброшенные стили
-                            const marker = document.getElementById('temp-reset-marker');
-                            if (marker) {
-                                marker.removeAttribute('id');
-                            }
-                        } else {
-                            // Если есть выделение - просто сбрасываем форматирование
-                            document.execCommand('removeFormat', false, null);
-                            document.execCommand('foreColor', false, '${defaultColor}');
-                        }
-                        
-                        // Устанавливаем обработчик для будущего форматирования с дефолтным цветом
-                        document.addEventListener('keydown', function resetHandler(e) {
-                            const sel = window.getSelection();
-                            if (sel && sel.isCollapsed && !e.ctrlKey && !e.metaKey) {
-                                const currentNode = sel.focusNode;
-                                if (currentNode && currentNode.nodeType === 3) { // Текстовый узел
-                                    const parentNode = currentNode.parentNode;
-                                    if (parentNode && parentNode.style && parentNode.style.color !== '${defaultColor}') {
-                                        document.execCommand('foreColor', false, '${defaultColor}');
-                                    }
-                                }
-                            }
-                        });
-                        
-                        console.log('Reset text color to default: ${defaultColor}');
-                    } catch(e) {
-                        console.error('Error resetting text color:', e);
+                        // Используем format для сброса цвета
+                        richText.current.format('color', defaultColor)
+
+                        // Удаляем формат из активных форматов
+                        const newFormats = new Set(activeFormat)
+                        newFormats.delete('textColor')
+                        setActiveFormat(newFormats)
+                    } else if (colorPickerMode === 'background') {
+                        // Сбрасываем цвет фона (делаем прозрачным)
+                        setSelectedBgColor('transparent')
+
+                        // Используем false для удаления формата фона
+                        richText.current.format('background', false)
+
+                        // Удаляем формат из активных форматов
+                        const newFormats = new Set(activeFormat)
+                        newFormats.delete('bgColor')
+                        setActiveFormat(newFormats)
                     }
-                `)
-
-                // Удаляем формат из активных форматов
-                const newFormats = new Set(activeFormat)
-                newFormats.delete('textColor')
-                setActiveFormat(newFormats)
-            } else if (colorPickerMode === 'background') {
-                // Сбрасываем цвет фона (делаем прозрачным)
-                setSelectedBgColor('transparent')
-
-                richText.current?.commandDOM(`
-                    try {
-                        // Убедимся, что режим CSS включен
-                        document.execCommand('styleWithCSS', false, true);
-                        
-                        // Удаляем обработчик, который сохраняет форматирование фона при вводе текста
-                        if (window.bgColorFormatHandlerAdded) {
-                            const oldHandler = document.onkeydown;
-                            document.removeEventListener('keydown', oldHandler);
-                            window.bgColorFormatHandlerAdded = false;
-                            console.log('Removed background color format handler');
-                        }
-                        
-                        // Если нет выделения, создаём виртуальное выделение в текущей позиции курсора
-                        const selection = window.getSelection();
-                        if (selection && selection.isCollapsed) {
-                            // Создаём маркер в текущей позиции для сброса стилей
-                            const markerNode = document.createElement('span');
-                            markerNode.id = 'temp-bg-reset-marker';
-                            markerNode.textContent = '​'; // Невидимый пробел
-                            
-                            // Вставляем маркер в текущую позицию
-                            const range = selection.getRangeAt(0);
-                            range.insertNode(markerNode);
-                            
-                            // Выделяем маркер для применения стиля
-                            range.selectNode(markerNode);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Применяем сброс форматирования
-                            document.execCommand('removeFormat', false, null);
-                            
-                            // Восстанавливаем позицию курсора
-                            range.collapse(false);
-                            selection.removeAllRanges();
-                            selection.addRange(range);
-                            
-                            // Удаляем маркер
-                            const marker = document.getElementById('temp-bg-reset-marker');
-                            if (marker) {
-                                marker.removeAttribute('id');
-                            }
-                        } else {
-                            // Если есть выделение - просто сбрасываем форматирование
-                            document.execCommand('removeFormat', false, null);
-                        }
-                        
-                        console.log('Reset background color to transparent');
-                    } catch(e) {
-                        console.error('Error resetting background color:', e);
-                    }
-                `)
-
-                // Удаляем формат из активных форматов
-                const newFormats = new Set(activeFormat)
-                newFormats.delete('bgColor')
-                setActiveFormat(newFormats)
+                }
+            } catch (e) {
+                console.error('Error resetting color:', e)
             }
 
             // Закрываем панель с задержкой
@@ -836,24 +488,23 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
     const handleVoiceInput = (text: string) => {
         logger.info(text, 'handleVoiceInput -- editor', 'handleVoiceInput')
 
-        // Экранируем специальные символы в тексте
-        const escapedText = text
-            .replace(/\\/g, '\\\\')
-            .replace(/'/g, "\\'")
-            .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r')
-
-        richText.current?.commandDOM(`
+        if (richText.current) {
             try {
-                // Убедимся, что режим CSS включен
-                document.execCommand('styleWithCSS', false, true);
-    
-                // Вставляем текст в редактор на позицию курсора
-                document.execCommand('insertHTML', false, '${escapedText}');
-            } catch(e) {
-                console.error('Error inserting text from server:', e);
+                // Фокусируемся на редакторе
+                if (typeof richText.current.focus === 'function') {
+                    richText.current.focus()
+                }
+
+                // Вставляем текст
+                if (typeof richText.current.insertText === 'function') {
+                    // Вставляем текст в текущую позицию или в начало
+                    const position = 0
+                    richText.current.insertText(position, text)
+                }
+            } catch (e) {
+                console.error('Error handling voice input:', e)
             }
-        `)
+        }
     }
 
     const changeSave = () => {
@@ -867,31 +518,79 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
     const accentColor = isDark ? '#FFD60A' : '#FFD60A'
 
     return (
-        <KeyboardWrapper>
+        <View className='flex-1 relative'>
             {/* Редактор */}
-            <View className="relative flex-1 scroll-auto overflow-hidden" style={{ height: height }}>
-                <RichEditor
-                    ref={richText}
-                    initialContentHTML={initialContent}
-                    onChange={handleChange}
-                    placeholder={placeholder}
-                    className={`flex-1 ${editorClassName}`}
-                    pasteAsPlainText={true}
-                    editorInitializedCallback={registerContentEditableFeature}
-                    autoCorrect={autoCorrect}
-                    initialHeight={height}
-                    onHeightChange={(height) => {
-                        setEditorHeight(height)
-                    }}
-                    editorStyle={{
-                        backgroundColor: bgColor,
-                        color: textColor,
-                        caretColor: accentColor,
-                        placeholderColor: isDark ? '#666' : '#999',
-                        contentCSSText: 'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 16px; padding: 12px;',
-                    }}
-                />
-            </View>
+            <QuillEditor
+                ref={richText}
+                initialHtml={initialContent}
+                onHtmlChange={handleChange}
+                autoSize={true}
+                quill={{
+                    modules: {
+                        toolbar: false,
+                    },
+                    placeholder: placeholder,
+                }}
+                style={{
+                    backgroundColor: bgColor,
+                    padding: 0,
+                    flex: 1,
+                    height: '100%',
+                }}
+                container={false}
+                theme={{
+                    background: bgColor,
+                    color: textColor,
+                    placeholder: textColor,
+                }}
+                webview={{
+                    nestedScrollEnabled: true,
+                    scrollEnabled: true,
+                    style: {
+                        flex: 1
+                    }
+                }}
+                customStyles={[
+                    `
+                    .ql-editor {
+                        font-size: 18px; /* Устанавливаем размер шрифта по умолчанию */
+                        line-height: 1.5;
+                    }
+                    .ql-editor p {
+                        font-size: 18px; /* Размер для параграфов */
+                    }
+                    `
+                ]}
+                customJS={`
+                    // Отключаем внешнюю прокрутку и настраиваем только внутреннюю
+                    document.body.style.overflowY = 'auto';
+                    document.body.style.height = '100%';
+                    document.documentElement.style.height = '100%';
+                    // Отключаем упругость прокрутки на iOS
+                    document.body.style.webkitOverflowScrolling = 'touch';
+                    // Предотвращаем двойную прокрутку
+                    document.addEventListener('touchmove', function(e) {
+                        e.stopPropagation();
+                    }, { passive: false });
+                    
+                    // Добавляем глобальные функции для undo/redo
+                    window.performUndo = function() {
+                        if (quill && quill.history) {
+                            quill.history.undo();
+                            return true;
+                        }
+                        return false;
+                    };
+                    
+                    window.performRedo = function() {
+                        if (quill && quill.history) {
+                            quill.history.redo();
+                            return true;
+                        }
+                        return false;
+                    };
+                `}
+            />
 
             {/* Кастомная панель форматирования (показывается при нажатии на Aa) */}
             {!disabled && showTextStyles && (
@@ -1087,56 +786,6 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
                 </Animated.View>
             )}
 
-            {/* Нижняя панель над клавиатурой */}
-            {!disabled && showBottomBar && !showBottomBarButton && (
-                <Animated.View
-                    entering={SlideInDown.duration(300).damping(15)}
-                    exiting={SlideOutDown.duration(250)}
-                    className="border-t border-border dark:border-border-dark px-4 py-2 flex-row justify-between items-center"
-                >
-                    <View className="flex-row">
-                        <TouchableOpacity onPress={toggleTextStyles} className="items-center justify-center px-3">
-                            <View className="w-8 h-8 items-center justify-center">
-                                <Text weight="bold" size="xl" variant="default">Aa</Text>
-                            </View>
-                        </TouchableOpacity>
-
-                        {/* <TouchableOpacity onPress={pickImage} className="items-center justify-center px-3">
-                            <View className="w-8 h-8 items-center justify-center">
-                                <Icon name="Paperclip" size={20} variant="default" />
-                            </View>
-                        </TouchableOpacity> */}
-
-                    </View>
-
-                    <View className="flex-row items-center space-x-8 ml-auto mr-6">
-                        <TouchableOpacity
-                            onPress={() => richText.current?.commandDOM('document.execCommand("undo", false, null)')}
-                            className="w-8 h-8 items-center justify-center"
-                        >
-                            <Icon name="Undo" size={20} variant="default" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() => richText.current?.commandDOM('document.execCommand("redo", false, null)')}
-                            className="w-8 h-8 items-center justify-center"
-                        >
-                            <Icon name="Redo" size={20} variant="default" />
-                        </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity
-                        onPress={() => {
-                            setShowBottomBarButton(true)
-                            setShowBottomBar(false)
-                        }}
-                        className="w-8 h-8 items-center justify-center"
-                    >
-                        <Icon name="X" size={20} variant="secondary" />
-                    </TouchableOpacity>
-
-                </Animated.View>
-            )}
-
             {/* Кнопка для показа нижней панели */}
             {!disabled && showBottomBarButton && !showTextStyles && (
                 <Animated.View
@@ -1144,7 +793,7 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
                     exiting={SlideOutDown.duration(250)}
                     className={'absolute bottom-4 left-4 right-4'}
                 >
-                    <View className="flex-row justify-start gap-x-4">
+                    <View className="flex-row justify-start items-end gap-x-4">
 
                         <Button
                             leftIcon="Pencil"
@@ -1153,13 +802,16 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
                             size="sm"
                             onPress={() => {
                                 setShowBottomBarButton(false)
-                                setShowBottomBar(true)
+                                setShowTextStyles(true)
                             }}
                         />
 
                         {buttonDown}
 
-                        <View className="flex-row justify-end gap-x-4 ml-auto">
+                        <View className="flex-row justify-end items-end gap-x-4 ml-auto">
+
+                            <VoiceInputButton onTranscribe={handleVoiceInput} size="sm" />
+
                             {isKeyboardVisible && (
                                 <Button
                                     leftIcon="KeyboardOff"
@@ -1174,10 +826,9 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
                             <Button
                                 leftIcon="Check"
                                 variant="default"
-                                size="sm"
                                 onPress={changeSave}
                             />
-                            <VoiceInputButton onTranscribe={handleVoiceInput} className='absolute right-6 bottom-16' />
+
 
                         </View>
                     </View>
@@ -1201,8 +852,9 @@ export const TextEditor = forwardRef<TextEditorRef, TextEditorProps>((props, ref
                     </View>
                 </Animated.View>
             )}
-        </KeyboardWrapper>
+        </View>
     )
 })
 
 export default TextEditor
+

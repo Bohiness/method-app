@@ -1,12 +1,13 @@
 // src/shared/api/auth/auth.service.ts
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { tokenService } from '@shared/lib/user/token/token.service';
-import { AuthTokensType } from '@shared/types/user/AuthTokensType';
+import { AuthTokensType, CheckAuthResponse } from '@shared/types/user/AuthTokensType';
 import { UserType } from '@shared/types/user/UserType';
+import * as Updates from 'expo-updates';
 
 interface LoginRequest {
     email: string;
@@ -23,12 +24,7 @@ interface RegisterRequest {
 interface AuthResponse {
     user: UserType;
     tokens: AuthTokensType;
-}
-
-interface CheckAuthResponse {
     csrfToken: string;
-    is_authenticated: boolean;
-    userData: UserType;
 }
 
 export interface CheckEmailResponse {
@@ -39,11 +35,7 @@ export interface CheckEmailResponse {
     has_expert?: boolean;
 }
 
-interface CsrfTokenResponse {
-    csrfToken: string;
-}
-
-class AuthApiService {
+export class AuthApiService {
     async checkEmail(email: string): Promise<CheckEmailResponse> {
         try {
             const response = await apiClient.post<CheckEmailResponse>(API_ROUTES.AUTH.CHECK_EMAIL, { email });
@@ -84,36 +76,40 @@ class AuthApiService {
         }
     }
 
-    async checkAuth(): Promise<CheckAuthResponse> {
-        try {
-            logger.debug('AuthService: Checking auth status...');
-            // Получаем сессию и проверяем токены
-            const session = await tokenService.getSession();
-            if (!session) {
-                logger.debug('AuthService: No session found during auth check');
-                throw new Error('No active session');
-            }
+    async checkAuthFromStorage(): Promise<CheckAuthResponse> {
+        const session = await tokenService.getSession();
 
-            // Запрашиваем данные пользователя
-            try {
-                const response = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CHECK_AUTH);
-                logger.debug('AuthService: Auth check successful');
-                return response;
-            } catch (error: any) {
-                // Проверяем, связана ли ошибка с отсутствием CSRF-токена
-                if (error?.response?.data?.detail === 'CSRF Failed: CSRF token missing.') {
-                    logger.debug('AuthService: CSRF token missing, requesting new token...');
-                    // Запрашиваем новый CSRF-токен
-                    await this.getCsrfToken();
-                    // Повторяем запрос
-                    const response = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CHECK_AUTH);
-                    logger.debug('AuthService: Auth check successful after CSRF token refresh');
-                    return response;
-                }
-                throw error; // Пробрасываем другие ошибки
-            }
-        } catch (error) {
-            logger.error(error, 'auth-api – checkAuth', 'AuthService: Auth check failed:');
+        if (!session) {
+            throw new Error('No active session');
+        }
+
+        const userData = await storage.get<UserType>(STORAGE_KEYS.USER.USER_DATA);
+
+        if (!userData) {
+            throw new Error('No user data in storage');
+        }
+
+        const csrfToken = await tokenService.getCsrfToken();
+
+        if (!csrfToken) {
+            throw new Error('No CSRF token in storage');
+        }
+
+        return {
+            is_authenticated: true,
+            userData: userData,
+            csrfToken: csrfToken,
+        };
+    }
+
+    async checkAuthFromServer(): Promise<CheckAuthResponse> {
+        try {
+            const response = await apiClient.get<CheckAuthResponse>(API_ROUTES.AUTH.CHECK_AUTH);
+            logger.debug('AuthService: Auth check successful');
+
+            return response;
+        } catch (error: any) {
+            logger.error(error, 'auth-api – checkAuthFromServer', 'AuthService: Auth check failed:');
             throw error;
         }
     }
@@ -128,6 +124,8 @@ class AuthApiService {
         } finally {
             logger.debug('AuthService: Clearing session...');
             await this.clearSession();
+            logger.debug('AuthService: Reloading the app after logout...');
+            await Updates.reloadAsync();
         }
     }
 
@@ -150,11 +148,12 @@ class AuthApiService {
             logger.debug('AuthService: Tokens saved successfully');
 
             // Затем сохраняем данные пользователя
-            await storage.set('user-data', response.user);
+            await storage.set(STORAGE_KEYS.USER.USER_DATA, response.user);
+            await storage.set(STORAGE_KEYS.USER.CSRF_TOKEN, response.csrfToken);
+
             logger.debug('AuthService: User data saved successfully');
         } catch (error) {
             logger.error(error, 'auth-api – saveSession', 'AuthService: Failed to save session:');
-            // При ошибке сохранения очищаем всё
             await this.clearSession();
             throw error;
         }
@@ -218,24 +217,21 @@ class AuthApiService {
             throw error;
         }
     }
+
+    /**
+     * Получает CSRF-токен.
+     * @returns {Promise< string | null >} CSRF-токен или null, если не найден.
+     */
     async getCsrfToken(): Promise<string | null> {
-        try {
-            logger.start('Getting CSRF token...', 'auth-api service – getCsrfToken');
-
-            const csrfTokenResponse = await apiClient.get<CsrfTokenResponse>(API_ROUTES.AUTH.CSRF_TOKEN);
-
-            if (!csrfTokenResponse?.csrfToken) {
-                logger.error('No CSRF token in response', 'auth-api service – getCsrfToken');
-                return null;
-            }
-
-            await storage.set(STORAGE_KEYS.CSRF_TOKEN, csrfTokenResponse.csrfToken);
-            logger.finish('CSRF token saved successfully', 'auth-api service – getCsrfToken');
-            return csrfTokenResponse.csrfToken;
-        } catch (error) {
-            logger.error(error, 'auth-api service – getCsrfToken', 'Error getting CSRF token:');
-            return null;
+        // TODO: Implement actual CSRF token retrieval logic
+        // Например, получить его из хранилища или сделать запрос к API
+        logger.debug('Retrieving CSRF token...', 'getCsrfToken - AuthApiService');
+        // Placeholder:
+        const token = null; // Замени на реальную логику
+        if (!token) {
+            logger.warn('CSRF token not found', 'getCsrfToken - AuthApiService');
         }
+        return token;
     }
 }
 

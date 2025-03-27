@@ -1,4 +1,5 @@
 // src/shared/lib/tasks/tasks-storage.service.ts
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { storage } from '@shared/lib/storage/storage.service';
 import { PaginatedResponse } from '@shared/types/PaginatedResponse';
 import { CreateTaskDtoType, TasksFiltersType, TaskType, UpdateTaskDtoType } from '@shared/types/plans/TasksTypes';
@@ -20,8 +21,8 @@ interface LocalTask extends TaskType {
 }
 
 class TasksStorageService {
-    private readonly TASKS_KEY = 'offline-tasks';
-    private readonly PENDING_CHANGES_KEY = 'tasks-pending-changes';
+    private readonly TASKS_KEY = STORAGE_KEYS.PLANS.TASKS;
+    private readonly PENDING_CHANGES_KEY = STORAGE_KEYS.PLANS.PENDING_CHANGES;
     private readonly MAX_RETRIES = 3;
     private taskLocks: Map<number, boolean> = new Map();
 

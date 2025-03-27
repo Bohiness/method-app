@@ -1,5 +1,5 @@
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { EveningReflectionStorageService } from '@shared/lib/diary/EveningReflectionStorageService';
 import { EveningReflectionType } from '@shared/types/diary/eveningreflection/EveningReflectionType';
 import axios from 'axios';

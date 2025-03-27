@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, PressableProps, View } from 'react-native
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
-    withSpring,
+    withSpring
 } from 'react-native-reanimated'
 import { Icon, IconName } from './icon'
 import { Text } from './text'
@@ -16,6 +16,7 @@ type ButtonVariant = 'default' | 'outline' | 'ghost' | 'tint' | 'destructive' | 
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends PressableProps {
+    animated?: boolean
     variant?: ButtonVariant
     size?: ButtonSize
     loading?: boolean
@@ -39,6 +40,7 @@ interface ButtonProps extends PressableProps {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 export const Button: React.FC<ButtonProps> = ({
+    animated = true,
     variant = 'default',
     size = 'md',
     loading = false,
@@ -204,7 +206,7 @@ export const Button: React.FC<ButtonProps> = ({
                     color={iconProps?.color || variantColors.icon}
                     fill={iconProps?.fill}
                 />
-            </AnimatedPressable>
+            </AnimatedPressable >
         )
     }
 

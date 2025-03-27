@@ -3,7 +3,7 @@
  */
 
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { AiChatResponseType } from '@shared/types/ai/AiTypes';
 import { DeeperType } from '@shared/types/ai/VoiceTone';
 

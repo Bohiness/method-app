@@ -1,9 +1,9 @@
 import {
     useJournal,
+    useJournalDraft,
     useJournalHistory,
     useJournalProfile,
-    useJournalStatistics,
-    useJournalTemplates
+    useJournalStatistics
 } from '@shared/hooks/diary/journal/useJournal'
 import { LocalJournal } from '@shared/types/diary/journal/JournalTypes'
 import { Button } from '@shared/ui/button'
@@ -45,7 +45,7 @@ export const JournalScreen = () => {
 
     // Получаем данные
     const { data: journals, isLoading: isLoadingJournals, refetch: refetchJournals } = useJournalHistory()
-    const { data: templates, isLoading: isLoadingTemplates, refetch: refetchTemplates } = useJournalTemplates()
+    const { data: templates, isLoading: isLoadingTemplates, refetch: refetchTemplates } = useJournalDraft()
     const { data: statistics, isLoading: isLoadingStatistics, refetch: refetchStatistics } = useJournalStatistics()
     const { data: profile, isLoading: isLoadingProfile, refetch: refetchProfile } = useJournalProfile()
     const { data: selectedJournal, isLoading: isLoadingJournalDetails } = getDetails(selectedJournalId)

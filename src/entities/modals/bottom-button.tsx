@@ -5,7 +5,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { KeyboardAvoidingView, Platform } from 'react-native'
 import Animated, { ComplexAnimationBuilder } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 interface BottomButtonProps {
     onBack?: () => void
@@ -37,7 +36,6 @@ export const BottomButton: React.FC<BottomButtonProps> = ({
     showButtonBlock = true
 }) => {
     const { t } = useTranslation()
-    const insets = useSafeAreaInsets()
     const { isKeyboardVisible, keyboardHeight } = useKeyboard()
 
     // Используем значение из пропсов, если оно передано, иначе из хука
@@ -53,10 +51,9 @@ export const BottomButton: React.FC<BottomButtonProps> = ({
             keyboardVerticalOffset={0}
         >
             <View
-                variant="default"
                 className={`pt-4 ${actualIsKeyboardVisible ? 'px-4' : 'px-6'}`}
                 style={{
-                    paddingBottom: actualIsKeyboardVisible ? 16 : insets.bottom,
+                    paddingBottom: 0,
                     position: actualIsKeyboardVisible ? 'absolute' : 'relative',
                     bottom: actualIsKeyboardVisible ? keyboardHeight : 0,
                     left: 0,

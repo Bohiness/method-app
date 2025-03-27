@@ -23,7 +23,7 @@ export const MoodEntryCard: React.FC<MoodEntryCardProps> = ({ entry, emotions, f
         <View variant='paper' className="mb-4 p-4 rounded-lg border-l-4 border-blue-400">
             <View className="flex flex-row items-center mb-2">
                 <Text className="text-2xl mr-2">{moodEmoji}</Text>
-                <Text className="text-lg font-medium">{diaryHelpers.getMoodDescription(entry.mood_level, t)}</Text>
+                <Text className="text-lg font-medium">{t('diary.beautifuldiary.moods.title')}</Text>
             </View>
 
             {emotionNames.length > 0 && (

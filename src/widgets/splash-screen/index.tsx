@@ -1,15 +1,13 @@
-import { authApiService } from '@shared/api/auth/auth-api.service'
 import { useTheme } from '@shared/context/theme-provider'
-import { useUser } from '@shared/context/user-provider'
+import { logger } from '@shared/lib/logger/logger.service'
+import { updateService, UpdateStatus } from '@shared/lib/update/update.service'
 import { BackgroundWithNoise } from '@shared/ui/bg/BackgroundWithNoise'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import Constants from 'expo-constants'
 import { Image } from 'expo-image'
-import * as Updates from 'expo-updates'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useWindowDimensions } from 'react-native'
+import { ActivityIndicator, useWindowDimensions } from 'react-native'
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
@@ -21,18 +19,13 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-type UpdateStatus = 'checking' | 'available' | 'no-update' | 'error'
-type StoreUpdateStatus = 'checking' | 'available' | 'no-update' | 'error'
-
 interface SplashScreenProps {
     onComplete: () => void
 }
 
 export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
-    const { checkAuth } = useUser()
     const { t } = useTranslation()
-    const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('checking')
-    const [storeUpdateStatus, setStoreUpdateStatus] = useState<StoreUpdateStatus>('checking')
+    const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('idle')
     const insets = useSafeAreaInsets()
     const { width: screenWidth } = useWindowDimensions()
 
@@ -41,64 +34,30 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
         ? require('@assets/images/logo/logo-white.svg')
         : require('@assets/images/logo/logo-black.svg')
 
-    const checkForUpdates = async () => {
-        if (__DEV__ || Constants.appOwnership === 'expo') {
-            setUpdateStatus('no-update')
-            return
-        }
-
-        try {
-            setUpdateStatus('checking')
-            const update = await Updates.checkForUpdateAsync()
-
-            if (update.isAvailable) {
-                setUpdateStatus('available')
-                await Updates.fetchUpdateAsync()
-                await Updates.reloadAsync()
-            } else {
-                setUpdateStatus('no-update')
-            }
-        } catch (error) {
-            setUpdateStatus('no-update')
-            console.log('Update check skipped in development mode')
-        }
-    }
-
-
     const initialize = async () => {
         // Главная обертка try-catch для всего процесса инициализации
         try {
-            // получаем CSRF токен
-            await authApiService.getCsrfToken()
+            // Сначала проверяем обновления через OTA/Store с помощью сервиса
+            // Передаем setUpdateStatus как колбэк и указываем немедленную перезагрузку
+            // Ошибки логируются внутри сервиса, .catch() не нужен
+            // Возвращаемое значение не используется, т.к. перезагрузка происходит внутри сервиса
+            await updateService.checkForUpdates({
+                reloadImmediately: true,
+                onStatusChange: setUpdateStatus, // Pass the state setter function
+            })
 
-            // Сначала проверяем обновления через OTA
-            try {
-                await checkForUpdates().catch(err => {
-                    console.error('OTA update check failed:', err)
-                })
-            } catch (otaError) {
-                console.error('Critical OTA update error:', otaError)
-                // Продолжаем работу даже при критических ошибках
-            }
+            // Если reloadImmediately=true и обновление найдено,
+            // updateService.reloadApp() будет вызван, и код ниже не выполнится.
+            // Если обновлений нет или reloadImmediately=false, продолжаем.
 
-            // Проверяем авторизацию пользователя
-            try {
-                await checkAuth().catch(err => {
-                    console.error('Auth check failed:', err)
-                })
-            } catch (authError) {
-                console.error('Critical auth error:', authError)
-                // Продолжаем работу даже при критических ошибках авторизации
-            }
-
-            // Полностью пропускаем инициализацию subscriptionService
-            // чтобы исключить возможные проблемы с нативными модулями
-
-            // Безопасно завершаем инициализацию
+            // Безопасно завершаем инициализацию (только если не было перезагрузки)
+            logger.debug('Инициализация завершена, скрываем сплэш-скрин', 'splash screen – initialize')
             onComplete()
+
         } catch (error) {
             // Это критический обработчик ошибок - последняя линия защиты
-            console.error('Critical initialization error:', error)
+            // Ловим ошибки, которые могли произойти *вне* updateService.checkForUpdates
+            logger.error(error, 'splash screen – initialize', 'Critical initialization error:')
 
             // В любом случае завершаем загрузку сплэш-скрина и переходим к приложению
             onComplete()
@@ -107,7 +66,8 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
 
     useEffect(() => {
         initialize()
-    }, [])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []) // Keep dependencies empty to run only once
 
     // Анимированные стили для текста
     const createTextStyle = (delay: number) => {
@@ -166,6 +126,26 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
         }]
     }))
 
+    // Function to get status text based on updateStatus
+    const getStatusText = () => {
+        switch (updateStatus) {
+            case 'checking':
+                return t('screens.splashscreen.checkingUpdates') // 'Проверка обновлений...'
+            case 'downloading':
+                return t('screens.splashscreen.downloadingUpdate') // 'Загрузка обновления...'
+            case 'ready':
+                // This state might be brief if reloadImmediately is true
+                return t('screens.splashscreen.updateReady') // 'Обновление готово...'
+            case 'error':
+                return t('screens.splashscreen.updateError') // 'Ошибка обновления'
+            case 'idle':
+            default:
+                return null // No text when idle or finished without error/reload
+        }
+    }
+
+    const statusText = getStatusText()
+
     return (
         <BackgroundWithNoise className="flex-1 bg-surface-paper dark:bg-surface-paper-dark" noiseOpacity={0.3}>
             {/* Верхний текст */}
@@ -210,6 +190,34 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                     contentFit="contain"
                 />
             </Animated.View>
+
+            {/* Update Status Indicator */}
+            {(updateStatus === 'checking' || updateStatus === 'downloading') && (
+                <View
+                    variant="transparent"
+                    className="absolute bottom-0 left-0 right-0 flex-row items-center justify-center space-x-2 pb-4"
+                    style={{ paddingBottom: insets.bottom + 16 }} // Position above bottom safe area
+                >
+                    <ActivityIndicator size="small" color={isDark ? '#FFFFFF' : '#000000'} />
+                    {statusText && (
+                        <Text variant="secondary" size="sm">
+                            {statusText}
+                        </Text>
+                    )}
+                </View>
+            )}
+            {/* Optional: Show error message differently if needed */}
+            {/* {updateStatus === 'error' && statusText && (
+                <View
+                    variant="transparent"
+                    className="absolute bottom-0 left-0 right-0 items-center justify-center pb-4"
+                    style={{ paddingBottom: insets.bottom + 16 }}
+                >
+                    <Text variant="error" size="sm">
+                        {statusText}
+                    </Text>
+                </View>
+            )} */}
         </BackgroundWithNoise>
     )
 }

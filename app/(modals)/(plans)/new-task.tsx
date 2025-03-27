@@ -1,15 +1,16 @@
+import { ModalBottomScreenContent } from '@entities/modals/modal-bottom-screen-content'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
-import { ModalBottomContentView, View } from '@shared/ui/view'
+import { View } from '@shared/ui/view'
 import NewTask from '@widgets/plans/NewTask'
 import { useLocalSearchParams } from 'expo-router'
+import { useTranslation } from 'react-i18next'
 import { ActivityIndicator } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function NewTaskModal() {
     const { taskId } = useLocalSearchParams()
     const { getTaskById } = useOfflineTasks()
     const { data: task, isLoading } = getTaskById(Number(taskId))
-    const insets = useSafeAreaInsets()
+    const { t } = useTranslation()
 
     if (isLoading) {
         return (
@@ -20,11 +21,11 @@ export default function NewTaskModal() {
     }
 
     return (
-        <ModalBottomContentView>
+        <ModalBottomScreenContent title={t(task ? 'common.edit' : 'plans.tasks.new.title')}>
             <NewTask
                 mode={task ? 'edit' : 'create'}
                 task={task}
             />
-        </ModalBottomContentView>
+        </ModalBottomScreenContent>
     )
 }       

@@ -6,6 +6,13 @@ import VersionCheck from 'react-native-version-check';
 
 type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'ready' | 'error';
 
+// Add type for options
+interface CheckForUpdatesOptions {
+    silentMode?: boolean;
+    reloadImmediately?: boolean;
+    onStatusChange?: (status: UpdateStatus) => void;
+}
+
 /**
  * Сервис для управления обновлениями приложения по воздуху (OTA)
  */
@@ -16,68 +23,92 @@ class UpdateService {
     private lastStoreCheckTime: number = 0;
     private storeCheckInterval: number = 1000 * 60 * 60 * 24; // Проверяем раз в день
 
+    // Helper to set status and notify
+    private setStatus(status: UpdateStatus, options?: CheckForUpdatesOptions) {
+        this.updateStatus = status;
+        options?.onStatusChange?.(status); // Call the callback if provided
+        logger.debug(`Update status changed to: ${status}`, 'setStatus – UpdateService');
+    }
+
     /**
      * Проверяет наличие обновлений и загружает их, если они доступны
-     * @param {boolean} silentMode - Не показывать уведомления пользователю
-     * @returns {Promise<boolean>} - true если обновление установлено, false если нет
+     * @param {CheckForUpdatesOptions} options - Опции для проверки обновлений
+     * @returns {Promise<boolean>} - true если OTA обновление было загружено (или обновление из стора найдено), false если нет
      */
-    async checkForUpdates(silentMode = false): Promise<boolean> {
+    async checkForUpdates(options: CheckForUpdatesOptions = {}): Promise<boolean> {
+        const { silentMode = false, reloadImmediately = false, onStatusChange } = options;
+
         try {
             if (__DEV__) {
                 logger.debug('Пропуск проверки обновлений в режиме разработки', 'checkForUpdates – UpdateService');
+                // Even in dev, report idle status if callback exists
+                onStatusChange?.('idle');
                 return false;
             }
 
             // Устанавливаем статус проверки
-            this.updateStatus = 'checking';
+            this.setStatus('checking', options);
             logger.debug('Проверяю наличие обновлений...', 'checkForUpdates – UpdateService');
 
             const update = await Updates.checkForUpdateAsync();
 
             if (update.isAvailable) {
                 // Устанавливаем статус загрузки
-                this.updateStatus = 'downloading';
+                this.setStatus('downloading', options);
                 logger.debug('Найдено новое обновление, загружаю...', 'checkForUpdates – UpdateService');
 
                 await Updates.fetchUpdateAsync();
 
                 // Устанавливаем статус готовности
-                this.updateStatus = 'ready';
+                this.setStatus('ready', options);
                 logger.debug('Обновление загружено, готово к установке', 'checkForUpdates – UpdateService');
+
+                if (reloadImmediately) {
+                    logger.debug(
+                        'Немедленный перезапуск приложения по опции reloadImmediately',
+                        'checkForUpdates – UpdateService'
+                    );
+                    await this.reloadApp(); // Reload immediately if requested
+                    // Note: reloadApp might not return if successful
+                    return true; // Indicate update was processed
+                }
 
                 if (!silentMode) {
                     this.showUpdateNotification();
                 }
 
-                return true;
+                return true; // Indicate OTA update was fetched
             } else {
                 // Возвращаем статус в исходное состояние
-                this.updateStatus = 'idle';
-                logger.debug('Обновлений не найдено', 'checkForUpdates – UpdateService');
+                this.setStatus('idle', options);
+                logger.debug('Обновлений OTA не найдено', 'checkForUpdates – UpdateService');
 
                 // Если OTA-обновлений нет, проверяем обновления в сторах
-                await this.checkStoreUpdates(silentMode);
+                // Pass silentMode to store check as well
+                const storeUpdateNeeded = await this.checkStoreUpdates({ silentMode, onStatusChange });
 
-                return false;
+                return storeUpdateNeeded; // Return result of store check
             }
         } catch (error) {
             // Устанавливаем статус ошибки
-            this.updateStatus = 'error';
+            this.setStatus('error', options);
             logger.error(error, 'Ошибка при проверке/загрузке обновлений', 'checkForUpdates – UpdateService');
 
             // В случае ошибки с OTA-обновлением, все равно проверяем сторы
-            await this.checkStoreUpdates(silentMode);
+            // Pass silentMode to store check as well
+            const storeUpdateNeeded = await this.checkStoreUpdates({ silentMode, onStatusChange });
 
-            return false;
+            return storeUpdateNeeded; // Return result of store check even after OTA error
         }
     }
 
     /**
      * Проверяет наличие обновлений в App Store/Google Play
-     * @param {boolean} silentMode - Не показывать уведомления пользователю
+     * @param {CheckForUpdatesOptions} options - Опции для проверки обновлений (используем silentMode и onStatusChange)
      * @returns {Promise<boolean>} - true если найдено обновление, false если нет
      */
-    async checkStoreUpdates(silentMode = false): Promise<boolean> {
+    async checkStoreUpdates(options: CheckForUpdatesOptions = {}): Promise<boolean> {
+        const { silentMode = false, onStatusChange } = options;
         try {
             // Проверяем только раз в день
             const now = Date.now();
@@ -91,27 +122,35 @@ class UpdateService {
 
             this.lastStoreCheckTime = now;
 
+            // Report checking status if callback exists and we proceed
+            onStatusChange?.('checking');
             logger.debug('Проверяю наличие обновлений в App Store/Google Play...', 'checkStoreUpdates – UpdateService');
 
             // Проверяем доступность новых версий
             const result = await VersionCheck.needUpdate();
 
             if (result.isNeeded) {
+                // Report ready status for store update if callback exists
+                onStatusChange?.('ready');
                 logger.debug(
-                    `Доступна новая версия в сторе: ${result.storeVersion}`,
+                    `Доступна новая версия в сторе: ${result.latestVersion}`,
                     'checkStoreUpdates – UpdateService'
                 );
 
                 if (!silentMode) {
-                    this.showStoreUpdateNotification(result.storeVersion);
+                    this.showStoreUpdateNotification(result.latestVersion);
                 }
 
                 return true;
             } else {
+                // Report idle status if no store update needed
+                onStatusChange?.('idle');
                 logger.debug('Обновлений в сторах не найдено', 'checkStoreUpdates – UpdateService');
                 return false;
             }
         } catch (error) {
+            // Report error status if callback exists
+            onStatusChange?.('error');
             logger.error(error, 'Ошибка при проверке обновлений в сторах', 'checkStoreUpdates – UpdateService');
             return false;
         }
@@ -150,7 +189,7 @@ class UpdateService {
             i18n.t('update.storeUpdateAvailableMessage', { version: storeVersion, store: storeName }),
             [
                 {
-                    text: i18n.t('common.nextTime'),
+                    text: i18n.t('common.later'),
                     style: 'cancel',
                 },
                 {
@@ -202,7 +241,8 @@ class UpdateService {
                 'Приложение вернулось из фона, проверяю обновления...',
                 'handleAppStateChange – UpdateService'
             );
-            await this.checkForUpdates(true);
+            // Use silent mode, no immediate reload, no status callback needed here (or maybe log status?)
+            await this.checkForUpdates({ silentMode: true, reloadImmediately: false });
         }
         this.appState = nextAppState;
     };
@@ -216,11 +256,6 @@ class UpdateService {
             this.appState = AppState.currentState;
             this.appStateSubscription = AppState.addEventListener('change', this.handleAppStateChange);
 
-            // Инициализируем VersionCheck для проверки обновлений в сторах
-            if (!__DEV__) {
-                VersionCheck.setAppName('Method do');
-            }
-
             logger.debug('Сервис обновлений инициализирован', 'initialize – UpdateService');
         } catch (error) {
             logger.error(error, 'Ошибка при инициализации сервиса обновлений', 'initialize – UpdateService');
@@ -229,3 +264,6 @@ class UpdateService {
 }
 
 export const updateService = new UpdateService();
+
+// Export the type for use in SplashScreen
+export type { UpdateStatus };

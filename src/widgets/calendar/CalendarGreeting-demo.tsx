@@ -3,13 +3,13 @@ import { DateScrollPicker } from '@entities/calendar/date-scroll-picker'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { Separator } from '@shared/ui/separator'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import CarouselDayDetails from './CarouselDayDetails'
 
 const CalendarGreeting = () => {
     const [selectedDate, setSelectedDate] = useState(new Date())
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+    const { formatDateTimeWithTimezoneAndLocale } = useDateTime()
 
     useEffect(() => {
         router.setParams({ selectedDate: selectedDate?.toISOString() || '' })
@@ -31,7 +31,7 @@ const CalendarGreeting = () => {
             <CarouselDayDetails
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
-                formatDateTime={formateDataTimeWithTimezoneAndLocale}
+                formatDateTime={formatDateTimeWithTimezoneAndLocale}
             />
         </View>
     )

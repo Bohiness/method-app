@@ -1,4 +1,5 @@
 // src/shared/context/add-menu-context.tsx
+import { APP_ROUTES } from '@shared/constants/system/app-routes'
 import { router } from 'expo-router'
 import React, { createContext, useContext, useState } from 'react'
 
@@ -22,7 +23,7 @@ export function AddMenuProvider({ children }: { children: React.ReactNode }) {
 
     const createNewTask = () => {
         hide()
-        router.push('/(modals)/(plans)/new-task')
+        router.push(`/${APP_ROUTES.MODALS.PLANS.NEW_TASK}`)
     }
 
     return (

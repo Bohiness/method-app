@@ -73,6 +73,7 @@ export function FactorsScrollView({ selectedFactors, onSelect, iconView = false,
                     showTitle={showSelectedFactorsTitle}
                 />
             )}
+
             {search && (
                 <TextInput
                     placeholder={t('search')}
@@ -84,6 +85,7 @@ export function FactorsScrollView({ selectedFactors, onSelect, iconView = false,
                     clearButton
                 />
             )}
+
             <ScrollView
                 className="flex-1 mb-6"
                 showsVerticalScrollIndicator={false}

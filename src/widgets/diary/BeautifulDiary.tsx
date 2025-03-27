@@ -13,16 +13,17 @@ import { EveningReflectionCard } from '@entities/diary/beautifulDiary/EveningRef
 import { JournalCard } from '@entities/diary/beautifulDiary/JournalCard'
 import { MoodEntryCard } from '@entities/diary/beautifulDiary/MoodEntryCard'
 import { StartDayCard } from '@entities/diary/beautifulDiary/StartDayCard'
+import { APP_ROUTES } from '@shared/constants/system/app-routes'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import { Journal } from '@shared/types/diary/journal/JournalTypes'
+import { Alert, AlertDescription, AlertTitle } from '@shared/ui/alert'
 import {
     CardSkeleton,
     TextSkeleton
 } from '@shared/ui/skeleton'
 import { router } from 'expo-router'
-import { ScrollView } from 'react-native'
+import { FlatList, ScrollView } from 'react-native'
 import { DiaryEntry, useDiary } from '../../shared/hooks/diary/useDiary'
-
 // Компонент для отображения диаграммы записи с информацией о типе
 interface UniversalDiaryEntryProps {
     diaryEntry: DiaryEntry
@@ -32,10 +33,10 @@ interface UniversalDiaryEntryProps {
 }
 
 const UniversalDiaryEntry: React.FC<UniversalDiaryEntryProps> = ({ diaryEntry, emotions, factors, t }) => {
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+    const { formatDateTimeWithTimezoneAndLocale } = useDateTime()
 
     // Форматирование времени создания
-    const timeFormatted = formateDataTimeWithTimezoneAndLocale(diaryEntry.created_at, 'HH:mm')
+    const timeFormatted = formatDateTimeWithTimezoneAndLocale(diaryEntry.created_at, 'HH:mm')
 
     // Отображение в зависимости от типа записи
     const renderEntry = () => {
@@ -66,9 +67,8 @@ const UniversalDiaryEntry: React.FC<UniversalDiaryEntryProps> = ({ diaryEntry, e
                     <JournalCard
                         entry={diaryEntry.data as Journal}
                         onPress={() => {
-                            console.log('journalEntry id', diaryEntry.id)
                             router.push({
-                                pathname: '/(modals)/(diary)/journal/journal-entry',
+                                pathname: `/${APP_ROUTES.MODALS.DIARY.JOURNAL.ENTRY}`,
                                 params: { journalId: diaryEntry.id }
                             })
                         }}
@@ -93,10 +93,11 @@ export function BeautifulDiary() {
     const { data: emotions } = useEmotions()
     const { factors } = useFactors()
     const { entriesByDay, isPending, error } = useDiary()
+    const { formatDateTimeWithTimezoneAndLocale } = useDateTime()
 
     if (isPending) {
         return (
-            <ScrollView className="p-4" contentContainerStyle={{ flexGrow: 1 }}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                 {/* Скелетон для первого дня */}
                 <View className="mb-6">
                     <TextSkeleton size="lg" width="40%" className="mb-2" />
@@ -139,34 +140,54 @@ export function BeautifulDiary() {
 
     if (error) {
         return (
-            <View className="p-4">
-                <Text>{t('common.error')}</Text>
+            <Alert variant="destructive" >
+                <AlertTitle>{t('common.error')}</AlertTitle>
+                <AlertDescription>{t('common.errorDescription')}</AlertDescription>
+            </Alert>
+        )
+    }
+
+    // Преобразуем объект entriesByDay в массив для FlatList
+    const sections = Object.entries(entriesByDay).map(([date, entries]) => ({
+        date,
+        data: entries, // FlatList ожидает поле 'data' для SectionList, но мы используем FlatList, поэтому назовем его 'entries' для ясности в renderItem
+    })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Сортируем дни по убыванию
+
+    // Функция для рендеринга одного дня (секции)
+    const renderDaySection = ({ item }: { item: { date: string; data: DiaryEntry[] } }) => {
+        return (
+            <View className="mb-6">
+                <Text className="text-xl font-semibold mb-2 capitalize">{item.date}</Text>
+                {item.data.map(entry => (
+                    <UniversalDiaryEntry
+                        key={entry.id}
+                        diaryEntry={entry}
+                        emotions={emotions}
+                        factors={factors}
+                        t={t}
+                    />
+                ))}
             </View>
         )
     }
 
+    // Компонент для отображения, когда список пуст
+    const renderEmptyList = () => (
+        <View className="flex-1 justify-center items-center mt-10">
+            <Text align='center' variant='secondary'>
+                {t('diary.history.noEntries')}
+            </Text>
+        </View>
+    )
+
     return (
-        <ScrollView className="p-4" contentContainerStyle={{ flexGrow: 1 }}>
-            {Object.entries(entriesByDay).length > 0 ? (
-                Object.entries(entriesByDay).map(([date, entries]) => (
-                    <View key={date} className="mb-6">
-                        <Text className="text-xl font-semibold mb-2">{date}</Text>
-                        {entries.map(entry => (
-                            <UniversalDiaryEntry
-                                key={entry.id}
-                                diaryEntry={entry}
-                                emotions={emotions}
-                                factors={factors}
-                                t={t}
-                            />
-                        ))}
-                    </View>
-                ))
-            ) : (
-                <Text className="text-center text-gray-500">
-                    {t('diary.history.noEntries')}
-                </Text>
-            )}
-        </ScrollView>
+        <FlatList
+            data={sections} // Передаем подготовленный массив секций
+            renderItem={renderDaySection} // Используем функцию рендеринга секции дня
+            keyExtractor={(item) => item.date} // Используем дату как уникальный ключ для секции
+            ListEmptyComponent={renderEmptyList} // Компонент для пустого списка
+            contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }} // Добавляем отступ снизу и разрешаем контейнеру расти
+            showsVerticalScrollIndicator={false} // Скрываем индикатор прокрутки для чистоты
+        />
     )
 } 

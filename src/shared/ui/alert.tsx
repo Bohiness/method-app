@@ -60,3 +60,7 @@ export const AlertTitle = ({ className = '', ...props }: StyledTextProps) => {
 export const AlertDescription = ({ className = '', ...props }: StyledTextProps) => {
     return <Text variant="secondary" size="sm" className={className} {...props} />
 }
+
+Alert.displayName = 'Alert'
+AlertTitle.displayName = 'AlertTitle'
+AlertDescription.displayName = 'AlertDescription'

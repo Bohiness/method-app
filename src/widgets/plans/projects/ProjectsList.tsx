@@ -4,7 +4,7 @@ import { Button } from '@shared/ui/button'
 import { Text } from '@shared/ui/text'
 import { Card, View } from '@shared/ui/view'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Alert } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -56,7 +56,7 @@ export default function ProjectsList() {
     }
 
     return (
-        <View className="flex-1 gap-y-6 px-4" variant='default'>
+        <View className="flex-1 gap-y-6 px-4">
 
             <View className="flex-1 gap-y-4">
                 {projects?.length === 0 && (
@@ -112,7 +112,6 @@ export default function ProjectsList() {
             <Button
                 leftIcon="Plus"
                 variant="outline"
-                className="mb-4"
                 style={{ marginBottom: insets.bottom }}
                 onPress={() => handleOpenModal()}
             >

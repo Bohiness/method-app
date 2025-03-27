@@ -1,5 +1,6 @@
 import { JournalSyncService } from '@shared/api/diary/JournalSyncService';
-import { QUERY_KEYS } from '@shared/constants/QUERY_KEYS';
+import { APP_ROUTES } from '@shared/constants/system/app-routes';
+import { QUERY_KEYS } from '@shared/constants/system/QUERY_KEYS';
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal';
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { JournalStorageService } from '@shared/lib/diary/Journal.storage.service';
@@ -13,7 +14,7 @@ const journalStorageService = new JournalStorageService();
 const journalSyncService = new JournalSyncService(journalStorageService);
 
 // Максимальное количество записей для бесплатной версии
-const FREE_JOURNALS_LIMIT = 5;
+const FREE_JOURNALS_LIMIT = Number(process.env.FREE_JOURNALS_LIMIT);
 
 /**
  * Хук для работы с записями журнала
@@ -41,7 +42,7 @@ export const useJournal = () => {
         }
 
         // Если есть премиум или количество записей меньше лимита, открываем модальное окно создания записи
-        router.push('/(modals)/(diary)/journal');
+        router.push(`/${APP_ROUTES.MODALS.DIARY.JOURNAL.EDITOR}`);
     };
 
     // Общая функция для дебаунсированной синхронизации
@@ -254,11 +255,11 @@ export const useJournal = () => {
     };
 
     // Функция для получения шаблонов
-    const getTemplates = () => {
+    const getDraft = () => {
         return useQuery<Journal[], Error>({
             queryKey: [QUERY_KEYS.JOURNAL_TEMPLATES],
             queryFn: async () => {
-                return journalStorageService.getTemplates();
+                return journalStorageService.getDraft();
             },
         });
     };
@@ -316,7 +317,7 @@ export const useJournal = () => {
         getProfile,
         openJournalModal,
         // Новые методы для работы с шаблонами
-        getTemplates,
+        getDraft,
         getTemplateDetails,
         deleteTemplate: deleteTemplateMutation,
         convertTemplateToJournal: convertTemplateToJournalMutation,
@@ -410,9 +411,9 @@ export const useJournalProfile = () => {
 };
 
 // Добавляем хуки для работы с шаблонами
-export const useJournalTemplates = () => {
-    const { getTemplates } = useJournal();
-    const query = getTemplates();
+export const useJournalDraft = () => {
+    const { getDraft } = useJournal();
+    const query = getDraft();
     return {
         ...query,
         isPending: query.isPending,

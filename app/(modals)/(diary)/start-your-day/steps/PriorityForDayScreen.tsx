@@ -43,8 +43,8 @@ export default function PriorityForDayScreen(
     }
 
     return (
-        <View className='flex-1 gap-y-4' variant='default'>
-            <Title align='center'>
+        <View className='flex-1' variant='default'>
+            <Title align='center' className='mb-2'>
                 {t('diary.startday.priority.title')}
             </Title>
 

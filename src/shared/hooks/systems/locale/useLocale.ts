@@ -1,9 +1,10 @@
 // src/shared/hooks/useLocale.ts
 import { getStoredLanguage } from '@shared/config/i18n';
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { useUser } from '@shared/context/user-provider';
 import { useStorage } from '@shared/lib/storage/storage.service';
 import { SupportedLocale } from '@shared/types/locale/types';
+import { enGB, ru } from 'date-fns/locale';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,9 +19,13 @@ export const useLocale = ({ initialLocale = 'ru' }: LocaleStorageProps = {}) => 
     const [hour12, setHour12] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const storage = useStorage();
-
-    // Флаг для предотвращения зацикливания
     const isUpdatingLocale = useRef(false);
+
+    // Маппинг локалей
+    const locales = {
+        ru: ru,
+        en: enGB,
+    };
 
     // Загрузка локали при инициализации
     useEffect(() => {
@@ -72,7 +77,7 @@ export const useLocale = ({ initialLocale = 'ru' }: LocaleStorageProps = {}) => 
             setLocale(newLocale);
 
             // Сохраняем в хранилище
-            await storage.set(STORAGE_KEYS.APP_LOCALE as any, newLocale);
+            await storage.set(STORAGE_KEYS.APP.APP_LOCALE as any, newLocale);
 
             // Обновляем язык пользователя, если он авторизован и не анонимный
             if (user && !user.is_anonymous_user) {
@@ -96,5 +101,6 @@ export const useLocale = ({ initialLocale = 'ru' }: LocaleStorageProps = {}) => 
         setHour12,
         updateLocale,
         isLoading,
+        dateFnsLocale: locales[locale],
     };
 };

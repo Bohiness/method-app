@@ -32,7 +32,7 @@ export function MoodLevelStep({
 }: MoodLevelStepProps) {
   const { t } = useTranslation()
   const { isDark } = useTheme()
-  const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+  const { formatDateTimeWithTimezoneAndLocale } = useDateTime()
   const { moods } = useMood()
 
   const [sliderValue, setSliderValue] = useState(() => {
@@ -93,7 +93,7 @@ export function MoodLevelStep({
           {t('diary.moodcheckin.step1.title')}
         </Title>
         <Text variant='secondary' className="mb-8 text-center">
-          {`${t('diary.moodcheckin.step1.description')} ${formateDataTimeWithTimezoneAndLocale(dateNow)}`}
+          {`${t('diary.moodcheckin.step1.description')} ${formatDateTimeWithTimezoneAndLocale(dateNow)}`}
         </Text>
 
         <View className="flex-row justify-between px-4 mb-6">

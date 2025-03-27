@@ -1,13 +1,11 @@
-import { ModalBottomContentView } from '@shared/ui/view'
+import { ModalBottomScreenContent } from '@entities/modals/modal-bottom-screen-content'
 import { LoginForm } from '@widgets/auth/LoginForm'
-
-
 
 export default function ProfileScreen() {
 
     return (
-        <ModalBottomContentView showHeader className='px-4'>
+        <ModalBottomScreenContent>
             <LoginForm />
-        </ModalBottomContentView>
+        </ModalBottomScreenContent>
     )
 }

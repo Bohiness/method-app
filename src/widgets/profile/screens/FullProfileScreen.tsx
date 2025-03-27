@@ -8,10 +8,11 @@ import { Button } from '@shared/ui/button'
 import { Icon } from '@shared/ui/icon'
 import { InfoGroup, InfoItem } from '@shared/ui/info-item'
 import { Text } from '@shared/ui/text'
+import { View } from '@shared/ui/view'
 import { router } from 'expo-router'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity } from 'react-native'
 
 export const FullProfileScreen = ({
     onBack,
@@ -55,7 +56,7 @@ export const FullProfileScreen = ({
     // Если пользователь не авторизован или анонимный
     if (!user || user.is_anonymous_user) {
         return (
-            <View className="flex-1 bg-background dark:bg-background-dark">
+            <View className="flex-1">
                 <HeaderMenuItem onBack={onBack} title={t('profile.title')} />
 
                 <View className="flex-1 gap-y-6 items-center justify-center px-4">
@@ -81,7 +82,7 @@ export const FullProfileScreen = ({
     }
 
     return (
-        <View className="flex-1 bg-background dark:bg-background-dark">
+        <View className="flex-1">
             <HeaderMenuItem onBack={onBack} title={t('profile.title')} />
 
             <View className="flex-1 gap-y-6">

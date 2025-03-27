@@ -6,7 +6,7 @@ import { IconPicker } from '@shared/ui/icon-picker'
 import { Title } from '@shared/ui/text'
 import { TextInput } from '@shared/ui/text-input'
 import { View } from '@shared/ui/view'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { KeyboardAvoidingView, Platform, Pressable } from 'react-native'
 import { CycleSelectionButton } from '../CycleSelectionButton'
@@ -20,7 +20,7 @@ interface NewHabitModalProps {
 export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) {
     const { createHabit } = useHabits()
     const { t } = useTranslation()
-    const { keyboardHeight, isKeyboardVisible, dismissKeyboard } = useKeyboard()
+    const { keyboardHeight, isKeyboardVisible, hideKeyboard } = useKeyboard()
 
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
@@ -33,6 +33,12 @@ export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) 
     const [isLoading, setIsLoading] = useState(false)
     const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>([])
     const [selectedMonthDays, setSelectedMonthDays] = useState<(number | 'last')[]>([])
+
+    useEffect(() => {
+        if (!isVisible) {
+            resetForm()
+        }
+    }, [isVisible])
 
     if (!isVisible) return null
 
@@ -71,11 +77,7 @@ export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) 
         setSelectedMonthDays([])
     }
 
-    useEffect(() => {
-        if (!isVisible) {
-            resetForm()
-        }
-    }, [isVisible])
+
 
     return (
         <KeyboardAvoidingView
@@ -83,7 +85,7 @@ export function NewHabit({ isVisible, onClose, onSuccess }: NewHabitModalProps) 
             className="flex-1"
             keyboardVerticalOffset={Platform.OS === 'ios' ? 44 : 0}
         >
-            <Pressable className="flex-1" onPress={dismissKeyboard}>
+            <Pressable className="flex-1" onPress={hideKeyboard}>
                 <View className="flex-1 gap-y-4 justify-between p-4">
                     <Title>{t('plans.habits.newHabit.title')}</Title>
                     <View className="flex-1 gap-y-4">

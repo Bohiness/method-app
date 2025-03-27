@@ -1,3 +1,4 @@
+import { APP_ROUTES } from '@shared/constants/system/app-routes'
 import { useUser } from '@shared/context/user-provider'
 import { Avatar } from '@shared/ui/avatar'
 import { Button } from '@shared/ui/button'
@@ -9,7 +10,7 @@ export function UserHeaderButton() {
 
     const handleProfilePress = () => {
         router.push({
-            pathname: '/(modals)/(profile)/settings',
+            pathname: `/${APP_ROUTES.MODALS.SETTINGS.BASE}`,
             params: {
                 startScreen: 'main'
             }

@@ -1,7 +1,6 @@
 // StepNavigator.tsx
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { router } from 'expo-router'
-import React from 'react'
 import { EmotionsScreen } from './steps/EmotionsScreen'
 import { ExplanationScreen } from './steps/ExplanationScreen'
 import { FactorsScreen } from './steps/FactorsScreen'
@@ -43,8 +42,15 @@ export default function StepNavigatorMood({ date = new Date(), onStepChange }: S
         <Stack.Navigator
             screenOptions={{
                 headerShown: false,
-                animation: 'slide_from_right',
+                animation: 'simple_push',
                 gestureEnabled: true,
+                sheetExpandsWhenScrolledToEdge: false,
+                headerShadowVisible: false,
+                fullScreenGestureShadowEnabled: false,
+                animationTypeForReplace: 'push',
+                contentStyle: {
+                    backgroundColor: 'transparent',
+                },
             }}
         >
             <Stack.Screen

@@ -5,7 +5,7 @@ import { Calendar } from '@shared/ui/calendar'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { format } from 'date-fns'
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface MonthlyActivityProps {
@@ -15,7 +15,7 @@ interface MonthlyActivityProps {
 export const MonthlyActivity = ({ currentMonthData }: MonthlyActivityProps) => {
     const { t } = useTranslation()
     const { currentLanguage } = useLanguage()
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+    const { formatDateTimeWithTimezoneAndLocale } = useDateTime()
     const [selectedDate, setSelectedDate] = useState(new Date())
 
     // Подготавливаем данные для маркеров календаря
@@ -121,7 +121,7 @@ export const MonthlyActivity = ({ currentMonthData }: MonthlyActivityProps) => {
     return (
         <View className="w-full">
             <Text className="text-center text-base font-semibold mb-4 text-secondary-light dark:text-secondary-light-dark">
-                {formateDataTimeWithTimezoneAndLocale(selectedDate, 'LLLL yyyy')}
+                {formatDateTimeWithTimezoneAndLocale(selectedDate, 'LLLL yyyy')}
             </Text>
 
             <Calendar

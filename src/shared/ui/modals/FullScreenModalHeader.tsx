@@ -6,13 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button } from '../button'
 
 interface ModalHeaderProps {
+    leftContent?: ReactNode
     centerContent?: ReactNode
     closeButton?: boolean
     onClose?: () => void
     variant?: 'default' | 'paper' | 'canvas' | 'stone' | 'inverse' | 'transparent'
 }
 
-export function FullScreenModalHeader({ variant = 'default', centerContent, onClose, closeButton = true }: ModalHeaderProps) {
+export function FullScreenModalHeader({ variant = 'default', leftContent, centerContent, onClose, closeButton = true }: ModalHeaderProps) {
     const insets = useSafeAreaInsets()
 
     return (
@@ -22,7 +23,13 @@ export function FullScreenModalHeader({ variant = 'default', centerContent, onCl
             style={{ zIndex: 1000, paddingTop: insets.top + 8, paddingBottom: 8 }}
         >
             {/* Левая часть – пустое пространство для балансировки */}
-            <View className="w-10" />
+            {leftContent ?
+                <View className="items-start">
+                    {leftContent}
+                </View>
+                :
+                <View className="w-10" />
+            }
 
             {/* Центральная часть – универсальный блок (например, StepIndicator) */}
             <Animated.View

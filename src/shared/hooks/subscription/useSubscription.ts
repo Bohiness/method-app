@@ -1,8 +1,8 @@
 // src/shared/hooks/subscription/useSubscription.ts
 
-import { QUERY_KEYS } from '@shared/constants/QUERY_KEYS';
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
 import { SUBSCRIPTION_TIERS } from '@shared/constants/substrations/tiers';
+import { QUERY_KEYS } from '@shared/constants/system/QUERY_KEYS';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { useUser } from '@shared/context/user-provider';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
@@ -66,7 +66,10 @@ export const useSubscription = () => {
                 // Если первая инициализация уже была выполнена,
                 // просто проверяем наличие кэшированных данных в localStorage
                 if (hasInitializedRef.current) {
-                    const savedStatus = await storage.get<SubscriptionStatus>(STORAGE_KEYS.SUBSCRIPTION_STATUS, true);
+                    const savedStatus = await storage.get<SubscriptionStatus>(
+                        STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS,
+                        true
+                    );
                     if (savedStatus) {
                         logger.log(
                             `Кэшированная подписка: ${JSON.stringify(savedStatus)}`,
@@ -109,7 +112,10 @@ export const useSubscription = () => {
                 }
 
                 // Если не удалось получить с сервера - ищем в хранилище
-                const savedStatus = await storage.get<SubscriptionStatus>(STORAGE_KEYS.SUBSCRIPTION_STATUS, true);
+                const savedStatus = await storage.get<SubscriptionStatus>(
+                    STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS,
+                    true
+                );
                 if (savedStatus) {
                     logger.log(`Кэшированная подписка: ${JSON.stringify(savedStatus)}`, 'useSubscription - queryFn');
                     return savedStatus;
@@ -467,7 +473,7 @@ export const useSubscription = () => {
         logger.log('Clearing subscription cache', 'useSubscription – clearSubscriptionCache');
         try {
             await cacheService.clearCache();
-            await storage.remove(STORAGE_KEYS.SUBSCRIPTION_STATUS);
+            await storage.remove(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS);
 
             // Обновляем состояние в React Query
             queryClient.invalidateQueries({

@@ -170,8 +170,8 @@ export function SuccessScreen({
                 {doneButtonActive && (
                     <Button
                         variant="default"
-                        fullWidth
                         onPress={handleClose}
+                        className="w-fit self-center px-20"
                         style={{ marginBottom: insets.bottom }}
                     >
                         {buttonText || t('common.done')}

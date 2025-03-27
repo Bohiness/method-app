@@ -3,12 +3,12 @@ import { useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { Text } from '@shared/ui/text'
 import { Check } from 'lucide-react-native'
-import React from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable } from 'react-native'
 import Animated, {
     useAnimatedStyle,
     withSpring
 } from 'react-native-reanimated'
+import { View } from './view'
 
 interface RadioOption {
     label: string
@@ -43,10 +43,10 @@ const RadioButton = ({
     }))
 
     return (
-        <View>
+        <View variant="default">
             <Pressable
                 onPress={onPress}
-                className={`flex-row justify-between items-center py-4 px-4 bg-text-dark dark:bg-text
+                className={`flex-row justify-between items-center py-4 px-4
                     ${isFirst ? 'rounded-t-xl' : ''}
                     ${isLast ? 'rounded-b-xl' : ''}
                     ${className}`}
@@ -54,7 +54,9 @@ const RadioButton = ({
                 <Text variant="default" size={textSize}>
                     {label}
                 </Text>
-                <View className={`
+                <View
+                    variant={'transparent'}
+                    className={`
                         w-5 h-5 rounded-full border-2 
                         items-center justify-center
                         ${isSelected ? 'bg-background-dark dark:bg-surface-paper border-background-dark dark:border-surface-paper' : 'border-inactive'}
@@ -71,7 +73,7 @@ const RadioButton = ({
                 </View>
             </Pressable>
             {showSeparator && !isLast && (
-                <View className="h-[1px] bg-inactive/20 mx-4" />
+                <View className="h-[1px] bg-inactive/10" />
             )}
         </View>
     )
@@ -113,7 +115,7 @@ export const RadioGroup = ({
                     {label}
                 </Text>
             )}
-            <View className={cn('overflow-hidden rounded-2xl bg-surface-paper dark:bg-surface-paper-dark', containerClassName)}>
+            <View variant="default" className={cn('overflow-hidden rounded-2xl', containerClassName)}>
                 {options.map((option, index) => (
                     <RadioButton
                         key={option.value}

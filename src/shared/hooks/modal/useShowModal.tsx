@@ -1,4 +1,4 @@
-import { ModalHeader } from '@shared/ui/modals/ModalHeader'
+import { BottomModalHeader } from '@shared/ui/modals/BottomModalHeader'
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { BackHandler } from 'react-native'
 import { View } from '../../ui/view'
@@ -170,7 +170,7 @@ export const useShowModal = (): UseModalResult => {
                     onChange={handleSheetChanges}
                     enablePanDownToClose={true}
                     backgroundStyle={{ backgroundColor: 'transparent' }}
-                    handleComponent={() => <ModalHeader showCloseButton={config.showCloseButton} onClose={hideModal} titleLeftComponent={renderTitleLeftComponent()} />}
+                    handleComponent={() => <BottomModalHeader showCloseButton={config.showCloseButton} onClose={hideModal} titleLeftComponent={renderTitleLeftComponent()} />}
                 >
                     <BottomSheetView className="flex-1">
                         <View

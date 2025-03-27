@@ -1,8 +1,9 @@
+import { ModalFullScreenContent } from '@entities/modals/modal-full-screen-content'
+import { StepIndicator } from '@entities/modals/StepIndicator'
 import { NavigationIndependentTree, useNavigation } from '@react-navigation/native'
-import React, { useLayoutEffect, useState } from 'react'
-import { View } from 'react-native'
+import { router } from 'expo-router'
+import { useLayoutEffect, useState } from 'react'
 import StepNavigatorStartYourDay from './start-your-day/StepNavigator'
-
 export default function StartYourDayScreen() {
     const [currentStep, setCurrentStep] = useState(1)
     const navigation = useNavigation()
@@ -20,10 +21,21 @@ export default function StartYourDayScreen() {
         setCurrentStep(step)
     }
     return (
-        <View className="flex-1 bg-background">
+        <ModalFullScreenContent
+            headerOnClose={() => {
+                router.dismissTo('/(tabs)')
+            }}
+            headerCenterContent={
+                <StepIndicator
+                    currentStep={currentStep}
+                    onStepPress={syncStep}
+                    totalSteps={4}
+                />
+            }
+        >
             <NavigationIndependentTree>
                 <StepNavigatorStartYourDay date={new Date()} onStepChange={syncStep} />
             </NavigationIndependentTree>
-        </View>
+        </ModalFullScreenContent>
     )
 }

@@ -1,5 +1,6 @@
 import { EveningReflectionSyncService } from '@shared/api/diary/EveningReflectionSyncService';
-import { QUERY_KEYS } from '@shared/constants/QUERY_KEYS';
+import { APP_ROUTES } from '@shared/constants/system/app-routes';
+import { QUERY_KEYS } from '@shared/constants/system/QUERY_KEYS';
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal';
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { EveningReflectionStorageService } from '@shared/lib/diary/EveningReflectionStorageService';
@@ -43,7 +44,7 @@ export const useEveningReflection = () => {
         }
 
         // Если есть премиум или количество записей меньше лимита, открываем модальное окно создания рефлексии
-        router.push('/(modals)/(diary)/evening-reflection');
+        router.push(`/${APP_ROUTES.MODALS.DIARY.EVENING_REFLECTION}`);
     };
 
     // Общая функция для дебаунсированной синхронизации

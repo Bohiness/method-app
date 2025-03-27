@@ -1,7 +1,6 @@
 // StepNavigator.tsx
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { router } from 'expo-router'
-import React from 'react'
 import PlansForDay from './steps/PlansForDay'
 import PriorityForDayScreen from './steps/PriorityForDayScreen'
 import SleepQualityStepScreen from './steps/SleepQualityStepScreen'
@@ -37,8 +36,15 @@ export default function StepNavigatorStartYourDay({ date = new Date(), onStepCha
         <Stack.Navigator
             screenOptions={{
                 headerShown: false,
-                animation: 'slide_from_right',
+                animation: 'simple_push',
                 gestureEnabled: true,
+                sheetExpandsWhenScrolledToEdge: false,
+                headerShadowVisible: false,
+                fullScreenGestureShadowEnabled: false,
+                animationTypeForReplace: 'push',
+                contentStyle: {
+                    backgroundColor: 'transparent',
+                },
             }}
         >
             <Stack.Screen

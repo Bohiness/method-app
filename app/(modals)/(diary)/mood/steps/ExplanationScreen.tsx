@@ -6,7 +6,7 @@ import { useCreateMoodCheckin } from '@shared/hooks/diary/mood/useMoodCheckin'
 import { View } from '@shared/ui/view'
 import { ExplanationStep } from '@widgets/diary/mood/steps/ExplanationStep'
 import { Audio } from 'expo-av'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MoodStackParamList } from '../StepNavigator'
 
 type Props = NativeStackScreenProps<MoodStackParamList, 'Explanation'>

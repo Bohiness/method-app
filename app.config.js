@@ -2,7 +2,7 @@ module.exports = {
     expo: {
         name: 'Method do',
         slug: 'method-app',
-        version: '1.0.1',
+        version: '1.1.0',
         orientation: 'portrait',
         icon: './assets/images/icons/icon-light.png',
         scheme: 'com.anonymous.methodapp',
@@ -73,7 +73,7 @@ module.exports = {
             fallbackToCacheTimeout: 0,
             url: 'https://u.expo.dev/2f9b2df6-af52-4635-9b67-d222cd5006c8',
         },
-        runtimeVersion: '1.0.1',
+        runtimeVersion: '1.1.0',
         channel: 'production',
         sdkVersion: '52.0.0',
     },

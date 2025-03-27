@@ -1,4 +1,5 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
+import { APP_ROUTES } from '@shared/constants/system/app-routes'
 import { useLanguage } from '@shared/context/language-provider'
 import { useUser } from '@shared/context/user-provider'
 import { useToneOfVoice } from '@shared/hooks/ai/toneOfVoice.hook'
@@ -87,7 +88,7 @@ export const SettingsScreen = ({ onBack, onNavigate }: { onBack: () => void, onN
                             </Badge>
                         }
                         onPress={() => {
-                            router.push('/(modals)/(profile)/ai-tone-of-voice')
+                            router.push(`/${APP_ROUTES.MODALS.SETTINGS.AI_TONE_OF_VOICE}`)
                         }}
                     />
                 </MenuGroup>

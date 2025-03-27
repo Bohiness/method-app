@@ -41,10 +41,6 @@ function TabNavigator() {
             borderTopWidth: 0,
             paddingHorizontal: 10,
             paddingBottom: insets.bottom,
-            marginBottom: 0,
-            elevation: 10,
-            position: 'relative',
-            zIndex: 10,
           },
           tabBarItemStyle: {
             height: TAB_BAR_HEIGHT,
@@ -94,8 +90,7 @@ function TabNavigator() {
         <Tabs.Screen
           name="add"
           options={{
-            title: '',
-            tabBarButton: () => <AddButton />,
+            tabBarButton: () => null,
           }}
           listeners={{
             tabPress: (e) => {
@@ -136,6 +131,7 @@ function TabNavigator() {
         />
       </Tabs>
       <AddButtonMenu />
+      <AddButton />
     </View>
   )
 }

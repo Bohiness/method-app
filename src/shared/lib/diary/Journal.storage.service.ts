@@ -1,10 +1,10 @@
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { JournalCreate, JournalUpdate, LocalJournal } from '@shared/types/diary/journal/JournalTypes';
 import { storage } from '../storage/storage.service';
 
 export class JournalStorageService {
-    private readonly STORAGE_KEY = STORAGE_KEYS.JOURNAL;
-    private readonly TEMPLATE_STORAGE_KEY = STORAGE_KEYS.JOURNAL_TEMPLATES;
+    private readonly STORAGE_KEY = STORAGE_KEYS.DIARY.JOURNAL;
+    private readonly TEMPLATE_STORAGE_KEY = STORAGE_KEYS.DIARY.JOURNAL_TEMPLATES;
 
     // Функция для генерации простого ID
     private generateId(): number {
@@ -259,7 +259,7 @@ export class JournalStorageService {
     // === МЕТОДЫ ДЛЯ РАБОТЫ С ШАБЛОНАМИ ===
 
     // Получить все шаблоны
-    async getTemplates(): Promise<LocalJournal[]> {
+    async getDraft(): Promise<LocalJournal[]> {
         try {
             const storedData = await storage.get<LocalJournal[]>(this.TEMPLATE_STORAGE_KEY);
             if (!storedData) return [];
@@ -282,7 +282,7 @@ export class JournalStorageService {
     // Получить шаблон по ID
     async getTemplateById(id: number): Promise<LocalJournal | null> {
         try {
-            const templates = await this.getTemplates();
+            const templates = await this.getDraft();
             // Ищем по id или local_id
             const template = templates.find(t => (t.id === id || t.local_id === id) && !t.is_deleted);
             return template || null;

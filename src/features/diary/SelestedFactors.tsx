@@ -72,10 +72,6 @@ export function SelectedFactorsBadges({
     const { t } = useTranslation()
     const selectedFactorsCount = selectedFactors.length
 
-    if (!selectedFactors.length) {
-        return null
-    }
-
     return (
         <View className={`flex-row flex-wrap justify-center items-center ${containerClassName}`}>
             {showTitle && (
@@ -84,7 +80,7 @@ export function SelectedFactorsBadges({
                 </Text>
             )}
 
-            <Animated.View className="flex-row flex-wrap justify-center w-full" layout={Layout}>
+            <Animated.View className="flex-row flex-wrap justify-center w-full min-h-10" layout={Layout}>
                 {factors
                     .filter(factor => selectedFactors.includes(factor.id))
                     .map((factor, index) => (
@@ -97,7 +93,7 @@ export function SelectedFactorsBadges({
                             <Badge
                                 variant="outline"
                                 removable={selectedFactorsCount > minimumRequired}
-                                onRemove={() => onRemoveFactor(factor.id)}
+                                onPress={() => onRemoveFactor(factor.id)}
                                 style={{ margin: 4 }}
                             >
                                 {factor.name}

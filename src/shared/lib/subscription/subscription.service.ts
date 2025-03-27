@@ -1,12 +1,38 @@
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { Platform } from 'react-native';
+// Импортируем только типы статически
 import { SUBSCRIPTION_TIERS } from '@shared/constants/substrations/tiers';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { SubscriptionCacheData, SubscriptionCacheService } from '@shared/lib/subscription/subscription-cache.service';
 import { SubscriptionStatus, SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
-// import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
+import type { CustomerInfo as RNCustomerInfo, PurchasesPackage as RNPurchasesPackage } from 'react-native-purchases';
+
+// Объявляем переменные для модуля и типов
+let Purchases: typeof import('react-native-purchases').default | null = null;
+// Переименовываем импортированные типы, чтобы избежать конфликта имен
+type CustomerInfo = RNCustomerInfo;
+type PurchasesPackage = RNPurchasesPackage;
+
+// Динамически загружаем модуль только не в DEV режиме
+if (!__DEV__) {
+    try {
+        // Используем require для динамической загрузки
+        const RNPurchases = require('react-native-purchases');
+        Purchases = RNPurchases.default; // Убедитесь, что это правильный экспорт (может быть просто RNPurchases)
+        logger.debug('Модуль react-native-purchases успешно загружен.');
+    } catch (error) {
+        logger.error(
+            error,
+            'SubscriptionService',
+            "Не удалось загрузить модуль 'react-native-purchases'. Возможно, он не установлен или не настроен для текущей платформы."
+        );
+        // Purchases останется null
+    }
+} else {
+    logger.warn("Режим разработки (__DEV__ === true). Модуль 'react-native-purchases' не будет загружен.");
+}
 
 /**
  * Сервис для работы с подписками RevenueCat
@@ -25,6 +51,12 @@ class SubscriptionService {
      * Инициализация RevenueCat SDK
      */
     async initialize(): Promise<boolean> {
+        // Проверяем, загружен ли модуль
+        if (!Purchases) {
+            logger.warn('Модуль Purchases не доступен. Инициализация невозможна.', 'initialize – SubscriptionService');
+            return false;
+        }
+
         try {
             if (this.isInitialized) {
                 logger.debug('RevenueCat уже инициализирован', 'initialize – SubscriptionService');
@@ -62,7 +94,8 @@ class SubscriptionService {
                     'RevenueCat поддерживается только для iOS в данной конфигурации',
                     'initialize – SubscriptionService'
                 );
-                return false;
+                // Не считаем это ошибкой инициализации, просто SDK не будет работать
+                return false; // Возвращаем false, так как для других платформ не настроено
             }
 
             // Проверка инициализации
@@ -92,11 +125,17 @@ class SubscriptionService {
      * Безопасный вызов метода RevenueCat с проверкой инициализации
      */
     private async ensureInitialized(): Promise<boolean> {
+        // Добавляем проверку на наличие Purchases
+        if (!Purchases) {
+            logger.warn('Модуль Purchases не доступен.', 'ensureInitialized – SubscriptionService');
+            return false;
+        }
         if (!this.isInitialized) {
             logger.debug(
                 'RevenueCat не инициализирован, пытаемся инициализировать...',
                 'ensureInitialized – SubscriptionService'
             );
+            // Инициализация может провалиться если Purchases недоступен, initialize обработает это
             return await this.initialize();
         }
         return true;
@@ -106,6 +145,15 @@ class SubscriptionService {
      * Устанавливает ID пользователя в RevenueCat
      */
     async setUserId(userId: string): Promise<void> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn(
+                'Модуль Purchases не доступен. Установка ID пользователя невозможна.',
+                'setUserId – SubscriptionService'
+            );
+            throw new Error('Purchases module is not available');
+        }
+
         try {
             logger.debug(`Попытка установить ID пользователя: ${userId}`, 'setUserId – SubscriptionService');
 
@@ -135,7 +183,7 @@ class SubscriptionService {
             logger.debug('ID пользователя успешно установлен', 'setUserId – SubscriptionService');
         } catch (error) {
             logger.error(error, 'SubscriptionService - setUserId', 'Ошибка при установке ID пользователя');
-            throw error;
+            throw error; // Пробрасываем ошибку дальше
         }
     }
 
@@ -177,11 +225,25 @@ class SubscriptionService {
      * Получает список доступных пакетов подписок
      */
     async getOfferings(): Promise<PurchasesPackage[]> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn(
+                'Модуль Purchases не доступен. Получение подписок невозможно.',
+                'getOfferings – SubscriptionService'
+            );
+            // Возвращаем пустой массив или можно бросить ошибку
+            return [];
+        }
         try {
             logger.debug('Получение списка доступных подписок', 'getOfferings – SubscriptionService');
 
             if (!(await this.ensureInitialized())) {
-                throw new Error('Не удалось инициализировать RevenueCat для получения подписок');
+                // ensureInitialized уже вернет false если Purchases нет, но дублируем лог для ясности
+                logger.error(
+                    'Не удалось инициализировать RevenueCat для получения подписок',
+                    'getOfferings – SubscriptionService'
+                );
+                return []; // Возвращаем пустой массив при ошибке инициализации
             }
 
             const offerings = await Purchases.getOfferings();
@@ -206,10 +268,12 @@ class SubscriptionService {
                 context: 'getOfferings – SubscriptionService',
             });
 
-            return offerings.current.availablePackages;
+            // Убедимся, что возвращаемый тип соответствует RNPurchasesPackage[]
+            return offerings.current.availablePackages as PurchasesPackage[];
         } catch (error) {
             logger.error(error, 'SubscriptionService - getOfferings', 'Ошибка при получении списка подписок');
-            throw error;
+            // Возвращаем пустой массив при ошибке
+            return [];
         }
     }
 
@@ -217,22 +281,44 @@ class SubscriptionService {
      * Покупка пакета подписки
      */
     async purchasePackage(pkg: PurchasesPackage): Promise<CustomerInfo> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn('Модуль Purchases не доступен. Покупка невозможна.', 'purchasePackage – SubscriptionService');
+            throw new Error('Purchases module is not available');
+        }
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
+            // ensureInitialized вызывается неявно через purchasePackage, но лучше явно
+            if (!(await this.ensureInitialized())) {
+                logger.error(
+                    'Не удалось инициализировать RevenueCat для покупки пакета',
+                    'purchasePackage – SubscriptionService'
+                );
+                throw new Error('Failed to initialize RevenueCat for purchase');
             }
 
             logger.debug(`Покупка пакета: ${pkg.identifier}`, 'purchasePackage – SubscriptionService');
-            const { customerInfo } = await Purchases.purchasePackage(pkg);
+            // Убедимся, что pkg имеет тип RNPurchasesPackage перед передачей
+            const { customerInfo } = await Purchases.purchasePackage(pkg as RNPurchasesPackage);
 
             // Обновляем статус подписки в хранилище
             await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
 
             logger.debug('Пакет успешно куплен', 'purchasePackage – SubscriptionService');
-            return customerInfo;
-        } catch (error) {
-            logger.error(error, 'SubscriptionService - purchasePackage', 'Ошибка при покупке пакета');
-            throw error;
+            return customerInfo as CustomerInfo;
+        } catch (error: any) {
+            // Явно типизируем ошибку
+            // RevenueCat может возвращать специфичные коды ошибок при отмене пользователем
+            if (error.code === '1') {
+                // '1' - Purchase cancelled error code
+                logger.warn('Покупка отменена пользователем.', 'purchasePackage – SubscriptionService');
+                // Не пробрасываем ошибку дальше, если это отмена пользователем
+                // Можно вернуть null или специальный объект, чтобы UI понял причину
+                // Пока просто пробросим для совместимости
+                throw error;
+            } else {
+                logger.error(error, 'SubscriptionService - purchasePackage', 'Ошибка при покупке пакета');
+                throw error; // Пробрасываем другие ошибки
+            }
         }
     }
 
@@ -240,9 +326,21 @@ class SubscriptionService {
      * Восстановление покупок
      */
     async restorePurchases(): Promise<CustomerInfo> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn(
+                'Модуль Purchases не доступен. Восстановление покупок невозможно.',
+                'restorePurchases – SubscriptionService'
+            );
+            throw new Error('Purchases module is not available');
+        }
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
+            if (!(await this.ensureInitialized())) {
+                logger.error(
+                    'Не удалось инициализировать RevenueCat для восстановления покупок',
+                    'restorePurchases – SubscriptionService'
+                );
+                throw new Error('Failed to initialize RevenueCat for restore');
             }
 
             logger.debug('Восстановление покупок', 'restorePurchases – SubscriptionService');
@@ -252,7 +350,7 @@ class SubscriptionService {
             await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
 
             logger.debug('Покупки успешно восстановлены', 'restorePurchases – SubscriptionService');
-            return customerInfo;
+            return customerInfo as CustomerInfo;
         } catch (error) {
             logger.error(error, 'SubscriptionService - restorePurchases', 'Ошибка при восстановлении покупок');
             throw error;
@@ -263,9 +361,46 @@ class SubscriptionService {
      * Проверка статуса подписки
      */
     async checkSubscriptionStatus(): Promise<SubscriptionStatus | null> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn(
+                'Модуль Purchases не доступен. Проверка статуса подписки невозможна.',
+                'checkSubscriptionStatus – SubscriptionService'
+            );
+            // Проверяем кеш даже если Purchases недоступен
+            const cachedSubscription = await this.cacheService.getCachedSubscription();
+            if (cachedSubscription) {
+                logger.debug(
+                    'Использование кешированного статуса подписки (Purchases недоступен)',
+                    'checkSubscriptionStatus – SubscriptionService'
+                );
+                return this.mapCacheDataToSubscriptionStatus(cachedSubscription);
+            }
+            return null; // Возвращаем null, если нет ни Purchases, ни кеша
+        }
         try {
+            // Не вызываем ensureInitialized здесь, т.к. getCustomerInfo сам его вызовет
+            // Но можно добавить для явности, если getCustomerInfo может работать без configure
             if (!this.isInitialized) {
+                // Попытаемся инициализировать, если еще не сделано
                 await this.initialize();
+                // Если инициализация не удалась (например, нет ключа или не iOS), getCustomerInfo все равно может вернуть ошибку
+                if (!this.isInitialized) {
+                    logger.warn(
+                        'RevenueCat не инициализирован. Проверка статуса подписки может быть неточной.',
+                        'checkSubscriptionStatus – SubscriptionService'
+                    );
+                    // Попробуем вернуть из кеша, если есть
+                    const cachedSubscription = await this.cacheService.getCachedSubscription();
+                    if (cachedSubscription) {
+                        logger.debug(
+                            'Использование кешированного статуса подписки (инициализация не удалась)',
+                            'checkSubscriptionStatus – SubscriptionService'
+                        );
+                        return this.mapCacheDataToSubscriptionStatus(cachedSubscription);
+                    }
+                    return null; // Возвращаем null если инициализация не удалась и нет кеша
+                }
             }
 
             logger.debug('Проверка статуса подписки', 'checkSubscriptionStatus – SubscriptionService');
@@ -280,6 +415,10 @@ class SubscriptionService {
             }
 
             // Если нет в кеше, делаем запрос к RevenueCat
+            logger.debug(
+                'Кеш пуст, запрашиваем CustomerInfo из RevenueCat',
+                'checkSubscriptionStatus – SubscriptionService'
+            );
             const customerInfo = await Purchases.getCustomerInfo();
             return this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
         } catch (error) {
@@ -288,7 +427,25 @@ class SubscriptionService {
                 'SubscriptionService - checkSubscriptionStatus',
                 'Ошибка при проверке статуса подписки'
             );
-            throw error;
+            // При ошибке попробуем вернуть из кеша
+            try {
+                const cachedSubscription = await this.cacheService.getCachedSubscription();
+                if (cachedSubscription) {
+                    logger.warn(
+                        'Возвращаем кешированный статус подписки из-за ошибки запроса',
+                        'checkSubscriptionStatus – SubscriptionService'
+                    );
+                    return this.mapCacheDataToSubscriptionStatus(cachedSubscription);
+                }
+            } catch (cacheError) {
+                logger.error(
+                    cacheError,
+                    'SubscriptionService - checkSubscriptionStatus',
+                    'Ошибка при чтении кеша после ошибки проверки статуса'
+                );
+            }
+            // Если не удалось получить данные и кеш пуст или вызвал ошибку
+            return null;
         }
     }
 
@@ -296,19 +453,33 @@ class SubscriptionService {
      * Принудительное обновление статуса подписки
      */
     async forceRefreshSubscriptionStatus(): Promise<SubscriptionStatus | null> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn(
+                'Модуль Purchases не доступен. Принудительное обновление статуса невозможно.',
+                'forceRefreshSubscriptionStatus – SubscriptionService'
+            );
+            return null; // Возвращаем null, так как обновить не можем
+        }
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
+            if (!(await this.ensureInitialized())) {
+                logger.error(
+                    'Не удалось инициализировать RevenueCat для обновления статуса',
+                    'forceRefreshSubscriptionStatus – SubscriptionService'
+                );
+                return null; // Возвращаем null при ошибке инициализации
             }
 
             logger.debug(
                 'Принудительное обновление статуса подписки',
                 'forceRefreshSubscriptionStatus – SubscriptionService'
             );
+            // syncPurchases может быть полезен, если были покупки вне приложения
             await Purchases.syncPurchases();
-            // Исправляем вызов метода, не используя параметр fetchPolicy
+
+            // Получаем свежую информацию
             const customerInfo = await Purchases.getCustomerInfo();
-            // Очищаем кеш перед обновлением
+            // Очищаем кеш перед обновлением, чтобы гарантировать запись свежих данных
             await this.cacheService.clearCache();
             return this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
         } catch (error) {
@@ -317,7 +488,8 @@ class SubscriptionService {
                 'SubscriptionService - forceRefreshSubscriptionStatus',
                 'Ошибка при обновлении статуса подписки'
             );
-            throw error;
+            // При ошибке не возвращаем ничего, чтобы не перезаписать старыми данными
+            return null;
         }
     }
 
@@ -325,48 +497,104 @@ class SubscriptionService {
      * Выход пользователя
      */
     async logout(): Promise<void> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn(
+                'Модуль Purchases не доступен. Выход из RevenueCat не требуется.',
+                'logout – SubscriptionService'
+            );
+            // Очищаем локальные данные даже если Purchases недоступен
+            await storage.remove(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS);
+            await this.cacheService.clearCache();
+            this.currentUserId = null; // Сбрасываем ID пользователя локально
+            logger.debug(
+                'Локальные данные подписки очищены при выходе (Purchases недоступен)',
+                'logout – SubscriptionService'
+            );
+            return;
+        }
         try {
+            // Проверяем инициализацию перед вызовом logOut
             if (!this.isInitialized) {
                 logger.debug('RevenueCat не инициализирован, выход не требуется', 'logout – SubscriptionService');
+                // Все равно очищаем локальные данные
+                await storage.remove(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS);
+                await this.cacheService.clearCache();
+                this.currentUserId = null;
+                logger.debug(
+                    'Локальные данные подписки очищены при выходе (RevenueCat не инициализирован)',
+                    'logout – SubscriptionService'
+                );
                 return;
             }
 
             logger.debug('Выход пользователя из RevenueCat', 'logout – SubscriptionService');
             await Purchases.logOut();
-            await storage.remove(STORAGE_KEYS.SUBSCRIPTION_STATUS);
+            await storage.remove(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS);
             // Очищаем кеш при выходе
             await this.cacheService.clearCache();
-            logger.debug('Пользователь успешно вышел из RevenueCat', 'logout – SubscriptionService');
+            this.currentUserId = null; // Сбрасываем ID пользователя
+            logger.debug(
+                'Пользователь успешно вышел из RevenueCat и локальные данные очищены',
+                'logout – SubscriptionService'
+            );
         } catch (error) {
-            logger.error(error, 'SubscriptionService - logout', 'Ошибка при выходе пользователя');
-            throw error;
+            logger.error(error, 'SubscriptionService - logout', 'Ошибка при выходе пользователя из RevenueCat');
+            // Даже при ошибке выхода из RC, пытаемся очистить локальные данные
+            try {
+                await storage.remove(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS);
+                await this.cacheService.clearCache();
+                this.currentUserId = null;
+                logger.debug(
+                    'Локальные данные подписки очищены после ошибки выхода из RevenueCat',
+                    'logout – SubscriptionService'
+                );
+            } catch (clearError) {
+                logger.error(
+                    clearError,
+                    'SubscriptionService - logout',
+                    'Ошибка при очистке локальных данных после ошибки выхода'
+                );
+            }
+            throw error; // Пробрасываем оригинальную ошибку выхода
         }
     }
 
     /**
-     * Проверка подписки на сервере
+     * Проверка подписки на сервере (через RevenueCat)
      */
     async verifySubscriptionWithServer(): Promise<boolean> {
+        // Проверка на наличие Purchases
+        if (!Purchases) {
+            logger.warn(
+                'Модуль Purchases не доступен. Проверка подписки невозможна.',
+                'verifySubscriptionWithServer – SubscriptionService'
+            );
+            // Возвращаем false, так как проверить не можем
+            return false;
+        }
         try {
-            if (!this.isInitialized) {
-                await this.initialize();
+            if (!(await this.ensureInitialized())) {
+                logger.error(
+                    'Не удалось инициализировать RevenueCat для проверки подписки',
+                    'verifySubscriptionWithServer – SubscriptionService'
+                );
+                return false; // Возвращаем false при ошибке инициализации
             }
 
-            logger.debug('Проверка подписки на сервере', 'verifySubscriptionWithServer – SubscriptionService');
+            logger.debug('Проверка подписки через RevenueCat', 'verifySubscriptionWithServer – SubscriptionService');
 
             // Получаем текущую информацию о клиенте
-            // Исправляем вызов метода, не используя параметр fetchPolicy
             const customerInfo = await Purchases.getCustomerInfo();
 
-            // Проверяем наличие активных подписок
-            const hasActiveSubscriptions =
-                customerInfo.activeSubscriptions && customerInfo.activeSubscriptions.length > 0;
+            // Обновляем локальный статус подписки на основе полученных данных
+            const status = await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
 
-            // Обновляем локальный статус подписки
-            await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
+            // Проверяем активность подписки из обновленного статуса
+            const hasActiveSubscriptions = status?.isActive ?? false;
 
             logger.debug(
-                `Проверка на сервере завершена. Результат: ${hasActiveSubscriptions}`,
+                `Проверка через RevenueCat завершена. Результат: ${hasActiveSubscriptions}`,
                 'verifySubscriptionWithServer – SubscriptionService'
             );
             return hasActiveSubscriptions;
@@ -374,9 +602,10 @@ class SubscriptionService {
             logger.error(
                 error,
                 'SubscriptionService - verifySubscriptionWithServer',
-                'Ошибка при проверке подписки на сервере'
+                'Ошибка при проверке подписки через RevenueCat'
             );
-            throw error;
+            // Возвращаем false при ошибке
+            return false;
         }
     }
 
@@ -386,94 +615,84 @@ class SubscriptionService {
     private mapCacheDataToSubscriptionStatus(cacheData: SubscriptionCacheData): SubscriptionStatus {
         return {
             tier: cacheData.tier,
-            isActive: cacheData.isPremium || cacheData.isPremiumAI,
+            isActive: cacheData.isPremium || cacheData.isPremiumAI, // Определяем активность по флагам кеша
             expiresAt: cacheData.expirationDate || '',
-            autoRenew: true, // Предполагаем автоматическое продление по умолчанию
-            cancelAtPeriodEnd: false, // Предполагаем, что не будет отменено в конце периода
+            // Данных об автопродлении в кеше нет, ставим значения по умолчанию
+            autoRenew: true,
+            cancelAtPeriodEnd: false,
         };
     }
 
     /**
      * Обновляет статус подписки на основе информации о клиенте
-     * и сохраняет его в хранилище
+     * и сохраняет его в хранилище и кеше
      */
     private async updateSubscriptionStatusFromCustomerInfo(customerInfo: CustomerInfo): Promise<SubscriptionStatus> {
         try {
-            const hasActiveSubscriptions =
-                customerInfo.activeSubscriptions && customerInfo.activeSubscriptions.length > 0;
+            // Проверяем свойство entitlements вместо activeSubscriptions для более надежного определения доступа
+            // Идентификатор 'premium' должен совпадать с тем, что настроено в RevenueCat Entitlements
+            const premiumEntitlement = customerInfo.entitlements.active['premium']; // Замените 'premium' на ваш ID
+            const premiumAIEntitlement = customerInfo.entitlements.active['premium_ai']; // Замените 'premium_ai' на ваш ID
 
-            // Определяем уровень подписки на основе активных подписок
             let tier: SubscriptionTier = SUBSCRIPTION_TIERS.FREE;
+            let isActive = false;
+            let activeEntitlementIdentifier: string | undefined = undefined; // Сохраним идентификатор активного доступа
 
-            if (hasActiveSubscriptions) {
-                // Проверяем конкретные уровни подписки
-                // Названия продуктов могут отличаться в зависимости от вашей настройки в RevenueCat
-                const hasPremiumAI = customerInfo.activeSubscriptions.some(
-                    sub => sub.includes('premium_ai') || sub.includes('premium_plus')
-                );
-
-                const hasPremium = customerInfo.activeSubscriptions.some(
-                    sub => sub.includes('premium') || sub.includes('pro')
-                );
-
-                if (hasPremiumAI) {
-                    tier = SUBSCRIPTION_TIERS.PREMIUM_AI;
-                } else if (hasPremium) {
-                    tier = SUBSCRIPTION_TIERS.PREMIUM;
-                }
+            if (premiumAIEntitlement) {
+                tier = SUBSCRIPTION_TIERS.PREMIUM_AI;
+                isActive = true;
+                activeEntitlementIdentifier = premiumAIEntitlement.identifier;
+            } else if (premiumEntitlement) {
+                tier = SUBSCRIPTION_TIERS.PREMIUM;
+                isActive = true;
+                activeEntitlementIdentifier = premiumEntitlement.identifier;
             }
 
-            // Получаем информацию об истечении подписки, если она доступна
+            // Получаем информацию об истечении подписки из активного entitlement, если он есть
             let expiresAtDate: Date | null = null;
             let expiresAt: string = '';
-            let autoRenew = true;
-            let cancelAtPeriodEnd = false;
+            let autoRenew = false; // По умолчанию считаем, что автопродление выключено
+            let cancelAtPeriodEnd = true; // По умолчанию считаем, что отменится
+            let productId: string | undefined = undefined; // ID продукта из RevenueCat
 
-            if (customerInfo.allExpirationDates && Object.keys(customerInfo.allExpirationDates).length > 0) {
-                // Берем первую дату истечения из всех доступных
-                const firstExpirationKey = Object.keys(customerInfo.allExpirationDates)[0];
-                const expirationString = customerInfo.allExpirationDates[firstExpirationKey];
-                if (expirationString) {
-                    expiresAtDate = new Date(expirationString);
-                    expiresAt = expirationString;
+            const activeEntitlement = premiumAIEntitlement || premiumEntitlement;
+
+            if (activeEntitlement) {
+                productId = activeEntitlement.productIdentifier;
+                if (activeEntitlement.expirationDate) {
+                    expiresAtDate = new Date(activeEntitlement.expirationDate);
+                    expiresAt = activeEntitlement.expirationDate;
                 }
-            }
-
-            // Проверяем, будет ли подписка автоматически продлена
-            // RevenueCat SDK может не иметь autoRenewStatus в типах, но он существует в реальном объекте
-            const customerInfoAny = customerInfo as any;
-            if (customerInfoAny.autoRenewStatus && Object.keys(customerInfoAny.autoRenewStatus).length > 0) {
-                // Берем статус автопродления для первой подписки
-                const firstRenewKey = Object.keys(customerInfoAny.autoRenewStatus)[0];
-                autoRenew = !!customerInfoAny.autoRenewStatus[firstRenewKey];
-                cancelAtPeriodEnd = !autoRenew;
+                // Проверяем, отменится ли подписка в конце периода
+                // `willRenew` показывает, будет ли следующее списание
+                autoRenew = activeEntitlement.willRenew;
+                cancelAtPeriodEnd = !activeEntitlement.willRenew;
             }
 
             // Формируем статус подписки
             const subscriptionStatus: SubscriptionStatus = {
                 tier,
-                isActive: hasActiveSubscriptions,
+                isActive, // Используем вычисленное значение isActive
                 expiresAt,
                 autoRenew,
                 cancelAtPeriodEnd,
             };
 
+            logger.debug(`Сформирован статус подписки: ${JSON.stringify(subscriptionStatus)}`);
+
             // Сохраняем в хранилище
-            await storage.set(STORAGE_KEYS.SUBSCRIPTION_STATUS, subscriptionStatus, true);
+            await storage.set(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS, subscriptionStatus, true);
+            logger.debug('Статус подписки сохранен в локальное хранилище.');
 
             // Кешируем данные о подписке
-            const productId =
-                customerInfo.activeSubscriptions && customerInfo.activeSubscriptions.length > 0
-                    ? customerInfo.activeSubscriptions[0]
-                    : undefined;
-
             await this.cacheService.cacheSubscription({
                 isPremium: tier === SUBSCRIPTION_TIERS.PREMIUM || tier === SUBSCRIPTION_TIERS.PREMIUM_AI,
                 isPremiumAI: tier === SUBSCRIPTION_TIERS.PREMIUM_AI,
                 tier,
-                expirationDate: expiresAt || undefined,
-                productId,
+                expirationDate: expiresAt || undefined, // Используем expiresAt из entitlement
+                productId: productId, // Используем productId из entitlement
             });
+            logger.debug('Статус подписки сохранен в кеш.');
 
             logger.debug(`Статус подписки обновлен: ${JSON.stringify(subscriptionStatus)}`);
             return subscriptionStatus;
@@ -481,9 +700,17 @@ class SubscriptionService {
             logger.error(
                 error,
                 'SubscriptionService - updateSubscriptionStatusFromCustomerInfo',
-                'Ошибка при обновлении статуса подписки'
+                'Ошибка при обновлении статуса подписки из CustomerInfo'
             );
-            throw error;
+            // В случае ошибки возвращаем "бесплатный" статус, чтобы не блокировать пользователя из-за ошибки обновления
+            // Но не сохраняем его, чтобы не перезаписать действительный статус при временной ошибке
+            return {
+                tier: SUBSCRIPTION_TIERS.FREE,
+                isActive: false,
+                expiresAt: '',
+                autoRenew: false,
+                cancelAtPeriodEnd: false,
+            };
         }
     }
 
@@ -519,11 +746,11 @@ class SubscriptionService {
                 tier,
                 isActive: true,
                 expiresAt: fakeExpirationDate.toISOString(),
-                autoRenew: true,
-                cancelAtPeriodEnd: false,
+                autoRenew: true, // Для теста ставим true
+                cancelAtPeriodEnd: false, // Для теста ставим false
             };
 
-            await storage.set(STORAGE_KEYS.SUBSCRIPTION_STATUS, subscriptionStatus, true);
+            await storage.set(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS, subscriptionStatus, true);
 
             logger.debug(`Админ-план ${tier} успешно активирован`);
             return true;
@@ -553,11 +780,11 @@ class SubscriptionService {
                 isActive: false,
                 expiresAt: '',
                 autoRenew: false,
-                cancelAtPeriodEnd: false,
+                cancelAtPeriodEnd: false, // У бесплатной подписки нет отмены в конце периода
             };
 
             // Обновляем локальное хранилище
-            await storage.set(STORAGE_KEYS.SUBSCRIPTION_STATUS, freeSubscriptionStatus, true);
+            await storage.set(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS, freeSubscriptionStatus, true);
 
             logger.debug('Админ-план успешно деактивирован', 'deactivatePremiumPlanForAdmin – SubscriptionService');
             return true;
@@ -572,22 +799,28 @@ class SubscriptionService {
     }
 
     /**
-     * Полная очистка кеша подписки (для отладки)
+     * Полная очистка кеша подписки и локального хранилища (для отладки)
      */
     async clearSubscriptionCache(): Promise<boolean> {
         try {
-            logger.debug('Очистка всех кешей подписки', 'clearSubscriptionCache – SubscriptionService');
+            logger.debug(
+                'Очистка всех данных подписки (кеш и хранилище)',
+                'clearSubscriptionCache – SubscriptionService'
+            );
 
             // Очищаем кеш в сервисе кеширования
             await this.cacheService.clearCache();
 
             // Очищаем локальное хранилище
-            await storage.remove(STORAGE_KEYS.SUBSCRIPTION_STATUS);
+            await storage.remove(STORAGE_KEYS.SUBSCRIPTION.SUBSCRIPTION_STATUS);
 
-            logger.debug('Кеш подписки успешно очищен', 'clearSubscriptionCache – SubscriptionService');
+            // Сбрасываем ID пользователя, если он был установлен
+            this.currentUserId = null;
+
+            logger.debug('Кеш и хранилище подписки успешно очищены', 'clearSubscriptionCache – SubscriptionService');
             return true;
         } catch (error) {
-            logger.error(error, 'SubscriptionService - clearSubscriptionCache', 'Ошибка при очистке кеша подписки');
+            logger.error(error, 'SubscriptionService - clearSubscriptionCache', 'Ошибка при очистке данных подписки');
             return false;
         }
     }

@@ -4,7 +4,7 @@ import { useEmotions } from '@shared/hooks/diary/mood/useEmotions'
 import { View } from '@shared/ui/view'
 import { EmotionsStep } from '@widgets/diary/mood/steps/EmotionsStep'
 import { Audio } from 'expo-av'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MoodStackParamList } from '../StepNavigator'
 
 type Props = NativeStackScreenProps<MoodStackParamList, 'Emotions'>

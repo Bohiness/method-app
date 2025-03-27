@@ -6,7 +6,7 @@ import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { Switch, SwitchGroup } from '@shared/ui/switch'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView } from 'react-native'
 

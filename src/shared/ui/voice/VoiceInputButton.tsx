@@ -3,7 +3,7 @@ import { useVoiceInput } from '@shared/hooks/voice/useVoiceInput'
 import { logger } from '@shared/lib/logger/logger.service'
 import { cn } from '@shared/lib/utils/cn'
 import * as Haptics from 'expo-haptics'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { useAnimatedStyle } from 'react-native-reanimated'
 import { Button } from '../button'
@@ -11,7 +11,7 @@ import { Icon } from '../icon'
 
 interface VoiceInputButtonProps {
     onTranscribe: (text: any) => void
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'xs' | 'sm' | 'md' | 'lg'
     className?: string
     asButton?: boolean
     initialText?: string
@@ -84,8 +84,8 @@ export const VoiceInputButton = ({
         }
     }
 
-    const iconSizes = { sm: 16, md: 18, lg: 20 }
-    const buttonSizes = { sm: 'w-8 h-8', md: 'w-12 h-12', lg: 'w-14 h-14' }
+    const iconSizes = { xs: 16, sm: 18, md: 20, lg: 22 }
+    const buttonSizes = { xs: 'w-6 h-6', sm: 'w-10 h-10', md: 'w-12 h-12', lg: 'w-14 h-14' }
     const innerScale = 1 + 0.5 * audioLevel
 
     const IconWithPulse = () => (

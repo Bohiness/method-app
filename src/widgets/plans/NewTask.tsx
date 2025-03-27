@@ -9,7 +9,7 @@ import { CreateTaskDtoType, SubTaskType, TaskPriority, TaskType } from '@shared/
 import { Button } from '@shared/ui/button'
 import { DatePickerModal } from '@shared/ui/datetime/DatePickerModal'
 import { Icon } from '@shared/ui/icon'
-import { Text, Title } from '@shared/ui/text'
+import { Text } from '@shared/ui/text'
 import { TextInput } from '@shared/ui/text-input'
 import { View } from '@shared/ui/view'
 import { router } from 'expo-router'
@@ -154,10 +154,9 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
 
     return (
         <>
-            <View variant='default' className="flex-1">
+            <View className="flex-1">
                 {/* Header */}
-                <View className="flex-row justify-between items-center mb-4 px-4">
-                    <Title>{t(mode === 'edit' ? 'common.edit' : 'plans.tasks.new.title')}</Title>
+                <View className="flex-row justify-between items-center mb-4">
                     {!isOnline && (
                         <View className="flex-row items-center">
                             <Icon name="WifiOff" size={16} className="mr-2 text-warning" />
@@ -182,7 +181,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
 
                 {/* Прокручиваемая часть контента */}
                 <ScrollView
-                    className="flex-1 px-4"
+                    className="flex-1"
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingBottom: 16 }}
                 >
@@ -228,11 +227,10 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                 </ScrollView>
 
                 {/* Нижний блок */}
-                <View className="pt-2">
-
+                <View className="pt-2 relative mb-2">
                     {/* Нижняя панель с иконками */}
                     <Animated.View
-                        className="absolute bottom-4 left-4"
+                        className="absolute bottom-0 left-0"
                         layout={Layout.duration(100)}
                     >
                         <View className="flex-row justify-start items-center gap-x-4">
@@ -254,7 +252,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                     </Animated.View>
 
                     <Animated.View
-                        className=" absolute bottom-4 right-4"
+                        className=" absolute bottom-0 right-4"
                         layout={Layout.duration(100)}
                     >
                         <Button
@@ -262,6 +260,7 @@ const NewTask = ({ mode = 'create', task, initialProjectId }: NewTaskProps) => {
                             disabled={!title.trim() || createTask.isPending || updateTask.isPending}
                             leftIcon={mode === 'edit' ? 'Save' : 'Check'}
                             variant='outline'
+                            size='lg'
                         />
                     </Animated.View>
 

@@ -35,7 +35,7 @@ export const TaskItem = React.memo(({ task }: TaskItemProps) => {
     const [isPressed, setIsPressed] = useState(false)
     const { deleteTask, toggleTask } = useOfflineTasks()
     const translateX = useSharedValue(0)
-    const { formateDataTimeWithTimezoneAndLocale } = useDateTime()
+    const { formatDateTimeWithTimezoneAndLocale } = useDateTime()
 
     const animatedStyle = useAnimatedStyle(() => ({
         backgroundColor: withSpring(
@@ -171,7 +171,7 @@ export const TaskItem = React.memo(({ task }: TaskItemProps) => {
                             variant='secondary'
                             className={cn("pl-9", task.status === 'completed' ? "line-through" : "")}
                         >
-                            {formateDataTimeWithTimezoneAndLocale(task.start_datetime, task.is_time_enabled ? 'HH:mm, EEEE' : 'EEEE')}
+                            {formatDateTimeWithTimezoneAndLocale(task.start_datetime, task.is_time_enabled ? 'HH:mm, EEEE' : 'EEEE')}
                         </Text>
                     </View>
                 </AnimatedPressable>
@@ -179,3 +179,5 @@ export const TaskItem = React.memo(({ task }: TaskItemProps) => {
         </View >
     )
 })
+
+TaskItem.displayName = 'TaskItem'

@@ -4,7 +4,7 @@ import { useCreateEveningReflection } from '@shared/hooks/diary/eveningreflectio
 import { Title } from '@shared/ui/text'
 import { SuccessStepEveningReflection } from '@widgets/diary/evening-reflection/screens/SuccessStep'
 import { router, useNavigation } from 'expo-router'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import EnhancedUniversalScreen from './steps/EnhancedUniversalScreen'
 import HowIsYourDayScreen from './steps/HowIsYourDay'
@@ -81,8 +81,15 @@ export default function StepNavigatorEveningReflection({ date = new Date(), onSt
         <Stack.Navigator
             screenOptions={{
                 headerShown: false,
-                animation: 'slide_from_right',
+                animation: 'simple_push',
                 gestureEnabled: true,
+                sheetExpandsWhenScrolledToEdge: false,
+                headerShadowVisible: false,
+                fullScreenGestureShadowEnabled: false,
+                animationTypeForReplace: 'push',
+                contentStyle: {
+                    backgroundColor: 'transparent',
+                },
             }}
         >
             <Stack.Screen

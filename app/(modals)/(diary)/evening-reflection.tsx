@@ -1,6 +1,8 @@
+import { ModalFullScreenContent } from '@entities/modals/modal-full-screen-content'
+import { StepIndicator } from '@entities/modals/StepIndicator'
 import { NavigationIndependentTree, useNavigation } from '@react-navigation/native'
-import { View } from '@shared/ui/view'
-import React, { useLayoutEffect, useState } from 'react'
+import { router } from 'expo-router'
+import { useLayoutEffect, useState } from 'react'
 import StepNavigatorEveningReflection from './evening-reflection/StepNavigator'
 
 export default function EveningReflection() {
@@ -21,10 +23,22 @@ export default function EveningReflection() {
         setCurrentStep(step)
     }
     return (
-        <View className="flex-1">
-            <NavigationIndependentTree>
+        <NavigationIndependentTree>
+            <ModalFullScreenContent
+                headerOnClose={() => {
+                    router.dismissTo('/(tabs)')
+                }}
+                headerCenterContent={
+                    <StepIndicator
+                        currentStep={currentStep}
+                        onStepPress={syncStep}
+                        totalSteps={6}
+                    />
+                }
+            >
                 <StepNavigatorEveningReflection date={new Date()} onStepChange={syncStep} />
-            </NavigationIndependentTree>
-        </View>
+            </ModalFullScreenContent>
+        </NavigationIndependentTree>
+
     )
 }

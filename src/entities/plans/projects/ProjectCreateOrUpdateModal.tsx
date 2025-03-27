@@ -27,7 +27,7 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
     const [description, setDescription] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [selectedColor, setSelectedColor] = useState('')
-    const { dismissKeyboard, isKeyboardVisible } = useKeyboard()
+    const { isKeyboardVisible, hideKeyboard } = useKeyboard()
 
     const isEditMode = !!project
 
@@ -39,6 +39,13 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
             setSelectedColor(project.color)
         }
     }, [project])
+
+
+    useEffect(() => {
+        if (!isVisible) {
+            resetForm()
+        }
+    }, [isVisible])
 
     const handleSubmit = async () => {
         if (!name.trim()) return
@@ -77,16 +84,11 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
         setSelectedColor('')
     }
 
-    useEffect(() => {
-        if (!isVisible) {
-            resetForm()
-        }
-    }, [isVisible])
 
     return (
-        <Pressable onPress={dismissKeyboard} className='flex-1'>
+        <Pressable onPress={hideKeyboard} className='flex-1'>
             <View variant='transparent' className="flex-1 justify-between">
-                <View variant='transparent' className="px-4 gap-y-4">
+                <View variant='transparent' className=" gap-y-4">
                     <Title>
                         {isEditMode
                             ? t('plans.projects.editProject.title')
@@ -118,7 +120,7 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
                     />
 
                 </View>
-                {!isKeyboardVisible && (<View className='px-4'>
+                {!isKeyboardVisible && (<View>
                     <Button
                         onPress={handleSubmit}
                         loading={isLoading}
@@ -133,7 +135,7 @@ export function ProjectCreateOrUpdateModal({ project, isVisible, onClose, onSucc
                 )}
 
                 {isKeyboardVisible && (
-                    <View className='px-4 flex-row justify-end' style={{ marginBottom: 16 }}>
+                    <View className=' flex-row justify-end' style={{ marginBottom: 16 }}>
                         <Button
                             onPress={handleSubmit}
                             disabled={!name.trim()}

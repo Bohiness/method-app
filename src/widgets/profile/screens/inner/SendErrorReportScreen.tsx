@@ -1,6 +1,6 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
 import { apiClient } from '@shared/config/api-client'
-import { API_ROUTES } from '@shared/constants/api-routes'
+import { API_ROUTES } from '@shared/constants/system/api-routes'
 import { useUser } from '@shared/context/user-provider'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
 import { logger } from '@shared/lib/logger/logger.service'
@@ -9,7 +9,7 @@ import { Text } from '@shared/ui/text'
 import { TextInput } from '@shared/ui/text-input'
 import { View } from '@shared/ui/view'
 import { isToday } from 'date-fns'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, Alert, Clipboard, Platform } from 'react-native'
 
@@ -229,7 +229,7 @@ export const SendErrorReportScreen = ({
                     {isCopyingLogs ? (
                         <ActivityIndicator size="small" color="#6366f1" />
                     ) : (
-                        t('settings.sendErrorReport.copyLogs.button', 'Скопировать логи')
+                        t('settings.sendErrorReport.copyLogs.button')
                     )}
                 </Button>
             </View>

@@ -1,11 +1,12 @@
 import { useTheme } from '@shared/context/theme-provider'
 import { Text } from '@shared/ui/text'
 import React, { createContext, useContext } from 'react'
-import { Pressable, View } from 'react-native'
+import { Pressable } from 'react-native'
 import Animated, {
     useAnimatedStyle,
     withSpring
 } from 'react-native-reanimated'
+import { View } from './view'
 
 interface SwitchGroupContextType {
     values: string[]
@@ -60,7 +61,7 @@ export const Switch = ({
     return (
         <Pressable
             onPress={handlePress}
-            className={`flex-row justify-between items-center py-4 px-4 
+            className={`flex-row justify-between items-center py-4 px-4
             ${disabled ? 'opacity-50' : ''} ${className}`}
             android_ripple={{ color: 'rgba(0, 0, 0, 0.1)' }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -131,12 +132,12 @@ export const SwitchGroup = ({
                 </Text>
             )}
             <SwitchGroupContext.Provider value={{ values, onChange: handleChange }}>
-                <View className="rounded-xl overflow-hidden bg-surface-paper dark:bg-surface-paper-dark">
+                <View variant="default" className="rounded-2xl overflow-hidden">
                     {React.Children.map(children, (child, index) => (
                         <>
                             {child}
                             {index < React.Children.count(children) - 1 && (
-                                <View className="h-[1px] bg-inactive/20 mx-4" />
+                                <View className="h-[1px] bg-inactive/10" />
                             )}
                         </>
                     ))}

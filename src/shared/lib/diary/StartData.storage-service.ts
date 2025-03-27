@@ -1,11 +1,11 @@
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { StartDayType } from '@shared/types/diary/startday/StartDayType';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { storage } from '../storage/storage.service';
 
 export class StartDayStorageService {
-    private readonly STORAGE_KEY = STORAGE_KEYS.START_DAY;
+    private readonly STORAGE_KEY = STORAGE_KEYS.DIARY.START_DAY;
 
     // Получить все записи начала дня
     async getStartDays(): Promise<StartDayType[]> {

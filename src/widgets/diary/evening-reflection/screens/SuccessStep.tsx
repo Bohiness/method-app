@@ -11,13 +11,11 @@ import { useTranslation } from 'react-i18next'
 import Animated, {
     FadeIn
 } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 type SuccessStepEveningReflectionProps = NativeStackScreenProps<EveningReflectionStackParamList, 'SuccessStepEveningReflection'>
 
 export function SuccessStepEveningReflection({ route, navigation }: SuccessStepEveningReflectionProps) {
     const { t } = useTranslation()
-    const insets = useSafeAreaInsets()
 
     const handleDone = async () => {
         router.dismissTo('/(tabs)')
@@ -55,7 +53,6 @@ export function SuccessStepEveningReflection({ route, navigation }: SuccessStepE
                 className="w-fit self-center px-20"
                 size='lg'
                 onPress={handleDone}
-                style={{ marginBottom: insets.bottom }}
             >
                 {t('common.done')}
             </Button>

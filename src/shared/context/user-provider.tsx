@@ -1,8 +1,8 @@
 // src/shared/context/user-provider.tsx
 import { authApiService } from '@shared/api/auth/auth-api.service'
 import { userApiService } from '@shared/api/user/user-api.service'
-import { QUERY_KEYS } from '@shared/constants/QUERY_KEYS'
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS'
+import { QUERY_KEYS } from '@shared/constants/system/QUERY_KEYS'
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS'
 import { logger } from '@shared/lib/logger/logger.service'
 import { useStorage } from '@shared/lib/storage/storage.service'
 import { subscriptionService } from '@shared/lib/subscription/subscription.service'
@@ -47,7 +47,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         onSettled: async () => {
             queryClient.clear()
             setUser(null)
-            await storage.remove(STORAGE_KEYS.USER_DATA)
+            await storage.remove(STORAGE_KEYS.USER.USER_DATA)
             router.dismissAll()
             try {
                 await signInAnonymously()
@@ -86,7 +86,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         onSuccess: async (response) => {
             await tokenService.setSession(response.tokens)
-            await storage.set(STORAGE_KEYS.USER_DATA, response.user)
+            await storage.set(STORAGE_KEYS.USER.USER_DATA, response.user)
             setUser(response.user)
             // Убираем избыточное сохранение токена
         },
@@ -100,7 +100,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         onSuccess: async (response) => {
             setUser(response.user)
-            await storage.set(STORAGE_KEYS.USER_DATA, response.user)
+            await storage.set(STORAGE_KEYS.USER.USER_DATA, response.user)
             // Убираем избыточное сохранение токена
         }
     })
@@ -110,20 +110,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         // Сначала получаем CSRF токен
         try {
+            await tokenService.getCsrfToken()
         } catch (csrfError) {
             logger.error(csrfError, 'user provider – checkAuth', 'UserProvider: Failed to get CSRF token:')
-            // Продолжаем проверку аутентификации даже при ошибке CSRF
         }
 
+        // Получаем сессию
         const session = await tokenService.getSession()
+
         logger.debug(session, 'user provider – checkAuth', 'UserProvider: Session status:')
 
         if (session) {
             try {
-                const checkResponse = await authApiService.checkAuth()
+                const checkResponse = await authApiService.checkAuthFromServer()
                 logger.debug(!!checkResponse, 'user provider – checkAuth', 'UserProvider: Got user data:')
                 setUser(checkResponse.userData)
-                await storage.set(STORAGE_KEYS.USER_DATA, checkResponse.userData)
+                await storage.set(STORAGE_KEYS.USER.USER_DATA, checkResponse.userData)
             } catch (error) {
                 logger.error(error, 'user provider – checkAuth', 'UserProvider: Auth check failed:')
                 await signInAnonymously()
@@ -158,7 +160,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         try {
             // Получаем свежий CSRF токен перед обновлением профиля
             const result = await userApiService.updateProfile(user!.id, userData)
-            await storage.set(STORAGE_KEYS.USER_DATA, result)
+            await storage.set(STORAGE_KEYS.USER.USER_DATA, result)
             setUser(result)
             return result
         } catch (error) {

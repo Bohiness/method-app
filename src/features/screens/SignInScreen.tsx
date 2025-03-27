@@ -3,7 +3,7 @@ import { useLocale } from '@shared/hooks/systems/locale/useLocale'
 import { Button } from '@shared/ui/button'
 import { Logo } from '@shared/ui/system/logo'
 import { Text } from '@shared/ui/text'
-import { Container, View } from '@shared/ui/view'
+import { View } from '@shared/ui/view'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -36,10 +36,7 @@ export function SignInScreen() {
     }
 
     return (
-        <Container
-            style={{ paddingTop: insets.top }}
-            className="flex-1 px-4"
-        >
+        <View className="flex-1" >
             {/* Логотип и заголовок */}
             <View className="items-center justify-center flex-1">
                 <Logo size={{ height: 70, width: 300 }} />
@@ -92,6 +89,6 @@ export function SignInScreen() {
                     {t('auth.privacyPolicy')}
                 </Text>
             </View>
-        </Container>
+        </View>
     )
 }

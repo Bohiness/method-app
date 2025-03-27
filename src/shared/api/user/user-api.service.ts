@@ -1,6 +1,6 @@
 // src/shared/api/user/user-api.service.ts
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
 import { UserType } from '@shared/types/user/UserType';
 

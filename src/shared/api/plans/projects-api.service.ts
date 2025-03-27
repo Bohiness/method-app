@@ -1,5 +1,5 @@
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { buildUrl } from '@shared/lib/url/buildUrl';
 import { PaginatedResponse } from '@shared/types/PaginatedResponse';
 import {

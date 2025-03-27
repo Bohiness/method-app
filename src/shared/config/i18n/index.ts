@@ -8,7 +8,7 @@ import en from './resources/en.json';
 import ru from './resources/ru.json';
 
 // Импортируем файлы переводов для coach
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import coachEn from './resources/coach/en.json';
 import coachRu from './resources/coach/ru.json';
 const resources = {
@@ -27,7 +27,7 @@ const resources = {
 };
 
 // Используем тот же ключ, что и в useLocale
-const LANGUAGE_KEY = STORAGE_KEYS.APP_LOCALE;
+const LANGUAGE_KEY = STORAGE_KEYS.APP.APP_LOCALE;
 
 // Получение сохраненного языка
 export const getStoredLanguage = async () => {

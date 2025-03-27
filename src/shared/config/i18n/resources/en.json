@@ -21,6 +21,7 @@
         "readMore": "Read more",
         "showAll": "Show all",
         "select": "Select",
+        "add": "Add",
         "backToHome": "Back to home",
         "create": "Create",
         "offline": "Offline",
@@ -180,11 +181,25 @@
     "calendar": {
         "yesterday": "yesterday",
         "tomorrow": "tomorrow",
-        "dayInfo": "Information about the selected day..."
+        "dayInfo": "Information about the selected day...",
+        "greeting": {
+            "morning": "Good morning",
+            "afternoon": "Good afternoon",
+            "evening": "Good evening",
+            "night": "Good night"
+        }
     },
     "diary": {
-        "note": {
-            "NotePlaceholder": "Write your thoughts here..."
+        "journal": {
+            "title": "Journal",
+            "newEntry": "New entry",
+            "description": "Write your thoughts here...",
+            "NotePlaceholder": "Write your thoughts here...",
+            "errorSavingJournal": "Error saving journal",
+            "draftSaved": "Draft saved",
+            "saveDraftTitle": "Save draft",
+            "saveDraftMessage": "Do you want to save this draft?",
+            "errorSavingTemplate": "Error saving template"
         },
         "moodcheckin": {
             "title": "Mood check-in",
@@ -302,6 +317,9 @@
             }
         },
         "beautifuldiary": {
+            "title": "My diary",
+            "description": "History of your thoughts and feelings",
+            "unknownEntry": "Unknown entry",
             "emotions": "You felt",
             "factors": "Why you felt that way",
             "factorNote": "Factor Note",
@@ -325,6 +343,38 @@
                 "lessonLearned": "Lesson Learned",
                 "additionalThoughts": "Additional Thoughts"
             }
+        },
+        "stats": {
+            "title": "📊 Entry Stats",
+            "createdAt": "When",
+            "mainTopic": "About",
+            "length": "Length (words)",
+            "questionCount": "Questions",
+            "indicators": "Key Metrics",
+            "sentiment": "Mood",
+            "selfConfidence": "Confidence",
+            "negativeThinking": "Negativity",
+            "awarenessLevel": "Awareness",
+            "keywords": "Keywords",
+            "insights": "✨ Insights",
+            "triggers": "🚩 Triggers",
+            "descriptions": {
+                "mainTopic": "What's this entry mainly about? AI figures it out from keywords and the overall meaning.",
+                "length": "How many words you wrote. Over 100? Looks like some deep reflection!",
+                "questionCount": "How many question marks (?) are in the text. More than 3? You're definitely digging deep!",
+                "sentiment": "The overall vibe: from -1 (total negativity 😠) to 1 (pure positivity 😎). Neutral = 0.",
+                "selfConfidence": "How confident the text sounds (0 to 1). Assessed based on phrasing.",
+                "negativeThinking": "How often negative thoughts pop up (0 to 1). Counted by 'gloomy' words.",
+                "awarenessLevel": "How deeply are you analyzing? 'Low' - just facts, 'Medium' - emotions/thoughts, 'High' - all that + conclusions.",
+                "keywords": "The juiciest words from the entry (no fluff like 'and', 'but'). Help see what's on your mind.",
+                "insights": "What interesting things did AI notice in your entries? Could be recurring themes or cool changes.",
+                "triggers": "Events or thoughts often linked to specific emotions (especially negative ones)."
+            }
+        },
+        "awareness": {
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High"
         }
     },
     "plans": {
@@ -336,6 +386,7 @@
         "tasks": {
             "new": {
                 "title": "New task",
+                "description": "Create a new task",
                 "inputPlaceholder": "What needs to be done?",
                 "subtaskPlaceholder": "Add subtask",
                 "addSubtask": "Add subtask"
@@ -578,7 +629,17 @@
             "error": {
                 "title": "Error",
                 "message": "Failed to send error report. Please try again later."
+            },
+            "copyLogs": {
+                "button": "Copy logs"
             }
+        },
+        "journal": {
+            "title": "Journal"
+        },
+        "quickAccess": {
+            "title": "Quick Access",
+            "description": "Customize your quick access options"
         }
     },
     "threads": {
@@ -591,7 +652,11 @@
             "yourenergy": "Your energy",
             "yourjourney": "Your journey",
             "newversion": "New Version Available",
-            "newversionmessage": "A new version of the app is available in the App Store. Would you like to update now?"
+            "newversionmessage": "A new version of the app is available in the App Store. Would you like to update now?",
+            "checkingUpdates": "Checking for updates...",
+            "downloadingUpdate": "Downloading update...",
+            "updateReady": "Update ready...",
+            "updateError": "Update error"
         },
         "onboarding": {
             "welcome": {
@@ -653,7 +718,7 @@
                 }
             },
             "last": {
-                "title": "Welcome to Method",
+                "title": "Welcome to Method do",
                 "subtitle": "You journey starts here"
             },
             "ask4": {
@@ -670,26 +735,52 @@
         },
         "subscription": {
             "title": "Do you want fast growth?",
-            "subtitle": "Get premium and begin the journey to your goals in inner peace.",
-            "restorePurchase": "Restore purchase",
+            "subtitle": "Choose the plan that fits your ambitions and take your productivity to the next level",
+            "hidePlans": "Hide Subscription Options",
+            "showPlans": "View All Subscription Options",
+            "selectPlan": "Choose Your Perfect Plan",
             "termsAndConditions": "Terms of Use (EULA)",
             "privacyPolicy": "Privacy policy",
             "disclaimer": "This subscription will renew at the end of your current period. You can cancel anytime.",
             "active": "Active subscription: {{plan}}",
-            "upgrade": "Upgrade subscription",
-            "error": "An error occurred while subscribing",
+            "bestDeal": "Annual plans save you up to 50% compared to monthly billing",
+            "restorePurchase": "Restore Previous Purchase",
+            "expires": "Your subscription expires on {{date}}",
+            "alreadySubscribed": "You're All Set!",
+            "upgrade": "Upgrade Your Plan",
+            "subscribe": "Subscribe",
+            "error": {
+                "wrong_purchase": "Oops! Something went wrong with the purchase. Please try again.",
+                "restore_empty_title": "No Purchases Found",
+                "restore_empty_message": "No previous purchases were found to restore"
+            },
+            "trial": {
+                "button": "Start {{days}}-Day Free Trial"
+            },
+            "cancel": {
+                "anytime": "Cancel or change your subscription anytime"
+            },
             "toggle": {
                 "premium": "Premium",
                 "premium_ai": "Premium + AI"
             },
+            "price": {
+                "annual": "{{price}} per year (only {{monthly}} per month)",
+                "perMonth": "That's just {{price}} per month",
+                "monthly": "{{price}} per month"
+            },
             "plans": {
+                "period": {
+                    "monthly": "Monthly Billing",
+                    "annually": "Annual Billing (Best Value)"
+                },
                 "premium": {
                     "title": "Premium",
-                    "description": "Advanced features for productivity",
+                    "description": "Perfect for ambitious individuals ready to level up their productivity",
                     "annual": "Yearly subscription",
                     "features": {
                         "planning": {
-                            "title": "Smart Planning",
+                            "title": "Advanced Planning Tools",
                             "description": "Create tasks, set priorities and deadlines"
                         },
                         "motivation": {
@@ -697,68 +788,58 @@
                             "description": "Daily inspiring quotes and reminders to maintain motivation"
                         },
                         "reminders": {
-                            "title": "Smart Reminder System",
-                            "description": "Flexible setup of notifications and recurring reminders"
+                            "title": "Smart Reminders",
+                            "description": "Never miss important tasks with intelligent notification system"
                         },
                         "state": {
                             "title": "State Assessment",
                             "description": "Regular analysis of your mood and productivity"
                         },
                         "goals": {
-                            "title": "Goal Setting",
+                            "title": "Goal Tracking System",
                             "description": "Link tasks to long-term goals, track progress"
                         },
                         "habits": {
-                            "title": "Habit Tracker",
-                            "description": "Form beneficial habits with reminders and statistics"
+                            "title": "Habit Building Framework",
+                            "description": "Build lasting habits with scientifically-proven techniques"
                         },
                         "analytics": {
-                            "title": "Advanced Analytics",
-                            "description": "Detailed reports and insights about your productivity"
+                            "title": "Productivity Analytics",
+                            "description": "Visualize your progress and identify improvement areas"
                         }
                     }
                 },
                 "premium_ai": {
                     "title": "Premium + AI",
-                    "description": "All Premium features + advanced AI assistant",
+                    "description": "For power users who want AI to supercharge their productivity",
                     "annual": "Yearly subscription + AI assistant",
                     "features": {
                         "premium": {
                             "title": "All Premium + AI Features",
-                            "description": "All Premium features + advanced AI features"
+                            "description": "All premium features plus AI-powered enhancements"
                         },
                         "voice": {
                             "title": "Voice Input",
                             "description": "Create records and notes using voice input"
                         },
                         "voiceTasks": {
-                            "title": "Voice Planning",
-                            "description": "Plan your day using voice commands"
+                            "title": "Voice-to-Task Conversion",
+                            "description": "Simply dictate tasks and let AI organize them for you"
                         },
                         "smartInput": {
-                            "title": "Smart Suggestions",
-                            "description": "AI helps formulate tasks and plans more effectively"
+                            "title": "Smart Input Suggestions",
+                            "description": "Get intelligent recommendations as you type tasks and notes"
                         },
                         "aiAnalytics": {
-                            "title": "AI Analytics",
-                            "description": "Deep analysis of your days and automatic report generation"
+                            "title": "AI-Powered Insights",
+                            "description": "Receive personalized productivity insights and improvement suggestions"
                         },
                         "smartReminders": {
-                            "title": "Smart Reminders",
-                            "description": "Personalized reminders based on your habits and preferences"
+                            "title": "Context-Aware Reminders",
+                            "description": "Smart reminders that adapt to your schedule and priorities"
                         }
                     }
                 }
-            },
-            "trial": {
-                "title": "{{days}} days free",
-                "button": "Try {{days}} days free"
-            },
-            "price": {
-                "annual": "{{price}} annually ({{monthly}}/month)"
-            },
-            "cancel": {
-                "anytime": "Cancel subscription at any time"
             }
         }
     },
@@ -769,6 +850,7 @@
         "invalidFormat": "Invalid format"
     },
     "subscription": {
+        "journal_limit": "In the free version, you can only create 5 journal entries. Subscribe to premium to create unlimited entries.",
         "feature_locked": "You need to subscribe to use this feature",
         "evening_reflection_limit": "In the free version, you can only create 5 evening reflections. Subscribe to premium to create unlimited reflections.",
         "start_day_limit": "In the free version, you can only create 5 start day entries. Subscribe to premium to create unlimited entries.",

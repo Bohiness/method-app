@@ -1,8 +1,10 @@
+import { ModalFullScreenContent } from '@entities/modals/modal-full-screen-content'
+import { StepIndicator } from '@entities/modals/StepIndicator'
 import { NavigationIndependentTree } from '@react-navigation/native'
-import { useNavigation } from 'expo-router'
-import React, { useLayoutEffect, useState } from 'react'
-import { View } from 'react-native'
+import { router, useNavigation } from 'expo-router'
+import { useLayoutEffect, useState } from 'react'
 import StepNavigatorMood from './mood/StepNavigator'
+
 export default function Mood() {
     const [currentStep, setCurrentStep] = useState(1)
     const navigation = useNavigation()
@@ -23,10 +25,22 @@ export default function Mood() {
     }
 
     return (
-        <View className="flex-1 bg-background">
-            <NavigationIndependentTree>
+
+        <NavigationIndependentTree>
+            <ModalFullScreenContent
+                headerOnClose={() => {
+                    router.dismissTo('/(tabs)')
+                }}
+                headerCenterContent={
+                    <StepIndicator
+                        currentStep={currentStep}
+                        onStepPress={syncStep}
+                        totalSteps={4}
+                    />
+                }>
                 <StepNavigatorMood date={new Date()} onStepChange={syncStep} />
-            </NavigationIndependentTree>
-        </View>
+            </ModalFullScreenContent>
+        </NavigationIndependentTree>
+
     )
 }

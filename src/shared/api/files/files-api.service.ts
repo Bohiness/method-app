@@ -1,6 +1,6 @@
 // src/shared/api/files/files-api.service.ts
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 
 interface FileUploadResponse {
     file_url: string;

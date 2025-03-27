@@ -1,7 +1,7 @@
 import { ProjectChoice } from '@entities/plans/projects/ProjectChoise'
 import { TabButton } from '@entities/plans/TabButton'
 import { TasksList } from '@entities/plans/TasksList'
-import { API_ROUTES } from '@shared/constants/api-routes'
+import { API_ROUTES } from '@shared/constants/system/api-routes'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { useProjects } from '@shared/hooks/plans/useProjects'
 import { TaskType } from '@shared/types/plans/TasksTypes'
@@ -160,7 +160,7 @@ export const TaskManager = () => {
                 </Animated.View>
             </GestureDetector>
 
-            <View className='absolute flex-row items-center justify-between gap-x-4 bottom-6 right-4 left-4'>
+            <View className='absolute flex-row items-center justify-between gap-x-4 bottom-7 right-2 left-2'>
                 <ProjectChoice
                     selectedProjectId={selectedProjectId}
                     onChangeSelectedProject={onChangeSelectedProject}

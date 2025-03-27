@@ -1,9 +1,9 @@
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { EveningReflectionType } from '@shared/types/diary/eveningreflection/EveningReflectionType';
 import { storage } from '../storage/storage.service';
 
 export class EveningReflectionStorageService {
-    private readonly STORAGE_KEY = STORAGE_KEYS.EVENING_REFLECTION;
+    private readonly STORAGE_KEY = STORAGE_KEYS.DIARY.EVENING_REFLECTION;
 
     // Функция для генерации простого ID без использования crypto
     private generateId(): string {

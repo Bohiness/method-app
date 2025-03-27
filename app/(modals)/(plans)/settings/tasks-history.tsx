@@ -1,3 +1,4 @@
+import { ModalBottomScreenContent } from '@entities/modals/modal-bottom-screen-content'
 import { useOfflineTasks } from '@shared/hooks/plans/useOfflineTasks'
 import { PaginatedResponse } from '@shared/types/PaginatedResponse'
 import { TaskStatus, TaskType } from '@shared/types/plans/TasksTypes'
@@ -129,69 +130,71 @@ export default function TasksHistory() {
     const hasResults = tasksResponse && tasksResponse.results && Array.isArray(tasksResponse.results) && tasksResponse.results.length > 0
 
     return (
-        <View className="flex-1 p-4">
-            <View className="flex-row justify-between items-center mb-6">
-                <Text size="xl" weight="bold">
-                    {'tasks_history_title'}
-                </Text>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onPress={() => refreshTasks()}
-                    rightIcon={'RefreshCw' as IconName}
-                >
-                    <Text variant="tint" weight="medium">
-                        {'tasks_history_refresh'}
+        <ModalBottomScreenContent title={'tasks_history_title'}>
+            <View className="flex-1">
+                <View className="flex-row justify-between items-center mb-6">
+                    <Text size="xl" weight="bold">
+                        {'tasks_history_title'}
                     </Text>
-                </Button>
-            </View>
-
-            {hasResults ? (
-                <>
-                    <FlatList
-                        data={tasksResponse.results as TaskType[]}
-                        renderItem={renderTask}
-                        keyExtractor={item => item.id.toString()}
-                        showsVerticalScrollIndicator={false}
-                        className="mb-4"
-                    />
-
-                    {/* Пагинация */}
-                    <View className="flex-row justify-between items-center py-2">
-                        <Text variant="secondary" size="sm">
-                            {'tasks_page'} {page} {'tasks_of'} {Math.ceil((tasksResponse.count || 0) / ITEMS_PER_PAGE)}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onPress={() => refreshTasks()}
+                        rightIcon={'RefreshCw' as IconName}
+                    >
+                        <Text variant="tint" weight="medium">
+                            {'tasks_history_refresh'}
                         </Text>
-                        <View className="flex-row">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                leftIcon={'ChevronLeft' as IconName}
-                                disabled={!tasksResponse.previous || page <= 1}
-                                onPress={handlePrevPage}
-                                className="mr-2"
-                            >
-                                <Text>{'tasks_prev'}</Text>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                rightIcon={'ChevronRight' as IconName}
-                                disabled={!tasksResponse.next}
-                                onPress={handleNextPage}
-                            >
-                                <Text>{'tasks_next'}</Text>
-                            </Button>
-                        </View>
-                    </View>
-                </>
-            ) : (
-                <View className="flex-1 justify-center items-center p-4">
-                    <Icon name={'Inbox' as IconName} size={48} variant="secondary" />
-                    <Text variant="secondary" size="base" className="mt-4 text-center">
-                        {'tasks_history_empty'}
-                    </Text>
+                    </Button>
                 </View>
-            )}
-        </View>
+
+                {hasResults ? (
+                    <>
+                        <FlatList
+                            data={tasksResponse.results as TaskType[]}
+                            renderItem={renderTask}
+                            keyExtractor={item => item.id.toString()}
+                            showsVerticalScrollIndicator={false}
+                            className="mb-4"
+                        />
+
+                        {/* Пагинация */}
+                        <View className="flex-row justify-between items-center py-2">
+                            <Text variant="secondary" size="sm">
+                                {'tasks_page'} {page} {'tasks_of'} {Math.ceil((tasksResponse.count || 0) / ITEMS_PER_PAGE)}
+                            </Text>
+                            <View className="flex-row">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    leftIcon={'ChevronLeft' as IconName}
+                                    disabled={!tasksResponse.previous || page <= 1}
+                                    onPress={handlePrevPage}
+                                    className="mr-2"
+                                >
+                                    <Text>{'tasks_prev'}</Text>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    rightIcon={'ChevronRight' as IconName}
+                                    disabled={!tasksResponse.next}
+                                    onPress={handleNextPage}
+                                >
+                                    <Text>{'tasks_next'}</Text>
+                                </Button>
+                            </View>
+                        </View>
+                    </>
+                ) : (
+                    <View className="flex-1 justify-center items-center p-4">
+                        <Icon name={'Inbox' as IconName} size={48} variant="secondary" />
+                        <Text variant="secondary" size="base" className="mt-4 text-center">
+                            {'tasks_history_empty'}
+                        </Text>
+                    </View>
+                )}
+            </View>
+        </ModalBottomScreenContent>
     )
 }

@@ -1,5 +1,3 @@
-import { format } from 'date-fns'
-import { ru } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 
 import HTMLView from '@shared/lib/utils/parsers/HTMLView'
@@ -17,11 +15,6 @@ interface JournalCardProps {
 
 export const JournalCard: React.FC<JournalCardProps> = ({ entry, onPress }) => {
     const { t } = useTranslation()
-
-    // Форматирование даты
-    const formattedDate = entry.created_at
-        ? format(new Date(entry.created_at), 'd MMMM yyyy', { locale: ru })
-        : ''
 
     // Получаем иконку для основной эмоции или категории
     const getEmotionIcon = () => {
@@ -49,7 +42,6 @@ export const JournalCard: React.FC<JournalCardProps> = ({ entry, onPress }) => {
                             {entry.primary_emotion_data?.name || t('diary.beautifuldiary.journal.entry')}
                         </Text>
                     </View>
-                    <Text variant='secondary' size='xs'>{formattedDate}</Text>
                 </View>
 
                 <HTMLView html={previewContent} />

@@ -39,7 +39,6 @@ export const SubscriptionSettingScreen = ({
     // Функция для показа модального окна подписки с нужным планом
     const handleShowSubscriptionModal = (plan: 'premium' | 'premium_ai' = 'premium') => {
         showSubscriptionModal({
-            text: t('settings.subscription.upgrade'),
             plan
         })
     }
@@ -102,7 +101,7 @@ export const SubscriptionSettingScreen = ({
                             </Text>
                             <Button
                                 variant="default"
-                                onPress={() => handleShowSubscriptionModal('premium')}
+                                onPress={() => handleShowSubscriptionModal('premium_ai')}
                                 loading={isPurchasing}
                             >
                                 {t('settings.subscription.activatePremium')}

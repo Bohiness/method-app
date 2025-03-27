@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from '@shared/constants/STORAGE_KEYS';
+import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { voiceTonesEN } from '@shared/data/initial/voiceTones/voiceTonesEN';
 import { voiceTonesRu } from '@shared/data/initial/voiceTones/voiceTonesRu';
-import { VoiceTone } from '@shared/types/ai/VoiceTone';
+import { VoiceToneType } from '@shared/types/ai/VoiceTone';
 
 type ToneChangeListener = (toneId: string) => void;
 
@@ -35,14 +35,14 @@ export const toneOfVoiceService = {
     /**
      * Получает все доступные тона голоса в зависимости от локали
      */
-    getVoiceTones: (locale: string): VoiceTone[] => {
+    getVoiceTones: (locale: string): VoiceToneType[] => {
         return locale === 'ru' ? voiceTonesRu : voiceTonesEN;
     },
 
     /**
      * Получает тон голоса по его идентификатору
      */
-    getToneById: (toneId: string, locale: string): VoiceTone | undefined => {
+    getToneById: (toneId: string, locale: string): VoiceToneType | undefined => {
         const tones = toneOfVoiceService.getVoiceTones(locale);
         return tones.find(tone => tone.name_id === toneId);
     },
@@ -58,7 +58,7 @@ export const toneOfVoiceService = {
     /**
      * Получает тон голоса по его индексу
      */
-    getToneByIndex: (index: number, locale: string): VoiceTone => {
+    getToneByIndex: (index: number, locale: string): VoiceToneType => {
         const tones = toneOfVoiceService.getVoiceTones(locale);
         return tones[index] || tones[0];
     },
@@ -68,7 +68,7 @@ export const toneOfVoiceService = {
      */
     saveTone: async (toneId: string): Promise<void> => {
         try {
-            await AsyncStorage.setItem(STORAGE_KEYS.AI_TONE_OF_VOICE, toneId);
+            await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS.AI_TONE_OF_VOICE, toneId);
             // Уведомляем всех подписчиков об изменении
             toneOfVoiceService.notifyListeners(toneId);
         } catch (error) {
@@ -82,11 +82,11 @@ export const toneOfVoiceService = {
     loadSavedTone: async (
         locale: string
     ): Promise<{
-        tone?: VoiceTone;
+        tone?: VoiceToneType;
         index: number;
     }> => {
         try {
-            const savedToneId = await AsyncStorage.getItem(STORAGE_KEYS.AI_TONE_OF_VOICE);
+            const savedToneId = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS.AI_TONE_OF_VOICE);
             if (savedToneId) {
                 const tones = toneOfVoiceService.getVoiceTones(locale);
                 const index = tones.findIndex(tone => tone.name_id === savedToneId);
@@ -107,7 +107,7 @@ export const toneOfVoiceService = {
     /**
      * Получает текущий выбранный тон для использования в AI
      */
-    getCurrentTone: async (locale: string): Promise<VoiceTone> => {
+    getCurrentTone: async (locale: string): Promise<VoiceToneType> => {
         const { tone, index } = await toneOfVoiceService.loadSavedTone(locale);
         if (tone) return tone;
 

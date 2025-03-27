@@ -1,4 +1,4 @@
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { StartDayStorageService } from '@shared/lib/diary/StartData.storage-service';
 import { StartDayType } from '@shared/types/diary/startday/StartDayType';
 import axios from 'axios';

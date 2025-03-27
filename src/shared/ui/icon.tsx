@@ -2,7 +2,7 @@
 import { useColors, useTheme } from '@shared/context/theme-provider'
 import { cn } from '@shared/lib/utils/cn'
 import { icons } from 'lucide-react-native'
-import React, { memo } from 'react'
+import { memo } from 'react'
 import { StyleProp, ViewStyle } from 'react-native'
 
 export type IconName = keyof typeof icons
@@ -105,3 +105,5 @@ export const Icon = memo(({
         />
     )
 })
+
+Icon.displayName = 'Icon'

@@ -1,13 +1,14 @@
 // src/shared/hooks/tasks/useOfflineTasks.ts
+import { APP_ROUTES } from '@shared/constants/system/app-routes';
 import { useNetwork } from '@shared/hooks/systems/network/useNetwork';
 import { tasksStorageService } from '@shared/lib/plans/tasks-storage.service';
 import { tasksSyncService } from '@shared/lib/plans/tasks-sync.service';
 import { PaginatedResponse } from '@shared/types/PaginatedResponse';
 import { CreateTaskDtoType, TasksFiltersType, TaskType, UpdateTaskDtoType } from '@shared/types/plans/TasksTypes';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import debounce from 'lodash/debounce';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-
 // Расширяем тип TaskType для локального использования
 interface LocalTaskType extends TaskType {
     serverId?: number;
@@ -20,6 +21,10 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
     const queryKey = ['tasks', filters];
     const initialLoadRef = useRef(false);
     const backgroundSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const openNewTaskModal = () => {
+        router.push(`/${APP_ROUTES.MODALS.PLANS.NEW_TASK}`);
+    };
 
     // Включаем периодическую синхронизацию при монтировании компонента
     useEffect(() => {
@@ -548,6 +553,7 @@ export const useOfflineTasks = (filters?: TasksFiltersType) => {
         updateTask,
         deleteTask,
         getTaskById,
+        openNewTaskModal,
         toggleTask: (taskId: string | number) => toggleTaskCompletion.mutate(taskId),
         isToggling: toggleTaskCompletion.isPending,
         syncTasks,

@@ -1,5 +1,5 @@
 import { apiClient } from '@shared/config/api-client';
-import { API_ROUTES } from '@shared/constants/api-routes';
+import { API_ROUTES } from '@shared/constants/system/api-routes';
 import { JournalStorageService } from '@shared/lib/diary/Journal.storage.service';
 import {
     Journal,
