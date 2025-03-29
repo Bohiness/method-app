@@ -79,9 +79,4 @@ i18n.use(initReactI18next).init({
     },
 });
 
-// Инициализация языка при загрузке
-getStoredLanguage().then(language => {
-    i18n.changeLanguage(language);
-});
-
 export default i18n;

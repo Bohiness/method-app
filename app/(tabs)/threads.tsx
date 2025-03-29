@@ -5,9 +5,9 @@ import { useMoodCheckinStats } from '@shared/hooks/diary/mood/useMoodCheckin'
 import { useCalendarWeekMoodConverter } from '@shared/hooks/diary/stats/useStatsMoodCheckinConverter'
 import { useSubscriptionModal } from '@shared/hooks/subscription/useSubscriptionModal'
 import { Text } from '@shared/ui/text'
-import { Container } from '@shared/ui/view'
+import { View } from '@shared/ui/view'
 import { useTranslation } from 'react-i18next'
-import { ScrollView, View } from 'react-native'
+import { ScrollView } from 'react-native'
 
 export default function ThreadsScreen() {
     const { t } = useTranslation()
@@ -29,34 +29,32 @@ export default function ThreadsScreen() {
     } = useMoodCheckinStats(30)
 
     return (
-        <Container>
-            <View className="flex-1">
-                <CheckConnect />
-                <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-                    <View className="flex-1 gap-y-6 pb-10">
-                        <View>
-                            <Text className='text-center' variant="secondary">
-                                {t('threads.description')}
-                            </Text>
-                        </View>
-
-                        <View className="flex-1 gap-y-6">
-                            <WeeklyChart
-                                currentWeekData={weeklyData}
-                                previousWeekData={prevWeeklyData}
-                                currentAvg={weeklyAvg || 0}
-                                previousAvg={prevWeeklyAvg || 0}
-                                isLoading={isWeeklyLoading}
-                            />
-
-                            {wrapWithSubscriptionOverlay({
-                                plan: 'premium',
-                                children: <MonthlyActivity currentMonthData={monthlyData} />
-                            })}
-                        </View>
+        <View variant="default" className="flex-1">
+            <CheckConnect />
+            <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+                <View className="flex-1 gap-y-6 pb-10">
+                    <View>
+                        <Text className='text-center' variant="secondary">
+                            {t('threads.description')}
+                        </Text>
                     </View>
-                </ScrollView>
-            </View>
-        </Container>
+
+                    <View className="flex-1 gap-y-6">
+                        <WeeklyChart
+                            currentWeekData={weeklyData}
+                            previousWeekData={prevWeeklyData}
+                            currentAvg={weeklyAvg || 0}
+                            previousAvg={prevWeeklyAvg || 0}
+                            isLoading={isWeeklyLoading}
+                        />
+
+                        {wrapWithSubscriptionOverlay({
+                            plan: 'premium',
+                            children: <MonthlyActivity currentMonthData={monthlyData} />
+                        })}
+                    </View>
+                </View>
+            </ScrollView>
+        </View>
     )
 }

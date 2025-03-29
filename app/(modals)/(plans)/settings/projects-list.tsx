@@ -6,7 +6,7 @@ export default function ProjectsListModal() {
     const { t } = useTranslation()
 
     return (
-        <ModalBottomScreenContent title={t('screens.settings.projects.title')}>
+        <ModalBottomScreenContent title={t('plans.projects.title')}>
             <ProjectsList />
         </ModalBottomScreenContent>
     )

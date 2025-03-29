@@ -301,6 +301,9 @@ class Logger {
 
     /**
      * Записать JSON-данные
+     * @param data - Данные для записи
+     * @param options - Опции лога
+     * @returns Временная метка лога
      */
     json(data: any, options: JsonLogOptions = {}) {
         const { title, context } = options;

@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { Button } from '@shared/ui/button'
+import { FinishButton } from '@shared/ui/button'
 import { View } from '@shared/ui/view'
 import { SuccessStep } from '@widgets/diary/mood/steps/SuccessStep'
 import { router } from 'expo-router'
@@ -23,15 +23,12 @@ export function SuccessScreen({ route }: Props) {
                 <SuccessStep />
             </View>
             <View className="px-4 items-center">
-                <Button
+                <FinishButton
                     variant="default"
-                    className="w-fit self-center px-20"
-                    size='lg'
                     onPress={handleClose}
-                    style={{ marginBottom: insets.bottom + 20 }}
                 >
                     {t('common.done')}
-                </Button>
+                </FinishButton>
             </View>
         </View>
     )

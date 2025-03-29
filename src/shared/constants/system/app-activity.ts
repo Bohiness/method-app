@@ -46,7 +46,7 @@ export const appActivity: AppActivity[] = [
         key: 'journal',
         categoryKey: 'diary',
         titleKey: 'diary.beautifuldiary.title',
-        descriptionKey: 'diary.journal.description',
+        descriptionKey: 'diary.beautifuldiary.description',
         icon: 'FileText',
         path: APP_ROUTES.MODALS.DIARY.JOURNAL.ENTRY,
         storageKey: STORAGE_KEYS.DIARY.JOURNAL,

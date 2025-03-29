@@ -10,10 +10,6 @@ export const useKeyboard = () => {
     const [contentHeight, setContentHeight] = useState(Dimensions.get('window').height);
     const inputRef = useRef<TextInput>(null);
 
-    useEffect(() => {
-        logger.log(contentHeight, 'useKeyboard –– useEffect', 'contentHeight');
-    }, [contentHeight]);
-
     // Обновление размеров при изменении окна
     useEffect(() => {
         const updateContentHeight = () => {
@@ -54,11 +50,6 @@ export const useKeyboard = () => {
             hideSubscription.remove();
         };
     }, []);
-
-    useEffect(() => {
-        logger.log(isKeyboardVisible, 'useKeyboard –– useEffect', 'isKeyboardVisible');
-        logger.log(keyboardHeight, 'useKeyboard –– useEffect', 'keyboardHeight');
-    }, [isKeyboardVisible]);
 
     // Показать клавиатуру
     const showKeyboard = useCallback(() => {

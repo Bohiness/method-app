@@ -268,3 +268,14 @@ export const Button: React.FC<ButtonProps> = ({
         </AnimatedPressable>
     )
 }
+
+export const FinishButton = ({ children, ...props }: { children: React.ReactNode } & ButtonProps) => {
+    return <Button
+        className="w-fit self-center px-20"
+        size='lg'
+        {...props}
+    >
+        {children}
+    </Button>
+}
+

@@ -293,19 +293,21 @@ export const useSubscription = () => {
             logger.log(pkg, 'useSubscription – purchaseMutation', 'Purchasing package');
             return subscriptionService.purchasePackage(pkg);
         },
-        onSuccess: () => {
+        onSuccess: customerInfo => {
+            logger.log(
+                { activeEntitlementsKeys: customerInfo ? Object.keys(customerInfo.entitlements.active) : 'N/A' },
+                'Purchase successful (onSuccess). Invalidating subscription queries.',
+                'useSubscription – purchaseMutation'
+            );
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.SUBSCRIPTION],
-                refetchType: 'active',
+                refetchType: 'all',
             });
             setError(null);
 
             // Уведомляем пользователя об успешной покупке
             if (Platform.OS !== 'web') {
-                Alert.alert(
-                    t('screens.subscription.success.success_bought'),
-                    t('screens.subscription.success.success_bought_message')
-                );
+                Alert.alert(t('subscription.success.success_bought'), t('subscription.success.success_bought_message'));
             }
         },
         onError: (err: any) => {
@@ -320,9 +322,14 @@ export const useSubscription = () => {
             return subscriptionService.restorePurchases();
         },
         onSuccess: customerInfo => {
+            logger.log(
+                { activeEntitlementsKeys: customerInfo ? Object.keys(customerInfo.entitlements.active) : 'N/A' },
+                'Restore successful (onSuccess). Invalidating subscription queries.',
+                'useSubscription – restoreMutation'
+            );
             queryClient.invalidateQueries({
                 queryKey: [QUERY_KEYS.SUBSCRIPTION],
-                refetchType: 'active',
+                refetchType: 'all',
             });
             setError(null);
 
@@ -334,13 +341,13 @@ export const useSubscription = () => {
             if (Platform.OS !== 'web') {
                 if (hasActiveSubscriptions) {
                     Alert.alert(
-                        t('screens.subscription.success.success_restored'),
-                        t('screens.subscription.success.success_restored_message')
+                        t('subscription.success.success_restored'),
+                        t('subscription.success.success_restored_message')
                     );
                 } else {
                     Alert.alert(
-                        t('screens.subscription.error.restore_empty_title'),
-                        t('screens.subscription.error.restore_empty_message')
+                        t('subscription.error.restore_empty_title'),
+                        t('subscription.error.restore_empty_message')
                     );
                 }
             }
@@ -487,6 +494,23 @@ export const useSubscription = () => {
             return false;
         }
     }, [cacheService, queryClient, handleSubscriptionError, setError]);
+
+    // Добавим useEffect для логирования subscription и производных состояний
+    useEffect(() => {
+        logger.debug(
+            {
+                isSubscriptionLoading,
+                hasSubscriptionData: !!subscription,
+                subscriptionTier: subscription?.tier,
+                isSubscriptionActive: subscription?.isActive,
+                calculated_isPremium: isPremium,
+                calculated_isPremiumAI: isPremiumAI,
+                error: subscriptionError ? JSON.stringify(subscriptionError) : null,
+            },
+            'useSubscription - useEffect[subscription]',
+            'Subscription state update in useSubscription'
+        );
+    }, [subscription, isSubscriptionLoading, isPremium, isPremiumAI, subscriptionError]);
 
     return {
         // Данные

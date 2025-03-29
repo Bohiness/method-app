@@ -10,77 +10,85 @@ export type SupportedLanguage = 'ru' | 'en'
 type LanguageContextType = {
     currentLanguage: SupportedLanguage
     changeLanguage: (lang: SupportedLanguage) => Promise<void>
-    isLoading: boolean
+    isInitialized: boolean
 }
 
 const LanguageContext = createContext<LanguageContextType>({
     currentLanguage: 'en',
     changeLanguage: async () => { },
-    isLoading: true
+    isInitialized: false
 })
-
 
 export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
     const { i18n } = useTranslation()
     const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(i18n.language as SupportedLanguage)
-    const [isLoading, setIsLoading] = useState(true)
+    const [isInitialized, setIsInitialized] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const { locale, updateLocale, isLoading: isLocaleLoading } = useLocale()
-
-    // Флаг для предотвращения зацикленности
     const isSyncingLanguage = useRef(false)
 
-    // Инициализация языка при первом рендере
     useLayoutEffect(() => {
         const initLanguage = async () => {
+            let initialLang = i18n.language as SupportedLanguage
             try {
-                setIsLoading(true)
                 const stored = await getStoredLanguage()
-                if (stored) {
-                    // Устанавливаем язык i18n
-                    await i18n.changeLanguage(stored as SupportedLanguage)
-                    await setStoredLanguage(stored as SupportedLanguage)
-                    setCurrentLanguage(stored as SupportedLanguage)
+                if (stored && ['ru', 'en'].includes(stored)) {
+                    initialLang = stored as SupportedLanguage
+                    if (i18n.language !== initialLang) {
+                        await i18n.changeLanguage(initialLang)
+                    }
                 }
+                setCurrentLanguage(initialLang)
+
             } catch (error) {
-                console.error('Failed to init language:', error)
+                console.error('Failed to init language from storage:', error)
+                setCurrentLanguage(i18n.language as SupportedLanguage)
             } finally {
-                setIsLoading(false)
+                setIsInitialized(true)
             }
         }
 
         initLanguage()
-    }, [i18n])
+    }, [])
 
-    // Синхронизация с useLocale только при изменении locale
-    // и только если это не результат нашего собственного обновления
     useEffect(() => {
-        // Пропускаем первый рендер и случаи, когда мы сами инициировали изменение
-        if (isLocaleLoading || isSyncingLanguage.current) return
+        if (!isInitialized || isSyncingLanguage.current || isLocaleLoading) return
 
-        // Если языки различаются, обновляем currentLanguage
-        if (locale !== currentLanguage) {
-            setCurrentLanguage(locale as SupportedLanguage)
-            i18n.changeLanguage(locale).catch(error => {
-                console.error('Failed to sync i18n with locale:', error)
+        const deviceLocale = locale as SupportedLanguage
+
+        if (['ru', 'en'].includes(deviceLocale) && deviceLocale !== currentLanguage) {
+            console.log(`Syncing language to device locale: ${deviceLocale}`)
+            changeLanguage(deviceLocale).catch(error => {
+                console.error('Failed to auto-sync language with locale:', error)
             })
         }
-    }, [locale, isLocaleLoading, currentLanguage, i18n])
+    }, [locale, isLocaleLoading, isInitialized, currentLanguage])
 
-    // Функция для изменения языка через UI
     const changeLanguage = async (language: SupportedLanguage) => {
+        if (!isInitialized) {
+            console.warn('Attempted to change language before initialization.')
+            return
+        }
+        if (language === currentLanguage && i18n.language === language) {
+            return
+        }
+
         try {
             setIsLoading(true)
             isSyncingLanguage.current = true
 
-            // Обновляем i18n
-            await i18n.changeLanguage(language)
+            if (i18n.language !== language) {
+                await i18n.changeLanguage(language)
+            }
             await setStoredLanguage(language)
             setCurrentLanguage(language)
 
-            // Обновляем локаль
-            await updateLocale(language as SupportedLocale)
+            if (locale !== language) {
+                await updateLocale(language as SupportedLocale)
+            }
+
         } catch (error) {
-            console.error('Failed to change language:', error)
+            console.error(`Failed to change language to ${language}:`, error)
             throw error
         } finally {
             setIsLoading(false)
@@ -92,11 +100,17 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
         <LanguageContext.Provider value={{
             currentLanguage,
             changeLanguage,
-            isLoading: isLoading || isLocaleLoading
+            isInitialized
         }}>
             {children}
         </LanguageContext.Provider>
     )
 }
 
-export const useLanguage = () => useContext(LanguageContext)
+export const useLanguage = () => {
+    const context = useContext(LanguageContext)
+    if (context === undefined) {
+        throw new Error('useLanguage must be used within a LanguageProvider')
+    }
+    return context
+}

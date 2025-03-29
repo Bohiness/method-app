@@ -11,7 +11,7 @@ import { OutlinedView, View } from '@shared/ui/view'
 import { router } from 'expo-router'
 import React, { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ActivityIndicator, TouchableOpacity, useWindowDimensions } from "react-native"
+import { ActivityIndicator, LayoutChangeEvent, TouchableOpacity, useWindowDimensions } from "react-native"
 import { FlatList } from "react-native-gesture-handler"
 import { Easing, useSharedValue, withRepeat, withSpring, withTiming } from "react-native-reanimated"
 
@@ -34,6 +34,9 @@ export default function AiToneOfVoice() {
     // Состояние для отслеживания видимых элементов
     const [visibleIndices, setVisibleIndices] = useState<number[]>([])
 
+    // Состояние для хранения измеренной ширины контейнера FlatList
+    const [containerWidth, setContainerWidth] = useState<number | null>(null)
+
     // Анимированные значения
     const circleSize = useSharedValue(120)
     const rotationValue = useSharedValue(0)
@@ -46,13 +49,15 @@ export default function AiToneOfVoice() {
         // Инициализируем видимые индексы
         setVisibleIndices([currentToneIndex])
 
-        // Прокрутка к выбранному тону
-        setTimeout(() => {
-            flatListRef.current?.scrollToIndex({
-                index: currentToneIndex,
-                animated: false
-            })
-        }, 100)
+        // Прокрутка к выбранному тону, если ширина уже известна
+        if (containerWidth !== null) {
+            setTimeout(() => {
+                flatListRef.current?.scrollToIndex({
+                    index: currentToneIndex,
+                    animated: false
+                })
+            }, 100)
+        }
 
         // Анимации при загрузке
         circleSize.value = withSpring(120, { damping: 15 })
@@ -63,7 +68,7 @@ export default function AiToneOfVoice() {
             -1, // бесконечное повторение
             false
         )
-    }, [currentToneIndex])
+    }, [currentToneIndex, containerWidth])
 
     // Сохранение выбранного тона
     const saveTone = async () => {
@@ -95,8 +100,15 @@ export default function AiToneOfVoice() {
         })
     }
 
-    // Расчет ширины элемента на основе размера экрана
-    const itemWidth = dimensions.width
+    // Обработчик для измерения ширины контейнера
+    const handleLayout = (event: LayoutChangeEvent) => {
+        if (containerWidth === null) {
+            setContainerWidth(event.nativeEvent.layout.width)
+        }
+    }
+
+    // Расчет ширины элемента на основе ИЗМЕРЕННОЙ ширины контейнера
+    const itemWidth = containerWidth ?? 0
 
     // Обработчик перелистывания
     const handleViewableItemsChanged = React.useRef(({ viewableItems }: { viewableItems: any[] }) => {
@@ -169,80 +181,89 @@ export default function AiToneOfVoice() {
 
     return (
         <ModalBottomScreenContent showHeader title="settings.ai.aiToneOfVoice.title">
-            {/* Карусель с тонами голоса */}
-            <View className="flex-1 justify-center">
-                {/* Кнопка влево */}
-                {selectedToneIndex > 0 && (
-                    <TouchableOpacity
-                        onPress={prevTone}
-                        className="absolute left-4 top-1/3 z-10 rounded-full p-2"
-                        style={{ transform: [{ translateY: -25 }] }}
-                        activeOpacity={0.7}
-                    >
-                        <Icon name="ChevronLeft" size={20} variant='secondary' />
-                    </TouchableOpacity>
-                )}
+            {/* Контейнер для карусели, измеряем его ширину */}
+            <View className="flex-1 justify-center" onLayout={handleLayout}>
+                {/* Показываем ActivityIndicator, пока ширина не измерена */}
+                {containerWidth === null ? (
+                    <ActivityIndicator size="large" />
+                ) : (
+                    <>
+                        {/* Кнопка влево */}
+                        {selectedToneIndex > 0 && (
+                            <TouchableOpacity
+                                onPress={prevTone}
+                                className="absolute left-4 top-1/3 z-10 rounded-full p-2"
+                                style={{ transform: [{ translateY: -25 }] }}
+                                activeOpacity={0.7}
+                            >
+                                <Icon name="ChevronLeft" size={20} variant='secondary' />
+                            </TouchableOpacity>
+                        )}
 
-                <FlatList
-                    ref={flatListRef}
-                    data={allTones}
-                    renderItem={renderVoiceTone}
-                    keyExtractor={(item) => item.name_id}
-                    horizontal
-                    pagingEnabled
-                    showsHorizontalScrollIndicator={false}
-                    onViewableItemsChanged={handleViewableItemsChanged}
-                    viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
-                    initialScrollIndex={selectedToneIndex}
-                    getItemLayout={(data, index) => ({
-                        length: itemWidth,
-                        offset: itemWidth * index,
-                        index,
-                    })}
-                    // Оптимизация FlatList
-                    windowSize={3} // 1 видимый элемент + по 1 в обе стороны
-                    maxToRenderPerBatch={3}
-                    updateCellsBatchingPeriod={50}
-                    removeClippedSubviews={true}
-                />
-
-                {/* Кнопка вправо */}
-                {selectedToneIndex < allTones.length - 1 && (
-                    <TouchableOpacity
-                        onPress={nextTone}
-                        className="absolute right-4 top-1/3 z-10 rounded-full p-2"
-                        style={{ transform: [{ translateY: -25 }] }}
-                        activeOpacity={0.7}
-                    >
-                        <Icon name="ChevronRight" size={20} variant='secondary' />
-                    </TouchableOpacity>
-                )}
-            </View>
-
-            {/* Индикаторы (точки) */}
-            <View className="flex-row justify-center gap-2 pb-8">
-                {allTones.map((_, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        onPress={() => {
-                            setSelectedToneIndex(index)
-                            setVisibleIndices([index])
-                            flatListRef.current?.scrollToIndex({
+                        <FlatList
+                            ref={flatListRef}
+                            data={allTones}
+                            renderItem={renderVoiceTone}
+                            keyExtractor={(item) => item.name_id}
+                            horizontal
+                            pagingEnabled
+                            showsHorizontalScrollIndicator={false}
+                            onViewableItemsChanged={handleViewableItemsChanged}
+                            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+                            initialScrollIndex={selectedToneIndex}
+                            getItemLayout={(data, index) => ({
+                                length: itemWidth,
+                                offset: itemWidth * index,
                                 index,
-                                animated: true
-                            })
-                        }}
-                        accessibilityLabel={t("settings.ai.aiToneOfVoice.selectTone", { number: index + 1 })}
-                    >
-                        <View
-                            className={`w-2 h-2 rounded-full ${index === selectedToneIndex
-                                ? 'bg-white'
-                                : 'bg-gray-600'
-                                }`}
+                            })}
+                            // Оптимизация FlatList
+                            windowSize={3} // 1 видимый элемент + по 1 в обе стороны
+                            maxToRenderPerBatch={3}
+                            updateCellsBatchingPeriod={50}
+                            removeClippedSubviews={true}
                         />
-                    </TouchableOpacity>
-                ))}
+
+                        {/* Кнопка вправо */}
+                        {selectedToneIndex < allTones.length - 1 && (
+                            <TouchableOpacity
+                                onPress={nextTone}
+                                className="absolute right-4 top-1/3 z-10 rounded-full p-2"
+                                style={{ transform: [{ translateY: -25 }] }}
+                                activeOpacity={0.7}
+                            >
+                                <Icon name="ChevronRight" size={20} variant='secondary' />
+                            </TouchableOpacity>
+                        )}
+                    </>
+                )}
             </View>
+
+            {/* Индикаторы (точки) - отображаем только после измерения ширины */}
+            {containerWidth !== null && (
+                <View className="flex-row justify-center gap-2 pb-8">
+                    {allTones.map((_, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={() => {
+                                setSelectedToneIndex(index)
+                                setVisibleIndices([index])
+                                flatListRef.current?.scrollToIndex({
+                                    index,
+                                    animated: true
+                                })
+                            }}
+                            accessibilityLabel={t("settings.ai.aiToneOfVoice.selectTone", { number: index + 1 })}
+                        >
+                            <View
+                                className={`w-2 h-2 rounded-full ${index === selectedToneIndex
+                                    ? 'bg-white'
+                                    : 'bg-gray-600'
+                                    }`}
+                            />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            )}
 
             {/* Кнопка внизу */}
             <View className="px-6">

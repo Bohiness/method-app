@@ -3,9 +3,11 @@ import { useToneOfVoice } from '@shared/hooks/ai/toneOfVoice.hook'
 import { useJournal } from '@shared/hooks/diary/journal/useJournal'
 import { useShowModal } from '@shared/hooks/modal/useShowModal'
 import { logger } from '@shared/lib/logger/logger.service'
+import { htmlContentCountWords } from '@shared/lib/utils/text/htmlContentCountWords'
 import { DeeperType } from '@shared/types/ai/VoiceTone'
 import { Badge } from '@shared/ui/badge'
 import { Button } from '@shared/ui/button'
+import { Switable, SwitableRef } from '@shared/ui/switable'
 import { Text } from '@shared/ui/text'
 import TextEditor, { TextEditorRef } from '@shared/ui/text-editor'
 import { View } from '@shared/ui/view'
@@ -13,6 +15,7 @@ import { router } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Alert } from 'react-native'
+import JournalEditorSuccess from './JournalEditorSuccess'
 
 // Создаем объект для хранения функции сохранения
 export const journalEditorState = {
@@ -23,10 +26,13 @@ export const journalEditorState = {
 
 export const JournalEditor: React.FC<{ onSaveDraft: (showSavedMessage: boolean) => void }> = ({ onSaveDraft }) => {
     const { t } = useTranslation()
+    const switableRef = useRef<SwitableRef>(null)
     const editorRef = useRef<TextEditorRef>(null)
     const { currentTone, goDeeper } = useToneOfVoice()
     const [content, setContent] = useState('')
-    const { create, update } = useJournal() // Используем хук для создания/обновления журнала
+    const [wordCount, setWordCount] = useState(0)
+    const [timeSpentSeconds, setTimeSpentSeconds] = useState(0)
+    const { create, update } = useJournal()
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null) // Референс для таймера автосохранения
 
     // Определяем loading indicator здесь для доступа в разных частях компонента
@@ -358,6 +364,10 @@ export const JournalEditor: React.FC<{ onSaveDraft: (showSavedMessage: boolean) 
                 return
             }
 
+            if (switableRef.current?.activeIndex.value === 1) {
+                return
+            }
+
             // Заменяем прямой Alert на Alert с выбором
             return new Promise((resolve) => {
                 Alert.alert(
@@ -464,6 +474,9 @@ export const JournalEditor: React.FC<{ onSaveDraft: (showSavedMessage: boolean) 
         try {
             const currentContent = editorRef.current?.getContent() || content
 
+            const wordCount = htmlContentCountWords(currentContent)
+            setWordCount(wordCount)
+
             if (!currentContent.trim()) {
                 Alert.alert(t('components.textEditor.emptyContent'))
                 return
@@ -490,7 +503,7 @@ export const JournalEditor: React.FC<{ onSaveDraft: (showSavedMessage: boolean) 
 
             }
 
-            router.dismissTo('/(tabs)')
+            switableRef.current?.switchToBack()
 
         } catch (error) {
             logger.error(error, 'handleSave', 'error')
@@ -498,44 +511,53 @@ export const JournalEditor: React.FC<{ onSaveDraft: (showSavedMessage: boolean) 
         }
     }
 
+
+    const textEditor = (
+        <TextEditor
+            ref={editorRef}
+            onChange={handleChange}
+            onSave={handleSave}
+            placeholder={t('diary.journal.NotePlaceholder')}
+            onAttachImage={handleImageUpload}
+            buttonDown={
+                <View className="flex-row gap-x-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        bgColor={currentTone?.gradient[0]}
+                        textColor={currentTone?.color}
+                        onPress={() => handleGoDeeper(content, 'goDeeper')}
+                    >
+                        {t('components.textEditor.goDeeper')}
+                    </Button>
+
+                    <Button
+                        leftIcon="ChevronUp"
+                        variant="outline"
+                        size="sm"
+                        bgColor={currentTone?.gradient[0]}
+                        iconProps={{
+                            color: currentTone?.color
+                        }}
+                        onPress={handleShowModal}
+                    />
+                </View>
+            }
+        />
+    )
+
+
     return (
         <View className="flex-1 relative">
-            <TextEditor
-                ref={editorRef}
-                onChange={handleChange}
-                onSave={handleSave}
-                placeholder={t('diary.journal.NotePlaceholder')}
-                onAttachImage={handleImageUpload}
-                buttonDown={
-                    <View className="flex-row gap-x-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            bgColor={currentTone?.gradient[0]}
-                            textColor={currentTone?.color}
-                            onPress={() => handleGoDeeper(content, 'goDeeper')}
-                        >
-                            {t('components.textEditor.goDeeper')}
-                        </Button>
-
-                        <Button
-                            leftIcon="ChevronUp"
-                            variant="outline"
-                            size="sm"
-                            bgColor={currentTone?.gradient[0]}
-                            iconProps={{
-                                color: currentTone?.color
-                            }}
-                            onPress={handleShowModal}
-                        />
-                    </View>
-                }
+            <Switable
+                front={textEditor}
+                back={<JournalEditorSuccess wordCount={wordCount} timeSpentSeconds={timeSpentSeconds} />}
+                ref={switableRef}
             />
-
-            {/* Рендерим компонент модального окна */}
             <ModalComponent />
         </View>
     )
 }
+
 
 export default JournalEditor 

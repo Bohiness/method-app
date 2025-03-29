@@ -57,7 +57,6 @@ function AppStack() {
       <Stack.Screen name={APP_ROUTES.MODALS.DIARY.START_YOUR_DAY} options={{ ...fullScreenModalOptions }} />
       <Stack.Screen name={APP_ROUTES.MODALS.DIARY.EVENING_REFLECTION} options={{ ...fullScreenModalOptions }} />
       <Stack.Screen name={APP_ROUTES.MODALS.DIARY.BEAUTIFUL_DIARY} options={{ ...bottomModalScreenOptions }} />
-      <Stack.Screen name={APP_ROUTES.MODALS.DIARY.JOURNAL.SUCCESS} options={{ ...bottomModalScreenOptions }} />
       <Stack.Screen name={APP_ROUTES.MODALS.DIARY.JOURNAL.EDITOR}
         options={{
           headerShown: false,

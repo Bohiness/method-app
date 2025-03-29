@@ -7,10 +7,12 @@ import { logger } from '@shared/lib/logger/logger.service'
 import { useStorage } from '@shared/lib/storage/storage.service'
 import { subscriptionService } from '@shared/lib/subscription/subscription.service'
 import { anonymousUserService } from '@shared/lib/user/anonymous.service'
+import { csrfService } from '@shared/lib/user/token/csrf.service'
 import { tokenService } from '@shared/lib/user/token/token.service'
+import { userService } from '@shared/lib/user/user.service'
 import { UserType } from '@shared/types/user/UserType'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { router } from 'expo-router'
+import * as Updates from 'expo-updates'
 import { createContext, useContext, useEffect, useState } from 'react'
 
 interface UserContextValue {
@@ -36,25 +38,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const signOutMutation = useMutation({
         mutationFn: async () => {
             try {
-                // Получаем свежий CSRF токен перед выходом
-                await authApiService.logout()
+                // await authApiService.logout()
                 await subscriptionService.logout()
             } catch (error) {
                 logger.error(error, 'user provider – signOut', 'UserProvider: Failed to logout:')
-                // Продолжаем процесс выхода даже при ошибке
             }
         },
         onSettled: async () => {
             queryClient.clear()
             setUser(null)
             await storage.remove(STORAGE_KEYS.USER.USER_DATA)
-            router.dismissAll()
-            try {
-                await signInAnonymously()
-                logger.debug('UserProvider: Successfully signed in anonymously after logout', 'user provider – signOut')
-            } catch (error) {
-                logger.error(error, 'user provider – signOut', 'UserProvider: Failed to sign in anonymously after logout:')
-            }
+            await tokenService.clearRefreshAndAccessTokens()
+            await csrfService.clearCsrfToken()
+            Updates.reloadAsync()
         },
         retry: false
     })
@@ -85,8 +81,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             })
         },
         onSuccess: async (response) => {
-            await tokenService.setSession(response.tokens)
-            await storage.set(STORAGE_KEYS.USER.USER_DATA, response.user)
+            await tokenService.setTokensToStorage(response.tokens)
+            await userService.setUserToStorage(response.user)
             setUser(response.user)
             // Убираем избыточное сохранение токена
         },
@@ -100,7 +96,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         },
         onSuccess: async (response) => {
             setUser(response.user)
-            await storage.set(STORAGE_KEYS.USER.USER_DATA, response.user)
+            await userService.setUserToStorage(response.user)
             // Убираем избыточное сохранение токена
         }
     })
@@ -108,29 +104,34 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
         logger.debug('UserProvider: Checking authentication...', 'user provider – checkAuth')
 
-        // Сначала получаем CSRF токен
         try {
-            await tokenService.getCsrfToken()
-        } catch (csrfError) {
-            logger.error(csrfError, 'user provider – checkAuth', 'UserProvider: Failed to get CSRF token:')
-        }
+            // Сразу пытаемся проверить сессию на сервере.
+            // apiClient внутри обработает CSRF и обновление токенов при необходимости.
+            const checkResponse = await authApiService.checkAuthFromServer()
+            logger.debug(checkResponse, 'user provider – checkAuth', 'UserProvider: Server auth check response:')
 
-        // Получаем сессию
-        const session = await tokenService.getSession()
-
-        logger.debug(session, 'user provider – checkAuth', 'UserProvider: Session status:')
-
-        if (session) {
-            try {
-                const checkResponse = await authApiService.checkAuthFromServer()
-                logger.debug(!!checkResponse, 'user provider – checkAuth', 'UserProvider: Got user data:')
+            // Проверяем, что сервер подтвердил аутентификацию и вернул данные
+            // (is_authenticated может быть полезен, если API может вернуть 200 OK, но сказать "не аутентифицирован")
+            if (checkResponse.is_authenticated && checkResponse.userData) {
+                logger.debug('UserProvider: Auth confirmed by server.', 'user provider – checkAuth')
                 setUser(checkResponse.userData)
-                await storage.set(STORAGE_KEYS.USER.USER_DATA, checkResponse.userData)
-            } catch (error) {
-                logger.error(error, 'user provider – checkAuth', 'UserProvider: Auth check failed:')
+                // Сохраняем свежие данные пользователя
+                await userService.setUserToStorage(checkResponse.userData)
+
+                // Сохраняем свежий CSRF токен, если он пришел
+                if (checkResponse.csrfToken) {
+                    await csrfService.setCsrfTokenToStorage(checkResponse.csrfToken)
+                    logger.debug('UserProvider: Updated CSRF token saved.', 'user provider – checkAuth')
+                }
+            } else {
+                // Сервер ответил, но пользователь не аутентифицирован
+                logger.warn('UserProvider: Server responded, but user is not authenticated. Signing in anonymously.', 'user provider – checkAuth')
                 await signInAnonymously()
             }
-        } else {
+        } catch (error) {
+            // Ошибка при вызове checkAuthFromServer (сетевая, 401 после неудачного refresh и т.д.)
+            logger.error(error, 'user provider – checkAuth', 'UserProvider: Server auth check failed. Signing in anonymously.')
+            // Пытаемся войти как анонимный пользователь в случае любой ошибки проверки
             await signInAnonymously()
         }
     }
@@ -160,7 +161,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         try {
             // Получаем свежий CSRF токен перед обновлением профиля
             const result = await userApiService.updateProfile(user!.id, userData)
-            await storage.set(STORAGE_KEYS.USER.USER_DATA, result)
+            await userService.setUserToStorage(result)
             setUser(result)
             return result
         } catch (error) {

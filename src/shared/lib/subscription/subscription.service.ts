@@ -175,7 +175,12 @@ class SubscriptionService {
             }
 
             logger.debug(`Вызов Purchases.logIn с ID: ${userId}`, 'setUserId – SubscriptionService');
-            await Purchases.logIn(userId);
+            const customerInfo = await Purchases.logIn(userId);
+
+            logger.json(customerInfo, {
+                title: 'CustomerInfo after logIn',
+                context: 'setUserId – SubscriptionService',
+            });
 
             // Сохраняем ID пользователя после успешной установки
             this.currentUserId = userId;
@@ -222,7 +227,7 @@ class SubscriptionService {
     }
 
     /**
-     * Получает список доступных пакетов подписок
+     * Получает список доступных пакетов подписок из ВСЕХ предложений (offerings)
      */
     async getOfferings(): Promise<PurchasesPackage[]> {
         // Проверка на наличие Purchases
@@ -231,14 +236,15 @@ class SubscriptionService {
                 'Модуль Purchases не доступен. Получение подписок невозможно.',
                 'getOfferings – SubscriptionService'
             );
-            // Возвращаем пустой массив или можно бросить ошибку
             return [];
         }
         try {
-            logger.debug('Получение списка доступных подписок', 'getOfferings – SubscriptionService');
+            logger.debug(
+                'Получение списка доступных подписок из ВСЕХ предложений',
+                'getOfferings – SubscriptionService'
+            );
 
             if (!(await this.ensureInitialized())) {
-                // ensureInitialized уже вернет false если Purchases нет, но дублируем лог для ясности
                 logger.error(
                     'Не удалось инициализировать RevenueCat для получения подписок',
                     'getOfferings – SubscriptionService'
@@ -248,28 +254,56 @@ class SubscriptionService {
 
             const offerings = await Purchases.getOfferings();
 
-            if (!offerings || !offerings.current) {
+            // Проверяем наличие объекта offerings и поля all
+            if (!offerings || !offerings.all || Object.keys(offerings.all).length === 0) {
                 logger.warn(
-                    'Результат запроса offerings получен, но current отсутствует',
+                    'Не найдено ни одного предложения (offering) или поле "all" пустое.',
                     'getOfferings – SubscriptionService'
                 );
                 return [];
             }
 
-            if (!offerings.current.availablePackages) {
-                logger.warn('Нет доступных пакетов подписок в offerings.current', 'getOfferings – SubscriptionService');
+            // Собираем все пакеты из всех предложений
+            let allPackages: PurchasesPackage[] = [];
+            for (const offeringIdentifier in offerings.all) {
+                const offering = offerings.all[offeringIdentifier];
+                if (offering && offering.availablePackages && offering.availablePackages.length > 0) {
+                    offering.availablePackages.forEach((pkg: RNPurchasesPackage) => {
+                        // Явно укажем тип pkg
+                        logger.debug(
+                            `Fetched Package: ID='${pkg.identifier}', ProductID='${pkg.product.identifier}', Price='${pkg.product.priceString}', Currency='${pkg.product.currencyCode}'`,
+                            'getOfferings - Package Details'
+                        );
+                    });
+                    // Добавляем пакеты из текущего предложения в общий список
+                    // Убедимся, что добавляемые элементы имеют тип RNPurchasesPackage
+                    allPackages = allPackages.concat(offering.availablePackages as PurchasesPackage[]);
+                } else {
+                    logger.debug(
+                        `Предложение "${offeringIdentifier}" не содержит доступных пакетов.`,
+                        'getOfferings – SubscriptionService'
+                    );
+                }
+            }
+
+            if (allPackages.length === 0) {
+                logger.warn(
+                    'Не найдено доступных пакетов ни в одном из предложений.',
+                    'getOfferings – SubscriptionService'
+                );
                 return [];
             }
 
-            logger.debug(`Получено ${offerings.current.availablePackages.length} пакетов подписок`);
+            logger.debug(
+                `Получено ${allPackages.length} пакетов подписок из ${Object.keys(offerings.all).length} предложений.`
+            );
 
-            logger.json(offerings.current.availablePackages, {
-                title: 'Список доступных пакетов подписок',
+            logger.json(allPackages, {
+                title: 'Список ВСЕХ доступных пакетов подписок',
                 context: 'getOfferings – SubscriptionService',
             });
 
-            // Убедимся, что возвращаемый тип соответствует RNPurchasesPackage[]
-            return offerings.current.availablePackages as PurchasesPackage[];
+            return allPackages;
         } catch (error) {
             logger.error(error, 'SubscriptionService - getOfferings', 'Ошибка при получении списка подписок');
             // Возвращаем пустой массив при ошибке
@@ -300,25 +334,38 @@ class SubscriptionService {
             // Убедимся, что pkg имеет тип RNPurchasesPackage перед передачей
             const { customerInfo } = await Purchases.purchasePackage(pkg as RNPurchasesPackage);
 
+            // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+            logger.json(
+                {
+                    originalPurchaseDate: customerInfo.originalPurchaseDate,
+                    latestExpirationDate: customerInfo.latestExpirationDate,
+                    activeSubscriptions: customerInfo.activeSubscriptions,
+                    activeEntitlementsKeys: Object.keys(customerInfo.entitlements.active),
+                    allEntitlementsKeys: Object.keys(customerInfo.entitlements.all),
+                },
+                {
+                    title: 'Received CustomerInfo after purchase',
+                    context: 'purchasePackage – SubscriptionService',
+                }
+            );
+            // ------------------------
+
             // Обновляем статус подписки в хранилище
             await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
 
             logger.debug('Пакет успешно куплен', 'purchasePackage – SubscriptionService');
             return customerInfo as CustomerInfo;
         } catch (error: any) {
-            // Явно типизируем ошибку
-            // RevenueCat может возвращать специфичные коды ошибок при отмене пользователем
+            logger.error(error, 'SubscriptionService - purchasePackage', 'Ошибка при покупке пакета');
+            // Перепроверим обработку ошибок, возможно стоит пробросить ошибку для мутации
             if (error.code === '1') {
-                // '1' - Purchase cancelled error code
+                // Purchase cancelled
                 logger.warn('Покупка отменена пользователем.', 'purchasePackage – SubscriptionService');
-                // Не пробрасываем ошибку дальше, если это отмена пользователем
-                // Можно вернуть null или специальный объект, чтобы UI понял причину
-                // Пока просто пробросим для совместимости
-                throw error;
-            } else {
-                logger.error(error, 'SubscriptionService - purchasePackage', 'Ошибка при покупке пакета');
-                throw error; // Пробрасываем другие ошибки
+                // Не пробрасываем ошибку отмены
+                // Нужно вернуть что-то, что не будет считаться успешной покупкой в useSubscription
+                // Возможно, стоит изменить возвращаемый тип или пробросить кастомную ошибку
             }
+            throw error; // Пробрасываем остальные ошибки
         }
     }
 
@@ -345,6 +392,22 @@ class SubscriptionService {
 
             logger.debug('Восстановление покупок', 'restorePurchases – SubscriptionService');
             const customerInfo = await Purchases.restorePurchases();
+
+            // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+            logger.json(
+                {
+                    originalPurchaseDate: customerInfo.originalPurchaseDate,
+                    latestExpirationDate: customerInfo.latestExpirationDate,
+                    activeSubscriptions: customerInfo.activeSubscriptions,
+                    activeEntitlementsKeys: Object.keys(customerInfo.entitlements.active),
+                    allEntitlementsKeys: Object.keys(customerInfo.entitlements.all),
+                },
+                {
+                    title: 'Received CustomerInfo after restore',
+                    context: 'restorePurchases – SubscriptionService',
+                }
+            );
+            // ------------------------
 
             // Обновляем статус подписки в хранилище
             await this.updateSubscriptionStatusFromCustomerInfo(customerInfo);
@@ -629,10 +692,38 @@ class SubscriptionService {
      */
     private async updateSubscriptionStatusFromCustomerInfo(customerInfo: CustomerInfo): Promise<SubscriptionStatus> {
         try {
-            // Проверяем свойство entitlements вместо activeSubscriptions для более надежного определения доступа
-            // Идентификатор 'premium' должен совпадать с тем, что настроено в RevenueCat Entitlements
-            const premiumEntitlement = customerInfo.entitlements.active['premium']; // Замените 'premium' на ваш ID
-            const premiumAIEntitlement = customerInfo.entitlements.active['premium_ai']; // Замените 'premium_ai' на ваш ID
+            // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+            logger.json(
+                {
+                    activeEntitlementsKeys: Object.keys(customerInfo.entitlements.active),
+                },
+                {
+                    title: 'Starting updateSubscriptionStatusFromCustomerInfo',
+                    context: 'updateSubscriptionStatusFromCustomerInfo',
+                }
+            );
+            // ------------------------
+
+            // Проверяем свойство entitlements
+            // !!! ВАЖНО: Убедись, что 'premium' и 'premium_ai' ТОЧНО совпадают с ID Entitlement в RevenueCat !!!
+            const premiumEntitlement = customerInfo.entitlements.active['premium'];
+            const premiumAIEntitlement = customerInfo.entitlements.active['premium_ai'];
+
+            // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+            logger.json(
+                {
+                    premiumEntitlementExists: !!premiumEntitlement,
+                    premiumAIEntitlementExists: !!premiumAIEntitlement,
+                    // Детали помогут при отладке идентификаторов
+                    premiumEntitlementId: premiumEntitlement?.identifier,
+                    premiumAIEntitlementId: premiumAIEntitlement?.identifier,
+                },
+                {
+                    title: 'Checked specific entitlements',
+                    context: 'updateSubscriptionStatusFromCustomerInfo',
+                }
+            );
+            // ------------------------
 
             let tier: SubscriptionTier = SUBSCRIPTION_TIERS.FREE;
             let isActive = false;
@@ -647,6 +738,19 @@ class SubscriptionService {
                 isActive = true;
                 activeEntitlementIdentifier = premiumEntitlement.identifier;
             }
+
+            // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+            logger.json(
+                {
+                    tier,
+                    isActive,
+                },
+                {
+                    title: 'Determined tier and isActive',
+                    context: 'updateSubscriptionStatusFromCustomerInfo',
+                }
+            );
+            // ------------------------
 
             // Получаем информацию об истечении подписки из активного entitlement, если он есть
             let expiresAtDate: Date | null = null;

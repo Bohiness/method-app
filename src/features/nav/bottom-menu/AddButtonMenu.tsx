@@ -257,7 +257,7 @@ export const AddButtonMenu = () => {
                                 >
                                     <View
                                         variant={option.id === actionMap.journal.key ? 'canvas' : 'paper'}
-                                        className="rounded-3xl items-center justify-center py-10 gap-y-4"
+                                        className="rounded-3xl items-center justify-center py-10 gap-y-4 flex-grow"
                                     >
                                         <Icon
                                             name={option.icon}

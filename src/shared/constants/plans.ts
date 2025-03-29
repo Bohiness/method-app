@@ -118,25 +118,68 @@ export const getSubscriptionPlans = (
         pkg: PurchasesPackage
     ): { planType: SubscriptionPlan | null; period: SubscriptionPeriod | null } => {
         const identifier = pkg.product.identifier.toLowerCase();
+        // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+        logger.debug(
+            `Mapping package: ID='${identifier}', Type='${pkg.packageType}', ProductPrice='${pkg.product.priceString}'`,
+            'mapPackageToPlanInfo'
+        );
+        // ------------------------
 
         // Точное сопоставление по ID
         switch (identifier) {
             case 'premium_monthly':
+                // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                logger.debug(`Matched: premium, monthly for ID: ${identifier}`, 'mapPackageToPlanInfo');
+                // ------------------------
                 return { planType: 'premium', period: 'monthly' };
             case 'premium_v1': // Предполагаем, что _v1 это годовой
+                // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                logger.debug(`Matched: premium, annually for ID: ${identifier}`, 'mapPackageToPlanInfo');
+                // ------------------------
                 return { planType: 'premium', period: 'annually' };
             case 'premium_ai_monthly':
+                // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                logger.debug(`Matched: premium_ai, monthly for ID: ${identifier}`, 'mapPackageToPlanInfo');
+                // ------------------------
                 return { planType: 'premium_ai', period: 'monthly' };
             case 'premium_ai_v1': // Предполагаем, что _v1 это годовой
+                // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                logger.debug(`Matched: premium_ai, annually for ID: ${identifier}`, 'mapPackageToPlanInfo');
+                // ------------------------
                 return { planType: 'premium_ai', period: 'annually' };
             default:
                 // Дополнительно можно проверить по типу пакета, если ID не совпали
                 const isAnnualPackageType = pkg.packageType.toLowerCase().includes('annual');
+                // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                logger.warn(
+                    `Identifier '${identifier}' not matched in switch. Falling back to includes check (isAnnual: ${isAnnualPackageType}).`,
+                    'mapPackageToPlanInfo'
+                );
+                // ------------------------
                 if (identifier.includes('premium_ai')) {
+                    // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                    logger.debug(
+                        `Fallback matched: premium_ai, ${
+                            isAnnualPackageType ? 'annually' : 'monthly'
+                        } for ID: ${identifier}`,
+                        'mapPackageToPlanInfo'
+                    );
+                    // ------------------------
                     return { planType: 'premium_ai', period: isAnnualPackageType ? 'annually' : 'monthly' };
                 } else if (identifier.includes('premium')) {
+                    // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                    logger.debug(
+                        `Fallback matched: premium, ${
+                            isAnnualPackageType ? 'annually' : 'monthly'
+                        } for ID: ${identifier}`,
+                        'mapPackageToPlanInfo'
+                    );
+                    // ------------------------
                     return { planType: 'premium', period: isAnnualPackageType ? 'annually' : 'monthly' };
                 }
+                // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                logger.warn(`Could not map package with ID: ${identifier}`, 'mapPackageToPlanInfo');
+                // ------------------------
                 return { planType: null, period: null };
         }
     };
@@ -180,26 +223,81 @@ export const getSubscriptionPlans = (
 
                     // Пытаемся получить числовое значение цены
                     const priceValue = pkg.product.price; // price обычно уже number
+                    const annualPriceString = pkg.product.priceString; // e.g., "$19.99" or "19,99 €"
+                    const currencyCode = pkg.product.currencyCode; // e.g., "USD", "EUR"
 
                     // Проверяем, что это валидное положительное число
                     if (typeof priceValue === 'number' && !isNaN(priceValue) && priceValue > 0) {
-                        // Рассчитываем и форматируем месячную цену
-                        result[planType].monthly_price_in_annual = `$${(priceValue / 12).toFixed(2)}`;
-                        // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
-                        logger.debug(
-                            `Calculated monthly_price_in_annual: ${result[planType].monthly_price_in_annual} for ${planType} from annual price ${priceValue}`,
-                            'getSubscriptionPlans'
-                        );
-                        // ------------------------
+                        // Рассчитываем месячную цену
+                        const monthlyNumericPrice = priceValue / 12;
+
+                        try {
+                            // Пытаемся извлечь символ валюты и формат из годовой строки цены
+                            // Это упрощенный вариант, может не работать для всех форматов валют мира
+                            const match = annualPriceString.match(/^([^\d.,\s]+)?\s*([\d.,]+)\s*([^\d.,\s]+)?$/);
+                            let symbolPrefix = '';
+                            let symbolSuffix = '';
+
+                            if (match) {
+                                // match[1] - символ перед числом, match[3] - символ после числа
+                                symbolPrefix = match[1] || '';
+                                symbolSuffix = match[3] || '';
+                                // Если есть оба, оставляем только префикс (чаще символ ставится перед числом)
+                                if (symbolPrefix && symbolSuffix) symbolSuffix = '';
+                                // Убираем лишние пробелы
+                                symbolPrefix = symbolPrefix.trim();
+                                symbolSuffix = symbolSuffix.trim();
+                            }
+
+                            // Если не удалось извлечь символ, используем код валюты (если есть)
+                            if (!symbolPrefix && !symbolSuffix && currencyCode) {
+                                // Можно добавить пробел для читаемости, например "USD 1.67"
+                                // Или оставить как есть, например "USD1.67"
+                                symbolPrefix = currencyCode; // Или `${currencyCode} `
+                            } else if (!symbolPrefix && !symbolSuffix && !currencyCode) {
+                                // Самый крайний случай - возвращаем доллар
+                                symbolPrefix = '$';
+                                logger.warn(
+                                    `Could not extract currency symbol and no currency code for ${planType}, falling back to '$'`,
+                                    'getSubscriptionPlans'
+                                );
+                            }
+
+                            // Форматируем число до 2 знаков после запятой
+                            const formattedMonthlyNumber = monthlyNumericPrice.toFixed(2);
+
+                            // Собираем строку: [символ]число[символ]
+                            result[planType].monthly_price_in_annual =
+                                `${symbolPrefix}${formattedMonthlyNumber}${symbolSuffix}`.trim();
+
+                            // --- ЗАМЕНИ СТАРЫЙ ЛОГ НА ЭТОТ ---
+                            logger.debug(
+                                `Calculated monthly_price_in_annual: ${
+                                    result[planType].monthly_price_in_annual
+                                } for ${planType} from annual price ${annualPriceString} (${priceValue} ${
+                                    currencyCode || 'N/A'
+                                })`,
+                                'getSubscriptionPlans'
+                            );
+                            // ----------------------------------
+                        } catch (formatError) {
+                            logger.error(
+                                formatError,
+                                'getSubscriptionPlans',
+                                `Error formatting monthly price for ${planType}, falling back to '$'`
+                            );
+                            // Запасной вариант с долларом при ошибке форматирования
+                            result[planType].monthly_price_in_annual = `$${monthlyNumericPrice.toFixed(2)}`;
+                        }
                     } else {
-                        // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                        // --- ЗАМЕНИ СТАРЫЙ ЛОГ НА ЭТОТ ---
                         logger.warn(
-                            `Could not calculate monthly_price_in_annual for ${planType}. pkg.product.price was: ${priceValue}`,
+                            `Could not calculate monthly_price_in_annual for ${planType}. pkg.product.price was: ${priceValue} (type: ${typeof priceValue}), annualPriceString: ${annualPriceString}`,
                             'getSubscriptionPlans'
                         );
                         // ------------------------
                         // Можно установить дефолтное значение или оставить undefined
-                        // result[planType].monthly_price_in_annual = '$?.??';
+                        // result[planType].monthly_price_in_annual = '?'; // Например
                     }
                     result[planType].revenuecat_package_annually = pkg;
                     // Применяем триал, если он есть
@@ -211,6 +309,12 @@ export const getSubscriptionPlans = (
                     result[planType].price_monthly = priceString;
                     // Сохраняем месячный пакет
                     result[planType].revenuecat_package_monthly = pkg;
+                    // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+                    logger.debug(
+                        `Assigned MONTHLY package to plan '${planType}'. Package ID: ${pkg.identifier}`,
+                        'getSubscriptionPlans'
+                    );
+                    // ------------------------
                     // Применяем триал, если он есть
                     if (hasTrial) {
                         result[planType].montly_trial_period_days = trialDurationDays;

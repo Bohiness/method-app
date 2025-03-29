@@ -43,16 +43,14 @@
             "year": "{{age}} year",
             "years": "{{age}} years"
         },
-        "charts": {
-            "noData": "No data"
-        },
         "errors": {
             "saveFailed": "Failed to save",
             "photoCaptureFailed": "Failed to capture photo",
             "cameraDenied": "Camera access denied",
             "photoLibraryDenied": "Photo library access denied",
             "requiredField": "This field is required",
-            "photoRequired": "Photo is required"
+            "photoRequired": "Photo is required",
+            "noData": "No data"
         },
         "later": "Later",
         "update": "Update",
@@ -199,7 +197,14 @@
             "draftSaved": "Draft saved",
             "saveDraftTitle": "Save draft",
             "saveDraftMessage": "Do you want to save this draft?",
-            "errorSavingTemplate": "Error saving template"
+            "errorSavingTemplate": "Error saving template",
+            "success": {
+                "title": "Great job!",
+                "description": "Your entry has been successfully saved. Keep it up!",
+                "words": "words",
+                "minutes": "minutes",
+                "seconds": "seconds"
+            }
         },
         "moodcheckin": {
             "title": "Mood check-in",
@@ -356,8 +361,8 @@
             "negativeThinking": "Negativity",
             "awarenessLevel": "Awareness",
             "keywords": "Keywords",
-            "insights": "✨ Insights",
-            "triggers": "🚩 Triggers",
+            "insights": "Insights",
+            "triggers": "Triggers",
             "descriptions": {
                 "mainTopic": "What's this entry mainly about? AI figures it out from keywords and the overall meaning.",
                 "length": "How many words you wrote. Over 100? Looks like some deep reflection!",
@@ -631,7 +636,15 @@
                 "message": "Failed to send error report. Please try again later."
             },
             "copyLogs": {
-                "button": "Copy logs"
+                "button": "Copy logs",
+                "success": {
+                    "title": "Logs copied",
+                    "message": "Logs copied to clipboard"
+                },
+                "error": {
+                    "title": "Error",
+                    "message": "Failed to copy logs"
+                }
             }
         },
         "journal": {
@@ -644,7 +657,13 @@
     },
     "threads": {
         "title": "trends.",
-        "description": "We're working on exciting new features that will help you achieve your goals more effectively"
+        "description": "We're working on exciting new features that will help you achieve your goals more effectively",
+        "charts": {
+            "noData": "No data",
+            "thisWeek": "This Week",
+            "previousWeek": "Previous Week",
+            "averageLabel": "Average: {{average}}"
+        }
     },
     "screens": {
         "splashscreen": {

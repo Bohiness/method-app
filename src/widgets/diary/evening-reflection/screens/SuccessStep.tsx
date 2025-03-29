@@ -2,7 +2,7 @@
 import { EveningReflectionStackParamList } from '@app/(modals)/(diary)/evening-reflection/StepNavigator'
 import { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { AnimatedCheck } from '@shared/ui/animated-icon/check'
-import { Button } from '@shared/ui/button'
+import { FinishButton } from '@shared/ui/button'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { StreakWidget } from '@widgets/gamification/streak/StreakWidget'
@@ -48,14 +48,12 @@ export function SuccessStepEveningReflection({ route, navigation }: SuccessStepE
                 </Animated.View>
             </View>
 
-            <Button
+            <FinishButton
                 variant="default"
-                className="w-fit self-center px-20"
-                size='lg'
                 onPress={handleDone}
             >
                 {t('common.done')}
-            </Button>
+            </FinishButton>
         </View>
     )
 }

@@ -3,6 +3,7 @@ import { BeautifulEntryStats } from '@features/diary/BeautifulEntryStats'
 import { useJournal } from '@shared/hooks/diary/journal/useJournal'
 import { useDateTime } from '@shared/hooks/systems/datetime/useDateTime'
 import HTMLView from '@shared/lib/utils/parsers/HTMLView'
+import { Skeleton } from '@shared/ui/skeleton'
 import { Text } from '@shared/ui/text'
 import { Tooltip } from '@shared/ui/tooltip'
 import { useLocalSearchParams } from 'expo-router'
@@ -22,6 +23,14 @@ export default function JournalEntry() {
     const { data: journal, isPending } = getDetails(Number(journalId))
 
     const title = journal?.created_at ? formatDateTimeWithTimezoneAndLocale(journal?.created_at, 'dd MMMM yyyy') + ' ' + t('common.date.at') + ' ' + formatDateTimeWithTimezoneAndLocale(journal?.created_at, 'HH:mm') : ''
+
+    if (isPending) {
+        return <Skeleton className="h-full" />
+    }
+
+    if (!journal) {
+        return <Text>{t('common.error.no_data')}</Text>
+    }
 
     return (
         <ModalBottomScreenContent title={title}>

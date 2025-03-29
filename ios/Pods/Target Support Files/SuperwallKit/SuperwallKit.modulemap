@@ -1,6 +1,0 @@
-module SuperwallKit {
-  umbrella header "SuperwallKit-umbrella.h"
-
-  export *
-  module * { export * }
-}

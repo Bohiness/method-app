@@ -5,78 +5,17 @@ import { STORAGE_KEYS } from '@shared/constants/system/STORAGE_KEYS';
 import { logger } from '@shared/lib/logger/logger.service';
 import { storage } from '@shared/lib/storage/storage.service';
 import { AuthTokensType } from '@shared/types/user/AuthTokensType';
-
-interface ServerResponse {
-    user: any;
-    tokens: AuthTokensType;
-}
+import { userService } from '../user.service';
 
 class TokenService {
     private readonly SESSION_KEY = STORAGE_KEYS.USER.USER_SESSION;
     private readonly CSRF_TOKEN_KEY = STORAGE_KEYS.USER.CSRF_TOKEN;
 
-    async getCsrfToken(): Promise<string | null> {
-        try {
-            const csrfToken = await this.getCsrfTokenFromStorage();
-
-            if (!csrfToken) {
-                return await this.getCsrfTokenFromServerAndSaveToStorage();
-            }
-
-            return csrfToken;
-        } catch (error) {
-            logger.error(error, 'token service – getCsrfToken', 'Error getting CSRF token:');
-            return null;
-        }
-    }
-
-    async getCsrfTokenFromStorage(): Promise<string> {
-        try {
-            const csrfToken = await storage.get<string>(this.CSRF_TOKEN_KEY, true);
-            if (!csrfToken) {
-                throw new Error('No CSRF token found');
-            }
-            return csrfToken;
-        } catch (error) {
-            logger.error(error, 'token service – getCsrfToken', 'Error getting CSRF token:');
-            throw error;
-        }
-    }
-
-    async setCsrfTokenToStorage(csrfToken: string): Promise<void> {
-        try {
-            await storage.set(this.CSRF_TOKEN_KEY, csrfToken);
-        } catch (error) {
-            logger.error(error, 'token service – setCsrfToken', 'Error setting CSRF token:');
-        }
-    }
-
-    async getCsrfTokenFromServerAndSaveToStorage(): Promise<string | null> {
-        try {
-            logger.start('Getting CSRF token...', 'token service – getCsrfToken');
-
-            const csrfTokenResponse = await apiClient.get<{ csrfToken: string }>(API_ROUTES.AUTH.CSRF_TOKEN);
-
-            if (!csrfTokenResponse?.csrfToken) {
-                logger.error('No CSRF token in response', 'token service – getCsrfToken');
-                return null;
-            }
-
-            await this.setCsrfTokenToStorage(csrfTokenResponse.csrfToken);
-
-            logger.finish('CSRF token saved successfully', 'token service – getCsrfToken');
-
-            return csrfTokenResponse.csrfToken;
-        } catch (error) {
-            logger.error(error, 'auth-api service – getCsrfToken', 'Error getting CSRF token:');
-            return null;
-        }
-    }
-
     /**
-     * Получение текущей сессии
+     * Получение текущих токенов из storage
+     * @returns {AuthTokensType | null}
      */
-    async getSession(): Promise<AuthTokensType | null> {
+    async getTokensFromStorage(): Promise<AuthTokensType | null> {
         try {
             logger.debug('TokenService: Getting session...', 'token service – getSession');
             const session = await storage.get<AuthTokensType>(this.SESSION_KEY, true);
@@ -88,7 +27,7 @@ class TokenService {
 
             if (!this.isValidSession(session)) {
                 logger.warn('TokenService: Session found but invalid (e.g., expired)', 'token service – getSession');
-                await this.clearSession();
+                await this.clearRefreshAndAccessTokens();
                 return null;
             }
 
@@ -100,13 +39,15 @@ class TokenService {
     }
 
     /**
-     * Установка новой сессии
+     * Установка новых токенов в storage
+     * @param {AuthTokensType} newTokens - Новые токены
+     * @returns {void}
      */
-    async setSession(newTokens: AuthTokensType): Promise<void> {
+    async setTokensToStorage(newTokens: AuthTokensType): Promise<void> {
         try {
             logger.debug('TokenService: Setting new session...', 'token service – setSession');
 
-            const accessTokenExpiresInMs = 24 * 60 * 60 * 1000 * 30; // Example: 30 days - NEEDS REVIEW
+            const accessTokenExpiresInMs = 24 * 60 * 60 * 1000 * 30; // 30 days
             const expiresAt = Date.now() + accessTokenExpiresInMs;
 
             const tokens: AuthTokensType = {
@@ -133,7 +74,7 @@ class TokenService {
      */
     async shouldRefreshToken(): Promise<boolean> {
         try {
-            const session = await this.getSession();
+            const session = await this.getTokensFromStorage();
             if (!session) {
                 logger.debug('No valid session, refresh needed (or login)', 'token service – shouldRefreshToken');
                 return true;
@@ -158,12 +99,13 @@ class TokenService {
     }
 
     /**
-     * Получение refresh токена для обновления
+     * Получение refresh токена для обновления с сервера
+     * @returns {AuthTokensType['refresh'] | null}
      */
-    async getRefreshToken(): Promise<string | null> {
+    async getRefreshToken(): Promise<AuthTokensType['refresh'] | null> {
         try {
-            const session = await this.getSession();
-            return session?.refresh || null;
+            const tokens = await this.getTokensFromStorage();
+            return tokens?.refresh || null;
         } catch (error) {
             logger.error(error, 'token service – getRefreshToken', 'Unexpected error getting refresh token:');
             return null;
@@ -171,15 +113,113 @@ class TokenService {
     }
 
     /**
-     * Очистка сессии
+     * Очистка refresh и access токенов
+     * @returns {void}
      */
-    async clearSession(): Promise<void> {
+    async clearRefreshAndAccessTokens(): Promise<void> {
         try {
-            logger.debug('TokenService: Clearing session...', 'token service – clearSession');
+            logger.debug(
+                'TokenService: Clearing refresh and access tokens...',
+                'token service – clearRefreshAndAccessTokens'
+            );
             await storage.remove(this.SESSION_KEY);
-            logger.debug('TokenService: Session cleared successfully', 'token service – clearSession');
+            logger.debug(
+                'TokenService: Refresh and access tokens cleared successfully',
+                'token service – clearRefreshAndAccessTokens'
+            );
         } catch (error) {
-            logger.error(error, 'token service – clearSession', 'Error clearing session:');
+            logger.error(
+                error,
+                'token service – clearRefreshAndAccessTokens',
+                'Error clearing refresh and access tokens:'
+            );
+            throw error;
+        }
+    }
+
+    /**
+     * Получает новый access токен с сервера
+     * @param {string} refreshToken - refresh токен
+     * @returns {Promise<AuthTokensType['access']>} Новый access токен
+     * @throws {AxiosError} Если токен недействителен или произошла ошибка сети/сервера
+     */
+    async getNewAccessTokenFromServer(refreshToken: AuthTokensType['refresh']): Promise<AuthTokensType['access']> {
+        try {
+            logger.debug('AuthService: Refreshing token...');
+            const response = await apiClient.post<{ tokens: AuthTokensType }>(API_ROUTES.AUTH.TOKENS.REFRESH, {
+                refresh: refreshToken,
+            });
+            return response.tokens.access;
+        } catch (error) {
+            logger.error(error, 'auth-api – refreshToken', 'AuthService: Error refreshing token:');
+            throw error;
+        }
+    }
+    /**
+     * Проверяет access токен на сервере
+     * @param {string} accessToken - access токен
+     * @returns {Promise<boolean>} true, если токен действителен, false - иначе
+     */
+    async checkAccessTokenOnServer(accessToken: AuthTokensType['access']): Promise<boolean> {
+        try {
+            // Этот метод возвращает только 200 статус и пустой ответ
+            await apiClient.post(API_ROUTES.AUTH.TOKENS.VALIDATE, {
+                access: accessToken,
+            });
+
+            // Если запрос успешен (нет ошибки), значит токен действителен
+            return true;
+        } catch (error) {
+            logger.error(error, 'auth-api – checkAccessTokenOnServer', 'AuthService: Error checking access token:');
+            return false;
+        }
+    }
+
+    /**
+     * Обновление токенов
+     * Этот метод используется ApiClient для обновления токенов
+     */
+    async getNewAccessToken(): Promise<AuthTokensType['access']> {
+        try {
+            logger.debug('AuthService: Starting token refresh...', 'auth-api - refreshTokens');
+            const refreshToken = await this.getRefreshToken();
+
+            if (!refreshToken) {
+                logger.error('No refresh token available for refresh', 'auth-api - refreshTokens');
+                throw new Error('No refresh token available');
+            }
+
+            // Call the API to get new tokens + potentially new CSRF
+            const newAccessToken = await this.getNewAccessTokenFromServer(refreshToken);
+
+            // The response should contain the new tokens and potentially a new CSRF token
+            if (!newAccessToken) {
+                logger.error('Invalid tokens received during refresh', 'auth-api - refreshTokens');
+                throw new Error('Invalid tokens received during refresh');
+            }
+
+            // Save the new session (tokens) using tokenService
+            // tokenService.setSession will handle expiry calculation
+            await this.setTokensToStorage({
+                access: newAccessToken,
+                refresh: refreshToken,
+            });
+
+            // Removed checking/saving CSRF token from refresh response body.
+            // It should be handled by the apiClient interceptor via Set-Cookie header if backend sends it.
+            logger.debug(
+                'CSRF token (if sent by backend) is handled by apiClient interceptor',
+                'auth-api - refreshTokens'
+            );
+
+            // Return only the tokens as per the original method signature
+            // The AuthTokensType from tokenService.setSession might not have expiresAt if not needed here
+            return newAccessToken;
+        } catch (error) {
+            logger.error(error, 'auth-api – refreshTokens', 'AuthService: Error refreshing tokens:');
+            // Clear session on refresh failure
+            await this.clearRefreshAndAccessTokens();
+            await userService.clearUserFromStorage();
             throw error;
         }
     }

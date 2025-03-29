@@ -1,7 +1,7 @@
 import { HeaderMenuItem } from '@features/nav/HeaderMenuItem'
+import { APP_ROUTES } from '@shared/constants/system/app-routes'
 import { useUser } from '@shared/context/user-provider'
 import { ScreenType } from '@shared/hooks/modal/useScreenNavigation'
-import { logger } from '@shared/lib/logger/logger.service'
 import { getGender } from '@shared/lib/utils/user/getGender'
 import { Avatar } from '@shared/ui/avatar'
 import { Button } from '@shared/ui/button'
@@ -10,7 +10,6 @@ import { InfoGroup, InfoItem } from '@shared/ui/info-item'
 import { Text } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { router } from 'expo-router'
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TouchableOpacity } from 'react-native'
 
@@ -21,19 +20,8 @@ export const FullProfileScreen = ({
     onBack: () => void,
     onNavigate: (screen: ScreenType) => void
 }) => {
-    const { user, signOut, isAnonymous } = useUser()
+    const { user, signOut } = useUser()
     const { t } = useTranslation()
-
-
-    useEffect(() => {
-        logger.log(user, 'useEffect – FullProfileScreen', 'user')
-    }, [user])
-
-    const renderLoginButton = () => (
-        <Button onPress={() => router.push('/(auth)/signin')}>
-            {t('profile.login.button')}
-        </Button>
-    )
 
     const renderProfileImage = () => (
         <TouchableOpacity onPress={() => onNavigate('profile_photo')}>
@@ -71,7 +59,7 @@ export const FullProfileScreen = ({
                     </Text>
 
                     <Button
-                        onPress={() => router.push('/(auth)/signin')}
+                        onPress={() => router.push(`/${APP_ROUTES.MODALS.AUTH.SIGN_IN}`)}
                         className="w-full"
                     >
                         {t('profile.login.button')}

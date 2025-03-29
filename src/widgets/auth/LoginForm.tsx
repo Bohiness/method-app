@@ -13,6 +13,7 @@ import { Keyboard, KeyboardAvoidingView, TouchableWithoutFeedback } from 'react-
 import Animated, {
     FadeIn,
     FadeOut,
+    LinearTransition,
     useAnimatedStyle,
     withSpring
 } from 'react-native-reanimated'
@@ -82,6 +83,7 @@ export const LoginForm = ({
                     className="w-full flex-1 justify-center -mt-40"
                     entering={FadeIn}
                     exiting={FadeOut}
+                    layout={LinearTransition.springify().damping(10).stiffness(100)}
                 >
                     {showTitle && (
                         <Text

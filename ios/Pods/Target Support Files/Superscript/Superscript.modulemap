@@ -1,6 +1,0 @@
-module Superscript {
-  umbrella header "Superscript-umbrella.h"
-
-  export *
-  module * { export * }
-}

@@ -1,4 +1,3 @@
-import { userApiService } from '@shared/api/user/user-api.service';
 import { StorageService } from '@shared/lib/storage/storage.service';
 import { SubscriptionTier } from '@shared/types/subscription/SubscriptionType';
 import { logger } from '../logger/logger.service';
@@ -114,15 +113,12 @@ export class SubscriptionCacheService {
                 timestamp: Date.now(),
             };
 
+            // 1. Сохраняем данные ЛОКАЛЬНО в AsyncStorage
             await this.storageService.set(SUBSCRIPTION_CACHE_KEY, cacheData);
             logger.log(cacheData, 'subscription cache service – cacheSubscription', 'cached subscription data');
-
-            // Синхронизируем с сервером
-            this.syncWithServer(cacheData).catch(error => {
-                logger.error(error, 'subscription cache service – syncWithServer', 'error');
-            });
         } catch (error) {
-            logger.error(error, 'subscription cache service – cacheSubscription', 'error');
+            // Эта ошибка относится к проблемам с ЛОКАЛЬНЫМ сохранением
+            logger.error(error, 'subscription cache service – cacheSubscription', 'error saving cache locally');
         }
     }
 
@@ -200,30 +196,6 @@ export class SubscriptionCacheService {
         } catch (error) {
             logger.error(error, 'subscription cache service – getTimeUntilExpiration', 'error');
             return null;
-        }
-    }
-
-    /**
-     * Синхронизирует данные о подписке с сервером
-     */
-    private async syncWithServer(data: SubscriptionCacheData): Promise<void> {
-        try {
-            if (!data || typeof data.isPremium !== 'boolean') {
-                logger.error('Invalid data for syncing with server', 'subscription cache service – syncWithServer');
-                return;
-            }
-
-            await userApiService.syncSubscription({
-                isPremium: data.isPremium,
-                isPremiumAI: data.isPremiumAI,
-                tier: data.tier,
-                expirationDate: data.expirationDate,
-                productId: data.productId,
-            });
-            logger.log('Subscription data synced with server', 'subscription cache service – syncWithServer');
-        } catch (error) {
-            logger.error(error, 'subscription cache service – syncWithServer', 'error');
-            throw error;
         }
     }
 }

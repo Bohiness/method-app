@@ -1,6 +1,6 @@
 import { streakService } from '@shared/lib/gamification/streak.service'
 import { AnimatedCheck } from '@shared/ui/animated-icon/check'
-import { Button } from '@shared/ui/button'
+import { FinishButton } from '@shared/ui/button'
 import { Text, Title } from '@shared/ui/text'
 import { View } from '@shared/ui/view'
 import { StreakWidget } from '@widgets/gamification/streak/StreakWidget'
@@ -58,6 +58,11 @@ interface SuccessScreenProps {
     updateStreak?: boolean
 
     /**
+     * Контент для отображения в средней части экрана
+     */
+    additionalContent?: React.ReactNode
+
+    /**
      * Параметры для обновления стрика
      */
     streakParams?: {
@@ -80,6 +85,7 @@ export function SuccessScreen({
     onButtonPress,
     showStreakWidget = true,
     updateStreak = true,
+    additionalContent,
     streakParams = {
         isCompleted: true,
         tasksCompleted: 1,
@@ -124,9 +130,9 @@ export function SuccessScreen({
     }
 
     return (
-        <View className="flex-1" variant="default">
+        <View className="flex-1">
             <View className="flex-1">
-                <View className="flex-1 px-4">
+                <View className="flex-1">
                     <View className="flex-1 items-center justify-center">
 
                         <AnimatedCheck
@@ -145,6 +151,11 @@ export function SuccessScreen({
                                     {description}
                                 </Text>
                             )}
+                            {additionalContent && (
+                                <Animated.View entering={FadeIn.delay(900)}>
+                                    {additionalContent}
+                                </Animated.View>
+                            )}
                         </Animated.View>
 
                         {showStreakWidget && (
@@ -158,7 +169,7 @@ export function SuccessScreen({
                     </View>
                 </View>
             </View>
-            <View className="px-4 items-center">
+            <View className="items-center">
                 {bottomContent && (
                     <Animated.View
                         entering={FadeIn.delay(1200)}
@@ -167,17 +178,15 @@ export function SuccessScreen({
                         {bottomContent}
                     </Animated.View>
                 )}
-                {doneButtonActive && (
-                    <Button
-                        variant="default"
-                        onPress={handleClose}
-                        className="w-fit self-center px-20"
-                        style={{ marginBottom: insets.bottom }}
-                    >
-                        {buttonText || t('common.done')}
-                    </Button>
-                )}
+
             </View>
+            {doneButtonActive && (
+                <FinishButton
+                    onPress={handleClose}
+                >
+                    {buttonText || t('common.done')}
+                </FinishButton>
+            )}
         </View>
     )
 }

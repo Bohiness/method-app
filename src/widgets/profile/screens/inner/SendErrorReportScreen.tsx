@@ -103,20 +103,20 @@ export const SendErrorReportScreen = ({
             if (content) {
                 Clipboard.setString(content)
                 Alert.alert(
-                    t('settings.sendErrorReport.copyLogs.success.title', 'Логи скопированы'),
-                    t('settings.sendErrorReport.copyLogs.success.message', 'Логи успешно скопированы в буфер обмена')
+                    t('settings.sendErrorReport.copyLogs.success.title'),
+                    t('settings.sendErrorReport.copyLogs.success.message')
                 )
             } else {
                 Alert.alert(
-                    t('settings.sendErrorReport.copyLogs.error.title', 'Ошибка'),
-                    t('settings.sendErrorReport.copyLogs.error.message', 'Не удалось загрузить логи')
+                    t('settings.sendErrorReport.copyLogs.error.title'),
+                    t('settings.sendErrorReport.copyLogs.error.message')
                 )
             }
         } catch (error) {
             logger.error(error, 'SendErrorReportScreen', 'Failed to copy logs')
             Alert.alert(
-                t('settings.sendErrorReport.copyLogs.error.title', 'Ошибка'),
-                t('settings.sendErrorReport.copyLogs.error.message', 'Не удалось скопировать логи')
+                t('settings.sendErrorReport.copyLogs.error.title'),
+                t('settings.sendErrorReport.copyLogs.error.message')
             )
         } finally {
             setIsCopyingLogs(false)

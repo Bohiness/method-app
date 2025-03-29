@@ -5,7 +5,12 @@ import { buildUrl } from '@shared/lib/url/buildUrl';
 export const API_ROUTES = {
     BASE: process.env.EXPO_PUBLIC_API_URL || 'https://api.method.do',
     AUTH: {
-        REFRESH_TOKEN: '/api/token/refresh/',
+        TOKENS: {
+            BASE: '/api/token/',
+            REFRESH: '/api/token/refresh/',
+            VALIDATE: '/api/token/validate/',
+            CSRF_TOKEN: '/api/token/csrf/',
+        },
         CHECK_EMAIL: '/api/v2/auth/check-email/',
         FORGOT_PASSWORD: '/api/v2/auth/forgotpassword/sendcode/',
         CHECK_CODE: '/api/v2/auth/forgotpassword/checkcode/',
@@ -14,11 +19,9 @@ export const API_ROUTES = {
         REGISTER: '/api/v2/auth/register/',
         CHECK_AUTH: '/api/v2/auth/checkAuthenticate/',
         LOGOUT: '/api/v2/auth/logout/',
-        CSRF_TOKEN: '/api/auth/csrf-token/',
         GOOGLE_AUTH: '/api/google/login/',
         GOOGLE_AUTH_CALLBACK: '/api/google/callback/mobile/',
         APPLE_AUTH: '/api/apple/login/',
-        // Добавляем маршруты для анонимных пользователей
         ANONYMOUS: {
             CREATE: '/api/v2/user/anonymous/',
             CONVERT: '/api/v2/user/convert/',

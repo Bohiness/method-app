@@ -248,13 +248,39 @@ export const SubscriptionScreen = ({
         ? currentPlanInfo?.revenuecat_package_monthly
         : currentPlanInfo?.revenuecat_package_annually
 
+      // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+      logger.debug(
+        {
+          selectedPlan,
+          subscriptionPeriod,
+          currentPlanInfoExists: !!currentPlanInfo,
+          monthlyPackageExists: !!currentPlanInfo?.revenuecat_package_monthly,
+          annualPackageExists: !!currentPlanInfo?.revenuecat_package_annually,
+          selectedPackageIdentifier: packageToPurchase?.identifier,
+          selectedPackageProductIdentifier: packageToPurchase?.product?.identifier,
+        },
+        'handlePurchase - Before package check'
+      )
+      // ------------------------
+
       if (!packageToPurchase) {
         const errMessage = `No package found for plan: ${selectedPlan}, period: ${subscriptionPeriod}`
         logger.error(errMessage, 'handlePurchase')
         return
       }
 
-      logger.log(packageToPurchase, 'handlePurchase', `Purchasing package for ${selectedPlan} - ${subscriptionPeriod}`)
+      // --- ДОБАВЬ ЛОГ ЗДЕСЬ ---
+      // Переместим лог сюда, чтобы убедиться, что пакет найден
+      logger.log(
+        {
+          identifier: packageToPurchase.identifier,
+          productIdentifier: packageToPurchase.product.identifier,
+          price: packageToPurchase.product.priceString,
+        },
+        'handlePurchase',
+        `Attempting to purchase package for ${selectedPlan} - ${subscriptionPeriod}`
+      )
+      // ------------------------
       // Покупаем пакет
       await purchase(packageToPurchase)
     } catch (error) {

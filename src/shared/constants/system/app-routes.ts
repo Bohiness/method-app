@@ -30,5 +30,8 @@ export const APP_ROUTES = {
             AI_TONE_OF_VOICE: '(modals)/(settings)/ai-tone-of-voice',
             QUICK_ACCESS: '(modals)/(settings)/quick-access',
         },
+        AUTH: {
+            SIGN_IN: '(auth)/signin',
+        },
     },
 } as const;
